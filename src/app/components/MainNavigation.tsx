@@ -38,39 +38,42 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
   return (
     <>
       {/* Topbar */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-100 z-40 px-4 flex items-center justify-between">
+      <header className="fixed top-0 left-0 right-0 h-16 border-b border-slate-600/30 z-40 px-4 flex items-center justify-between" style={{ backgroundColor: "#1e3a5f" }}>
         <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
             size="icon" 
-            className="md:hidden"
+            className="md:hidden text-slate-200 hover:text-white hover:bg-white/10"
             onClick={() => setIsSidebarOpen(true)}
           >
             <Menu className="w-6 h-6" />
           </Button>
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate("dashboard")}>
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center shrink-0">
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl hidden sm:block">FinEra INCLUSIVE CREDIT</span>
+            <div className="hidden sm:flex flex-col leading-tight">
+              <span className="font-bold text-lg text-white">FinEra</span>
+              <span className="font-semibold text-xs text-slate-300 tracking-wider uppercase">INCLUSIVE CREDIT</span>
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="relative text-slate-500">
+          <Button variant="ghost" size="icon" className="relative text-slate-200 hover:text-white hover:bg-white/10">
             <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#1e3a5f]" />
           </Button>
-          <div className="h-8 w-[1px] bg-slate-100 mx-1" />
+          <div className="h-8 w-[1px] bg-slate-500/50 mx-1" />
           <div className="flex items-center gap-2 pl-2">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold leading-none">{userName}</p>
-              <p className="text-[10px] text-slate-500 font-semibold tracking-wide">
+              <p className="text-sm font-bold leading-none text-white">{userName}</p>
+              <p className="text-[10px] text-slate-300 font-semibold tracking-wide">
                 {accountNumber ? `Acc: ${accountNumber}` : 'Verified Member'}
               </p>
             </div>
-            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center border-2 border-white shadow-sm cursor-pointer" onClick={() => onNavigate("profileSettings")}>
-              <User className="w-6 h-6 text-indigo-600" />
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/30 shadow-sm cursor-pointer hover:bg-white/30" onClick={() => onNavigate("profileSettings")}>
+              <User className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
@@ -132,7 +135,10 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
                   <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                     <ShieldCheck className="w-5 h-5 text-white" />
                   </div>
-                  <span className="font-bold text-xl">FinEra INCLUSIVE CREDIT</span>
+                  <div className="flex flex-col leading-tight">
+                    <span className="font-bold text-lg text-slate-900">FinEra</span>
+                    <span className="font-semibold text-xs text-slate-600 tracking-wider uppercase">INCLUSIVE CREDIT</span>
+                  </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}>
                   <X className="w-6 h-6" />

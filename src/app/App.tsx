@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { SplashScreen } from "@/app/components/SplashScreen";
 import { LoginRegister } from "@/app/components/LoginRegister";
 import { OTPVerification } from "@/app/components/OTPVerification";
-import { WelcomeIntro } from "@/app/components/WelcomeIntro";
 import { MainNavigation } from "@/app/components/MainNavigation";
 import { AccountTypeSelection } from "@/app/components/AccountTypeSelection";
 import { VerifyAccess } from "@/app/components/VerifyAccess";
@@ -38,7 +37,6 @@ type Screen =
   | "otpVerification"
   | "bankLinking"
   | "accountCreationSuccess"
-  | "welcomeIntro"
   | "accountType"
   | "verify"
   | "profileDetails"
@@ -333,11 +331,9 @@ export default function App() {
             fullName={userData.fullName}
             phoneNumber={userData.phoneNumber}
             finEraAccountNumbers={userData.finEraAccountNumbers}
-            onContinue={() => setCurrentScreen("welcomeIntro")}
+            onContinue={() => setCurrentScreen("dashboard")}
           />
         )}
-        {currentScreen === "welcomeIntro" && <WelcomeIntro userName={userData.fullName} onContinue={() => setCurrentScreen("dashboard")} />}
-        
         {currentScreen === "dashboard" && (
           <DashboardV2
             userName={userData.fullName || "User"}

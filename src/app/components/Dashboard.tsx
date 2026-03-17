@@ -63,7 +63,7 @@ export function Dashboard({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-900">Hello, {userName} 👋</h1>
-          <p className="text-slate-500 font-medium text-sm">Empowering your academic financial journey.</p>
+          <p className="text-slate-500 font-medium text-sm">Empowering your financial literacy journey.</p>
         </div>
         <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
           <Calendar className="w-4 h-4 text-indigo-600" />

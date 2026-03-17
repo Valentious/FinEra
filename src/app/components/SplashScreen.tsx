@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { ShieldCheck } from "lucide-react";
+import { FinEraLogo } from "./FinEraLogo";
+import { ZimbabweFlag } from "./ZimbabweFlag";
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -15,31 +16,28 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-indigo-700 via-blue-800 to-indigo-950 flex flex-col items-center justify-center text-white overflow-hidden">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative z-10 flex flex-col items-center"
-      >
-        <div className="w-24 h-24 bg-white/10 backdrop-blur-xl rounded-3xl flex items-center justify-center mb-6 border border-white/20 shadow-2xl">
-          <ShieldCheck className="w-14 h-14 text-white" />
-        </div>
-        
-        <motion.h1 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="text-5xl md:text-6xl font-black tracking-tight mb-2 text-center"
+    <div className="fixed inset-0 bg-gradient-to-br from-indigo-700 via-blue-800 to-indigo-950 flex flex-col items-center text-white overflow-hidden">
+      <div className="flex-1 flex items-center justify-center w-full">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="relative z-10 flex flex-col items-center"
         >
-          FinEra <span className="text-indigo-300">INCLUSIVE CREDIT</span>
-        </motion.h1>
+        <motion.div
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="mb-8"
+        >
+          <FinEraLogo size="xl" showTagline={true} />
+        </motion.div>
         
         <motion.p
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
-          className="text-indigo-200 text-xl font-medium mb-6"
+          className="text-slate-300 text-lg font-medium mb-8"
         >
           Your Financial Operating System
         </motion.p>
@@ -48,10 +46,32 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.7, duration: 0.5 }}
-          className="text-white/70 text-sm font-semibold tracking-wider uppercase"
+          className="text-white/60 text-xs font-semibold tracking-[0.2em] uppercase"
         >
           Powered by NUST AND SPC Microfinance
         </motion.p>
+        </motion.div>
+      </div>
+
+      {/* Footer tagline: Proudly Zimbabwean */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1, duration: 0.5 }}
+        className="flex items-center justify-center gap-3 shrink-0 z-10 w-full"
+        style={{ paddingBottom: "20px", paddingLeft: "24px", paddingRight: "24px" }}
+      >
+        <span
+          className="font-medium tracking-wide"
+          style={{
+            color: "#E5E7EB",
+            fontSize: "0.875rem",
+            letterSpacing: "0.05em",
+          }}
+        >
+          Proudly Zimbabwean
+        </span>
+        <ZimbabweFlag height={14} className="shrink-0" />
       </motion.div>
 
       {/* Background Animated Orbs */}
