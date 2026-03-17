@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinEra INCLUSIVE CREDIT - Logo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      padding: 2rem;
+      background: #f1f5f9;
+    }
+
+    /* Logo component - reusable */
+    .finera-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Dark background variant */
+    .finera-logo--dark {
+      background: rgba(30, 41, 59, 0.5);
+    }
+
+    .finera-logo--dark .finera-logo__title {
+      color: #ffffff;
+    }
+
+    .finera-logo--dark .finera-logo__subtitle {
+      color: #94a3b8;
+    }
+
+    /* Icon container */
+    .finera-logo__icon {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%);
+      box-shadow: 0 2px 8px rgba(30, 58, 95, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .finera-logo__icon svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Text block */
+    .finera-logo__text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .finera-logo__title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+      margin: 0;
+    }
+
+    .finera-logo__title .finera-logo__brand {
+      letter-spacing: 0.02em;
+    }
+
+    .finera-logo__title .finera-logo__tagline {
+      font-weight: 800;
+    }
+
+    .finera-logo__subtitle {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #64748b;
+      margin: 2px 0 0 0;
+    }
+
+    /* Size variants */
+    .finera-logo--sm .finera-logo__icon {
+      width: 40px;
+      height: 40px;
+      padding: 8px;
+    }
+
+    .finera-logo--sm .finera-logo__title {
+      font-size: 1rem;
+    }
+
+    .finera-logo--sm .finera-logo__subtitle {
+      font-size: 10px;
+    }
+
+    .finera-logo--sm {
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+    }
+
+    .finera-logo--lg .finera-logo__icon {
+      width: 56px;
+      height: 56px;
+      padding: 12px;
+    }
+
+    .finera-logo--lg .finera-logo__title {
+      font-size: 1.25rem;
+    }
+
+    .finera-logo--lg .finera-logo__subtitle {
+      font-size: 0.875rem;
+    }
+
+    .finera-logo--lg {
+      gap: 1.25rem;
+      padding: 1.25rem 1.5rem;
+    }
+
+    /* Demo section */
+    .demo-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .demo-section h2 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin: 0;
+    }
+
+    .demo-dark {
+      background: #0f172a;
+      padding: 2rem;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-section">
+    <h2>Light background</h2>
+    <div class="finera-logo finera-logo--md">
+      <div class="finera-logo__icon">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M24 6L8 12v10c0 8 6 14 16 18 10-4 16-10 16-18V12L24 6z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path d="M16 24l6 6 12-12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="finera-logo__text">
+        <h1 class="finera-logo__title">
+          <span class="finera-logo__brand">FinEra</span> <span class="finera-logo__tagline">INCLUSIVE CREDIT</span>
+        </h1>
+        <p class="finera-logo__subtitle">For Formal Institutions/Organisation</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-dark">
+    <h2 style="color: #94a3b8;">Dark background</h2>
+    <div class="finera-logo finera-logo--md finera-logo--dark">
+      <div class="finera-logo__icon">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M24 6L8 12v10c0 8 6 14 16 18 10-4 16-10 16-18V12L24 6z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path d="M16 24l6 6 12-12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="finera-logo__text">
+        <h1 class="finera-logo__title">
+          <span class="finera-logo__brand">FinEra</span> <span class="finera-logo__tagline">INCLUSIVE CREDIT</span>
+        </h1>
+        <p class="finera-logo__subtitle">For Formal Institutions/Organisation</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-section">
+    <h2>Size variants</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center;">
+      <div class="finera-logo finera-logo--sm">
+        <div class="finera-logo__icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 6L8 12v10c0 8 6 14 16 18 10-4 16-10 16-18V12L24 6z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M16 24l6 6 12-12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="finera-logo__text">
+          <h1 class="finera-logo__title">
+            <span class="finera-logo__brand">FinEra</span> <span class="finera-logo__tagline">INCLUSIVE CREDIT</span>
+          </h1>
+          <p class="finera-logo__subtitle">For Formal Institutions/Organisation</p>
+        </div>
+      </div>
+      <div class="finera-logo finera-logo--lg">
+        <div class="finera-logo__icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 6L8 12v10c0 8 6 14 16 18 10-4 16-10 16-18V12L24 6z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M16 24l6 6 12-12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="finera-logo__text">
+          <h1 class="finera-logo__title">
+            <span class="finera-logo__brand">FinEra</span> <span class="finera-logo__tagline">INCLUSIVE CREDIT</span>
+          </h1>
+          <p class="finera-logo__subtitle">For Formal Institutions/Organisation</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

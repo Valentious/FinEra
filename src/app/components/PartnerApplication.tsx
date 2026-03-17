@@ -4,6 +4,7 @@ import { Card } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Textarea } from "@/app/components/ui/textarea";
+import { PhoneInputField } from "@/app/components/PhoneInputField";
 import { ArrowLeft, CheckCircle2, UserPlus, FileText } from "lucide-react";
 
 interface PartnerApplicationProps {
@@ -133,14 +134,15 @@ export function PartnerApplication({ onBack }: PartnerApplicationProps) {
               <Label htmlFor="contactNumber" className="text-sm font-black text-slate-700 uppercase tracking-wide">
                 Contact Number *
               </Label>
-              <Input
+              <PhoneInputField
                 id="contactNumber"
-                type="tel"
-                required
-                placeholder="e.g., +263 77 123 4567"
                 value={formData.contactNumber}
-                onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                className="h-12 rounded-xl font-medium"
+                onChange={(value) => setFormData({ ...formData, contactNumber: value })}
+                placeholder="e.g., +263 77 123 4567"
+                required
+                defaultCountry="zw"
+                inputClassName="!rounded-xl !font-medium"
+                buttonClassName="!rounded-l-xl"
               />
             </div>
 

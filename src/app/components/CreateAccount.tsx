@@ -3,6 +3,7 @@ import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
+import { PhoneInputField } from "@/app/components/PhoneInputField";
 
 interface CreateAccountProps {
   onContinue: (data: {
@@ -67,11 +68,11 @@ export function CreateAccount({ onContinue }: CreateAccountProps) {
 
           <div className="space-y-2">
             <Label htmlFor="mobile">Mobile Number</Label>
-            <Input
+            <PhoneInputField
               id="mobile"
-              type="tel"
               value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
+              onChange={setMobile}
+              placeholder="Enter mobile number"
               required
             />
           </div>

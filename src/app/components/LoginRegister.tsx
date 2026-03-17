@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app
 import { Input } from "@/app/components/ui/input";
 import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
+import { PhoneInputField } from "@/app/components/PhoneInputField";
 import { motion } from "motion/react";
-import { LogIn, UserPlus, Mail, Lock, User, ShieldCheck, Phone, ArrowLeft } from "lucide-react";
+import { LogIn, UserPlus, Mail, Lock, User, ShieldCheck, ArrowLeft } from "lucide-react";
 
 interface LoginRegisterProps {
   onLogin: (email: string) => void;
@@ -158,18 +159,15 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="reg-phone">Phone Number</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input 
-                          id="reg-phone" 
-                          type="tel" 
-                          placeholder="123-456-7890" 
-                          className="pl-10 h-12 rounded-lg"
-                          value={registerData.phoneNumber}
-                          onChange={(e) => setRegisterData({ ...registerData, phoneNumber: e.target.value })}
-                          required 
-                        />
-                      </div>
+                      <PhoneInputField
+                        id="reg-phone"
+                        value={registerData.phoneNumber}
+                        onChange={(value) => setRegisterData({ ...registerData, phoneNumber: value })}
+                        placeholder="Enter phone number"
+                        required
+                        inputClassName="!border-slate-200 focus:!ring-indigo-500 focus:!border-indigo-500"
+                        buttonClassName="!border-slate-200"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="reg-email">University Email</Label>
