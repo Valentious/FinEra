@@ -1,0 +1,570 @@
+import { useState, useEffect } from "react";
+import { SplashScreen } from "@/app/components/SplashScreen";
+import { LoginRegister } from "@/app/components/LoginRegister";
+import { OTPVerification } from "@/app/components/OTPVerification";
+import { WelcomeIntro } from "@/app/components/WelcomeIntro";
+import { MainNavigation } from "@/app/components/MainNavigation";
+import { AccountTypeSelection } from "@/app/components/AccountTypeSelection";
+import { VerifyAccess } from "@/app/components/VerifyAccess";
+import { ProfileDetails } from "@/app/components/ProfileDetails";
+import { Dashboard } from "@/app/components/Dashboard";
+import { DashboardV2 } from "@/app/components/DashboardV2";
+import { SavingsWallet } from "@/app/components/SavingsWallet";
+import { WalletManagement } from "@/app/components/WalletManagement";
+import { ApplyForCredit } from "@/app/components/ApplyForCredit";
+import { CreditDetails } from "@/app/components/CreditDetails";
+import { CreditTypeSelection } from "@/app/components/CreditTypeSelection";
+import { CollateralDetails } from "@/app/components/CollateralDetails";
+import { ConfirmApplication } from "@/app/components/ConfirmApplication";
+import { BuyBackAgreement } from "@/app/components/BuyBackAgreement";
+import { CreditApproved } from "@/app/components/CreditApproved";
+import { WalletCredited } from "@/app/components/WalletCredited";
+import { RepaymentDashboard } from "@/app/components/RepaymentDashboard";
+import { FinancialEducation } from "@/app/components/FinancialEducation";
+import { WithdrawFlow } from "@/app/components/WithdrawFlow";
+import { DepositFlow } from "@/app/components/DepositFlow";
+import { ProfileSettings } from "@/app/components/ProfileSettings";
+import { AdminOverview } from "@/app/components/AdminOverview";
+import { MemberAgreement } from "@/app/components/MemberAgreement";
+import { MakeRepayment } from "@/app/components/MakeRepayment";
+import { AccountCreationSuccess } from "@/app/components/AccountCreationSuccess";
+import { Toaster, toast } from "sonner";
+import { apiService, type UserData, type Transaction, type CreditApplication, type FinEraAccountNumbers } from "@/services/index";
+import { BankLinking } from "@/app/components/BankLinking";
+
+type Screen =
+  | "splash"
+  | "loginRegister"
+  | "otpVerification"
+  | "bankLinking"
+  | "accountCreationSuccess"
+  | "welcomeIntro"
+  | "accountType"
+  | "verify"
+  | "profileDetails"
+  | "dashboard"
+  | "savingsWallet"
+  | "walletManagement"
+  | "withdrawFlow"
+  | "depositFlow"
+  | "memberAgreement"
+  | "applyForCredit"
+  | "creditDetails"
+  | "creditTypeSelection"
+  | "collateralDetails"
+  | "confirmApplication"
+  | "buyBackAgreement"
+  | "applicationStatus"
+  | "creditApproved"
+  | "walletCredited"
+  | "repaymentDashboard"
+  | "financialEducation"
+  | "profileSettings"
+  | "adminOverview"
+  | "makeRepayment";
+
+// NOTE: These limits are now defined in the backend
+// Kept here for UI reference only - backend is the source of truth
+const CREDIT_LIMITS = {
+  student: { min: 20, max: 200 },
+  staff: { min: 30, max: 2000 },
+  alumni: { min: 30, max: 2000 },
+};
+
+// ==================== MOCK DATA HELPERS ====================
+// TODO: Remove these when connecting to real backend
+// These are only used in mock mode for development
+function generateMemberId(): string {
+  return 'MEM' + Date.now().toString().slice(-8);
+}
+
+function generateAccountNumber(): string {
+  const timestamp = Date.now().toString();
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return timestamp.slice(-9) + random;
+}
+
+/** Generate unique FinEra multi-currency account numbers (FE-USD-xxx, FE-ZIG-xxx, FE-ZAR-xxx) */
+function generateFinEraAccountNumbers(): FinEraAccountNumbers {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const suffix = () => Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return {
+    usd: `FE-USD-${suffix()}`,
+    zig: `FE-ZIG-${suffix()}`,
+    zar: `FE-ZAR-${suffix()}`,
+  };
+}
+
+function calculateActiveCredit(principal: number): number {
+  const serviceFee = principal * 0.015; // 1.5%
+  const interest = principal * 0.18; // 18%
+  return principal + serviceFee + interest;
+}
+
+const saveUserData = (data: UserData) => {
+  localStorage.setItem(`member_${data.email}`, JSON.stringify(data));
+};
+
+const loadUserData = (email: string): UserData | null => {
+  const saved = localStorage.getItem(`member_${email}`);
+  return saved ? JSON.parse(saved) : null;
+};
+// ==================== END MOCK DATA HELPERS ====================
+
+export default function App() {
+  const [currentScreen, setCurrentScreen] = useState<Screen>("splash");
+  const [preSelectedAccountType, setPreSelectedAccountType] = useState<'student' | 'staff' | 'alumni' | null>(null);
+  const [userData, setUserData] = useState<UserData>({
+    memberId: "",
+    fullName: "",
+    title: "",
+    phoneNumber: "",
+    accountNumber: "",
+    nationalIdNumber: "",
+    studentStaffId: "",
+    salaryRange: null,
+    email: "",
+    mobile: "",
+    password: "",
+    accountType: "student",
+    savingsBalance: 0,
+    approvedCreditWallet: 0, // New: Approved Credit Wallet (non-withdrawable)
+    activeCredit: 0,
+    availableCreditLimit: 200, // Default for students
+    loanPrincipal: 0,
+    transactions: [],
+    // Financial Identity Metrics: New users start at 50 discipline, 0 loyalty
+    disciplineScore: 50,
+    creditScore: 82,
+    loyaltyProgress: 0,
+    missedPayments: 0,
+    onTimePayments: 6,
+  });
+
+  // Session Management Logic
+  useEffect(() => {
+    const checkSession = () => {
+      const activeUserEmail = localStorage.getItem("active_user_email");
+      if (!activeUserEmail) return;
+
+      const saved = loadUserData(activeUserEmail);
+      if (saved && saved.lastLogin) {
+        const now = Date.now();
+        const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
+        
+        if (now - saved.lastLogin > sessionDuration) {
+          handleLogout();
+          toast.error("Session expired. Please login again.");
+          localStorage.removeItem("active_user_email");
+        } else {
+          // Auto-refresh token if < 1 hour left
+          const refreshThreshold = 1 * 60 * 60 * 1000;
+          if (sessionDuration - (now - saved.lastLogin) < refreshThreshold) {
+            const updated = { ...saved, lastLogin: now };
+            setUserData(updated);
+            saveUserData(updated);
+          }
+        }
+      }
+    };
+
+    const interval = setInterval(checkSession, 5 * 60 * 1000); // Every 5 mins
+    checkSession(); // Initial check
+    return () => clearInterval(interval);
+  }, []);
+
+  const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'ZIG' | 'ZAR'>('USD');
+  const [creditApplication, setCreditApplication] = useState<CreditApplication>({
+    creditType: "essential",
+    amount: 0,
+    withCollateral: false,
+  });
+
+  const displayAccountNumber = (() => {
+    const fe = userData.finEraAccountNumbers;
+    if (fe) {
+      switch (selectedCurrency) {
+        case 'USD': return fe.usd;
+        case 'ZIG': return fe.zig;
+        case 'ZAR': return fe.zar;
+      }
+    }
+    return userData.accountNumber;
+  })();
+
+  const handleLogin = (email: string) => {
+    const saved = loadUserData(email);
+    if (saved) {
+      // Add backwards compatibility for approvedCreditWallet
+      if (!saved.hasOwnProperty('approvedCreditWallet')) {
+        saved.approvedCreditWallet = 0;
+      }
+      // Migrate legacy users: generate FinEra account numbers if missing
+      let updated: UserData = { ...saved, lastLogin: Date.now() };
+      if (!saved.finEraAccountNumbers) {
+        updated = { ...updated, finEraAccountNumbers: generateFinEraAccountNumbers() };
+      }
+      setUserData(updated);
+      saveUserData(updated);
+      localStorage.setItem("active_user_email", email);
+      setCurrentScreen("dashboard");
+      toast.success(`Welcome back, ${saved.fullName}!`);
+    } else {
+      toast.error("Account not found. Please register.");
+    }
+  };
+
+  const handleRegister = (data: any) => {
+    // Use pre-selected account type if available
+    const accountType = preSelectedAccountType || 'student';
+    const limit = CREDIT_LIMITS[accountType].max;
+    const newUser = { 
+      ...userData, 
+      ...data, 
+      accountType, 
+      availableCreditLimit: limit,
+      memberId: generateMemberId(), 
+      accountNumber: generateAccountNumber(), 
+      lastLogin: Date.now(),
+      disciplineScore: 50, // New users start at 50
+      loyaltyProgress: 0,  // New users start at 0
+    };
+    setUserData(newUser);
+    localStorage.setItem("active_user_email", data.email);
+    setCurrentScreen("otpVerification");
+  };
+
+  const handlePreSelectAccountType = (type: 'student' | 'staff' | 'alumni') => {
+    setPreSelectedAccountType(type);
+    setCurrentScreen("loginRegister");
+  };
+
+  const handleSelectAccountType = (type: 'student' | 'staff' | 'alumni') => {
+    const limit = CREDIT_LIMITS[type].max;
+    setUserData({ ...userData, accountType: type, availableCreditLimit: limit });
+    setCurrentScreen("verify");
+  };
+
+  const isAuthScreen = [
+    "dashboard", "savingsWallet", "walletManagement", "withdrawFlow", "depositFlow", "applyForCredit", 
+    "creditDetails", "creditTypeSelection", "collateralDetails", "confirmApplication", 
+    "buyBackAgreement", "creditApproved", "walletCredited", "repaymentDashboard", "financialEducation", 
+    "profileSettings", "adminOverview", "memberAgreement", "makeRepayment"
+  ].includes(currentScreen);
+
+  const handleLogout = () => {
+    localStorage.removeItem("active_user_email");
+    setCurrentScreen("loginRegister");
+  };
+
+  const creditDetails = (() => {
+    switch (creditApplication.creditType) {
+      case 'essential': return { maxAmount: Math.min(5000, userData.availableCreditLimit), repaymentCycle: "12 months", savingsRequirement: 0.2 };
+      case 'emergency': return { maxAmount: Math.min(3000, userData.availableCreditLimit), repaymentCycle: "6 months", savingsRequirement: 0 };
+      case 'business': return { maxAmount: Math.min(10000, userData.availableCreditLimit), repaymentCycle: "24 months", savingsRequirement: 0.2 };
+    }
+  })();
+
+  const updateAndSave = (newData: UserData) => {
+    setUserData(newData);
+    saveUserData(newData);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+      <Toaster position="top-center" richColors />
+      
+      {isAuthScreen && (
+        <MainNavigation 
+          activeScreen={currentScreen} 
+          onNavigate={(s) => setCurrentScreen(s as Screen)} 
+          onLogout={handleLogout}
+          userName={userData.fullName || "User"}
+          accountNumber={displayAccountNumber}
+          isAdmin={userData.accountType === 'staff'}
+        />
+      )}
+
+      <main className={`${isAuthScreen ? "pt-20 md:pl-64 p-4 md:p-8" : ""}`}>
+        {currentScreen === "splash" && <SplashScreen onComplete={() => setCurrentScreen("accountType")} />}
+        {currentScreen === "accountType" && <AccountTypeSelection onSelectType={handlePreSelectAccountType} onBack={() => setCurrentScreen("splash")} />}
+        {currentScreen === "loginRegister" && <LoginRegister onLogin={handleLogin} onRegister={handleRegister} onBack={() => setCurrentScreen("accountType")} />}
+        {currentScreen === "otpVerification" && <OTPVerification email={userData.email} onVerify={() => setCurrentScreen("verify")} onBack={() => setCurrentScreen("loginRegister")} />}
+        {currentScreen === "verify" && <VerifyAccess onVerify={() => setCurrentScreen("profileDetails")} />}
+        {currentScreen === "profileDetails" && (
+          <ProfileDetails 
+            accountType={userData.accountType} 
+            onComplete={(profileData) => { 
+              const updatedUser = { ...userData, ...profileData };
+              setUserData(updatedUser);
+              saveUserData(updatedUser);
+              // Staff & Alumni: redirect to bank linking first
+              if (userData.accountType === "staff" || userData.accountType === "alumni") {
+                setCurrentScreen("bankLinking");
+              } else {
+                // Student: generate FinEra accounts and go to success
+                const finEra = generateFinEraAccountNumbers();
+                const withAccounts = { ...updatedUser, finEraAccountNumbers: finEra };
+                setUserData(withAccounts);
+                saveUserData(withAccounts);
+                setCurrentScreen("accountCreationSuccess");
+              }
+            }} 
+          />
+        )}
+        {currentScreen === "bankLinking" && (
+          <BankLinking
+            accountHolderName={userData.fullName}
+            onComplete={(bankData) => {
+              const finEra = generateFinEraAccountNumbers();
+              const updatedUser = {
+                ...userData,
+                bankLinkingData: bankData,
+                finEraAccountNumbers: finEra,
+              };
+              setUserData(updatedUser);
+              saveUserData(updatedUser);
+              setCurrentScreen("accountCreationSuccess");
+            }}
+          />
+        )}
+        {currentScreen === "accountCreationSuccess" && (
+          <AccountCreationSuccess
+            fullName={userData.fullName}
+            phoneNumber={userData.phoneNumber}
+            finEraAccountNumbers={userData.finEraAccountNumbers}
+            onContinue={() => setCurrentScreen("welcomeIntro")}
+          />
+        )}
+        {currentScreen === "welcomeIntro" && <WelcomeIntro userName={userData.fullName} onContinue={() => setCurrentScreen("dashboard")} />}
+        
+        {currentScreen === "dashboard" && (
+          <DashboardV2
+            userName={userData.fullName || "User"}
+            savingsBalance={userData.savingsBalance}
+            activeCredit={userData.activeCredit}
+            availableCreditLimit={userData.availableCreditLimit}
+            disciplineScore={userData.disciplineScore}
+            creditScore={userData.creditScore}
+            loyaltyProgress={userData.loyaltyProgress}
+            selectedCurrency={selectedCurrency}
+            onCurrencyChange={setSelectedCurrency}
+            displayAccountNumber={displayAccountNumber}
+            onApplyForCredit={() => setCurrentScreen("memberAgreement")}
+            onAddSavings={() => setCurrentScreen("depositFlow")}
+            onViewSavings={() => {
+              // If user has approved credit, show WalletManagement, otherwise SavingsWallet
+              if (userData.approvedCreditWallet > 0) {
+                setCurrentScreen("walletManagement");
+              } else {
+                setCurrentScreen("savingsWallet");
+              }
+            }}
+            onViewRepayment={() => setCurrentScreen("repaymentDashboard")}
+            onWithdrawFunds={() => setCurrentScreen("withdrawFlow")}
+            transactions={userData.transactions}
+          />
+        )}
+
+        {currentScreen === "memberAgreement" && (
+          <MemberAgreement 
+            memberType={userData.accountType} 
+            onAgree={() => setCurrentScreen("applyForCredit")} 
+            onBack={() => setCurrentScreen("dashboard")} 
+          />
+        )}
+
+        {currentScreen === "savingsWallet" && (
+          <SavingsWallet
+            totalSavings={userData.savingsBalance}
+            lockedSavings={userData.activeCredit > 0 ? userData.savingsBalance * 0.2 : 0}
+            availableSavings={userData.activeCredit > 0 ? userData.savingsBalance * 0.8 : userData.savingsBalance}
+            onAddSavings={() => setCurrentScreen("depositFlow")}
+            onWithdraw={() => {
+              if (userData.savingsBalance > 0) setCurrentScreen("withdrawFlow");
+              else toast.error("Insufficient balance");
+            }}
+            onBack={() => setCurrentScreen("dashboard")}
+          />
+        )}
+
+        {currentScreen === "walletManagement" && (
+          <WalletManagement
+            approvedCreditWallet={userData.approvedCreditWallet}
+            savingsWallet={userData.savingsBalance}
+            activeCredit={userData.activeCredit}
+            onTransferToSavings={(amount) => {
+              const txn: Transaction = { 
+                id: `TXN${Date.now()}`, 
+                type: 'deposit', 
+                amount, 
+                date: new Date().toISOString(), 
+                description: `Transfer from Approved Credit to Savings` 
+              };
+              updateAndSave({ 
+                ...userData, 
+                approvedCreditWallet: userData.approvedCreditWallet - amount,
+                savingsBalance: userData.savingsBalance + amount, 
+                transactions: [...userData.transactions, txn] 
+              });
+            }}
+            onAddSavings={() => setCurrentScreen("depositFlow")}
+            onWithdraw={() => {
+              if (userData.savingsBalance > 0) setCurrentScreen("withdrawFlow");
+              else toast.error("Insufficient balance in Savings Wallet");
+            }}
+            onBack={() => setCurrentScreen("dashboard")}
+          />
+        )}
+
+        {currentScreen === "withdrawFlow" && (
+          <WithdrawFlow
+            balance={userData.savingsBalance}
+            onConfirm={(amount, method) => {
+              const txn: Transaction = { id: `TXN${Date.now()}`, type: 'withdrawal', amount, date: new Date().toISOString(), description: `Withdrawal via ${method}` };
+              updateAndSave({ ...userData, savingsBalance: userData.savingsBalance - amount, transactions: [...userData.transactions, txn] });
+            }}
+            onBack={() => setCurrentScreen("savingsWallet")}
+            onSuccess={() => setCurrentScreen("dashboard")}
+          />
+        )}
+
+        {currentScreen === "depositFlow" && (
+          <DepositFlow
+            currentBalance={userData.savingsBalance}
+            onConfirm={(amount, method, purpose) => {
+              const txn: Transaction = { id: `TXN${Date.now()}`, type: 'deposit', amount, date: new Date().toISOString(), description: `Deposit for ${purpose}` };
+              updateAndSave({ ...userData, savingsBalance: userData.savingsBalance + amount, transactions: [...userData.transactions, txn] });
+            }}
+            onBack={() => setCurrentScreen("savingsWallet")}
+            onSuccess={() => setCurrentScreen("dashboard")}
+          />
+        )}
+
+        {currentScreen === "applyForCredit" && (
+          <ApplyForCredit
+            savingsBalance={userData.savingsBalance}
+            hasActiveLoan={userData.activeCredit > 0}
+            onSelectCreditType={(type) => {
+              setCreditApplication({ ...creditApplication, creditType: type });
+              setCurrentScreen("creditDetails");
+            }}
+            onBack={() => setCurrentScreen("dashboard")}
+          />
+        )}
+
+        {currentScreen === "creditDetails" && (
+          <CreditDetails
+            creditType={creditApplication.creditType}
+            maxAmount={creditDetails.maxAmount}
+            repaymentCycle={creditDetails.repaymentCycle}
+            savingsRequirement={creditDetails.savingsRequirement * 100} // Convert to %
+            currentSavings={userData.savingsBalance} // Pass current savings for validation
+            onContinue={(amount) => {
+              // Discipline Rule Check (20% Savings)
+              if (creditApplication.creditType !== 'emergency' && userData.savingsBalance < (amount * 0.2)) {
+                toast.error("Financial Discipline Notification: Savings must be at least 20% of loan amount.");
+                return;
+              }
+              setCreditApplication({ ...creditApplication, amount });
+              setCurrentScreen("creditTypeSelection");
+            }}
+            onBack={() => setCurrentScreen("applyForCredit")}
+          />
+        )}
+
+        {currentScreen === "creditTypeSelection" && (
+          <CreditTypeSelection
+            onSelect={(withCollateral) => {
+              setCreditApplication({ ...creditApplication, withCollateral });
+              if (withCollateral) setCurrentScreen("collateralDetails");
+              else setCurrentScreen("confirmApplication");
+            }}
+            onBack={() => setCurrentScreen("creditDetails")}
+          />
+        )}
+
+        {currentScreen === "collateralDetails" && (
+          <CollateralDetails onSubmit={() => setCurrentScreen("confirmApplication")} onBack={() => setCurrentScreen("creditTypeSelection")} />
+        )}
+
+        {currentScreen === "confirmApplication" && (
+          <ConfirmApplication
+            creditType={creditApplication.creditType}
+            amount={creditApplication.amount}
+            repaymentTerms={creditDetails.repaymentCycle}
+            withCollateral={creditApplication.withCollateral}
+            onSubmit={() => {
+              setCurrentScreen("applicationStatus");
+              setTimeout(() => {
+                const principal = creditApplication.amount;
+                const active = calculateActiveCredit(principal);
+                const txn: Transaction = { id: `TXN${Date.now()}`, type: 'loan', amount: principal, date: new Date().toISOString(), description: `${creditApplication.creditType} Loan Approved` };
+                // NEW FLOW: Credit goes to Approved Credit Wallet (not directly withdrawable)
+                updateAndSave({ 
+                  ...userData, 
+                  approvedCreditWallet: userData.approvedCreditWallet + principal, // Add to Approved Credit Wallet
+                  activeCredit: active, 
+                  loanPrincipal: principal, 
+                  transactions: [...userData.transactions, txn] 
+                });
+                setCurrentScreen("creditApproved");
+              }, 2000);
+            }}
+            onBack={() => setCurrentScreen(creditApplication.withCollateral ? "collateralDetails" : "creditTypeSelection")}
+          />
+        )}
+
+        {currentScreen === "creditApproved" && <CreditApproved approvedAmount={creditApplication.amount} repaymentSchedule={`${creditDetails.repaymentCycle}`} onViewWallet={() => setCurrentScreen("walletManagement")} />}
+        {currentScreen === "walletCredited" && <WalletCredited amount={creditApplication.amount} onWithdrawFunds={() => setCurrentScreen("walletManagement")} onViewRepayment={() => setCurrentScreen("repaymentDashboard")} />}
+        
+        {currentScreen === "repaymentDashboard" && (
+          <RepaymentDashboard 
+            totalCredit={userData.activeCredit} 
+            amountRepaid={0} 
+            outstandingBalance={userData.activeCredit} 
+            onMakeRepayment={() => setCurrentScreen("makeRepayment")} 
+            onBack={() => setCurrentScreen("dashboard")} 
+          />
+        )}
+
+        {currentScreen === "makeRepayment" && (
+          <MakeRepayment 
+            outstandingBalance={userData.activeCredit} 
+            savingsBalance={userData.savingsBalance}
+            onBack={() => setCurrentScreen("repaymentDashboard")}
+            onConfirm={(amount, method) => {
+              const txn: Transaction = { 
+                id: `TXN${Date.now()}`, 
+                type: 'repayment', 
+                amount, 
+                date: new Date().toISOString(), 
+                description: `Repayment via ${method}` 
+              };
+              
+              // Logic for updating balances
+              let newSavings = userData.savingsBalance;
+              if (method === 'savings') {
+                newSavings -= amount;
+              }
+              
+              const newActiveCredit = Math.max(0, userData.activeCredit - amount);
+              updateAndSave({ 
+                ...userData, 
+                savingsBalance: newSavings, 
+                activeCredit: newActiveCredit, 
+                transactions: [...userData.transactions, txn] 
+              });
+              
+              setCurrentScreen("dashboard");
+              toast.success(`Repayment of $${amount} verified! Email confirmation sent.`);
+            }}
+          />
+        )}
+
+        {currentScreen === "financialEducation" && <FinancialEducation onBack={() => setCurrentScreen("dashboard")} />}
+        {currentScreen === "profileSettings" && <ProfileSettings userData={userData} onLogout={handleLogout} onUpdate={(d) => updateAndSave({ ...userData, ...d })} />}
+      </main>
+    </div>
+  );
+}
