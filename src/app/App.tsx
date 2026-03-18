@@ -116,6 +116,7 @@ export default function App() {
     memberId: "",
     fullName: "",
     title: "",
+    dateOfBirth: "",
     phoneNumber: "",
     accountNumber: "",
     nationalIdNumber: "",
@@ -269,7 +270,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="min-h-screen bg-[var(--background)] font-sans selection:bg-primary/20 selection:text-primary">
       <Toaster position="top-center" richColors />
       
       {isAuthScreen && (

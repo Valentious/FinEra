@@ -16,7 +16,7 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
       description: "Start saving to unlock higher credit limits and better interest rates."
     },
     {
-      icon: <CreditCard className="w-6 h-6 text-blue-600" />,
+      icon: <CreditCard className="w-6 h-6 text-emerald-600" />,
       title: "Access FinEra INCLUSIVE CREDIT",
       description: "Apply for student-friendly loans with flexible repayment terms."
     },
@@ -28,7 +28,7 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-indigo-600 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-emerald-600 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
@@ -37,10 +37,10 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
           className="text-center text-white mb-10"
         >
           <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl">
-            <CheckCircle2 className="w-12 h-12 text-indigo-600" />
+            <CheckCircle2 className="w-12 h-12 text-emerald-600" />
           </div>
           <h1 className="text-3xl font-black mb-2">Welcome, {userName}!</h1>
-          <p className="text-indigo-100 text-lg opacity-90">Your academic financial journey starts now.</p>
+          <p className="text-emerald-100 text-lg opacity-90">Your academic financial journey starts now.</p>
         </motion.div>
 
         <div className="space-y-4">
@@ -72,7 +72,7 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
         >
           <Button 
             onClick={onContinue}
-            className="w-full h-14 bg-white text-indigo-600 hover:bg-indigo-50 text-xl font-bold rounded-2xl shadow-2xl transition-all active:scale-[0.98]"
+            className="w-full h-14 bg-white text-emerald-600 hover:bg-emerald-50 text-xl font-bold rounded-2xl shadow-2xl transition-all active:scale-[0.98]"
           >
             Go to Dashboard
             <ArrowRight className="w-6 h-6 ml-2" />

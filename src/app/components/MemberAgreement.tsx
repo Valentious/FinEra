@@ -27,7 +27,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
       case 'student':
         return {
           title: "Student Portal Agreement",
-          icon: <GraduationCap className="w-8 h-8 text-indigo-600" />,
+          icon: <GraduationCap className="w-8 h-8 text-emerald-600" />,
           terms: [
             "Loan default or late repayment may result in temporary restriction from viewing academic results.",
             "Default may lead to temporary restriction from next semester registration access.",
@@ -38,7 +38,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
       case 'alumni':
         return {
           title: memberType === 'staff' ? "Staff Agreement" : "Alumni Agreement",
-          icon: <UserCircle className="w-8 h-8 text-indigo-600" />,
+          icon: <UserCircle className="w-8 h-8 text-emerald-600" />,
           terms: [
             "In case of default, repayments may be automatically deducted from your linked salary/bank account.",
             "You must maintain a verified bank account for repayment tracking and recovery.",
@@ -53,15 +53,15 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
   return (
     <div className="max-w-xl mx-auto space-y-6 animate-in slide-in-from-bottom-4 duration-500">
       <Card className="border-none shadow-2xl rounded-3xl overflow-hidden">
-        <div className="bg-indigo-600 p-8 text-white relative">
+        <div className="bg-emerald-600 p-8 text-white relative">
           <div className="relative z-10">
             <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6">
               <ShieldAlert className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-black mb-2">Member Agreement</h1>
-            <p className="text-indigo-100 font-medium">Please review the terms specific to your {memberType} account.</p>
+            <p className="text-emerald-100 font-medium">Please review the terms specific to your {memberType} account.</p>
           </div>
-          <FileText className="absolute bottom-[-20px] right-[-20px] w-48 h-48 text-indigo-500 opacity-20 rotate-12" />
+          <FileText className="absolute bottom-[-20px] right-[-20px] w-48 h-48 text-emerald-500 opacity-20 rotate-12" />
         </div>
 
         <CardContent className="p-8 space-y-8">
@@ -79,8 +79,8 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
             <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">Key Conditions</p>
             {content.terms.map((term, i) => (
               <div key={i} className="flex gap-4 items-start group">
-                <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-indigo-100 transition-colors">
-                  <span className="text-xs font-black text-indigo-600">{i + 1}</span>
+                <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-emerald-100 transition-colors">
+                  <span className="text-xs font-black text-emerald-600">{i + 1}</span>
                 </div>
                 <p className="text-slate-600 text-sm font-medium leading-relaxed">{term}</p>
               </div>
@@ -100,7 +100,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
                 id="agree-terms" 
                 checked={agreed} 
                 onCheckedChange={(checked) => setAgreed(checked as boolean)}
-                className="w-6 h-6 rounded-lg border-2 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                className="w-6 h-6 rounded-lg border-2 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
               />
               <label 
                 htmlFor="agree-terms" 
@@ -121,7 +121,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
               <Button 
                 onClick={onAgree}
                 disabled={!agreed}
-                className="flex-[2] h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-lg font-bold shadow-xl shadow-indigo-200 disabled:opacity-50"
+                className="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-bold shadow-xl shadow-emerald-200 disabled:opacity-50"
               >
                 Agree & Continue
                 <ArrowRight className="w-5 h-5 ml-2" />

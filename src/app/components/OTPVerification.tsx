@@ -44,7 +44,7 @@ export function OTPVerification({ email, onVerify, onBack }: OTPVerificationProp
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Button variant="ghost" className="mb-6 -ml-2 text-slate-500 hover:text-indigo-600" onClick={onBack}>
+        <Button variant="ghost" className="mb-6 -ml-2 text-slate-500 hover:text-emerald-600" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to registration
         </Button>
@@ -55,8 +55,8 @@ export function OTPVerification({ email, onVerify, onBack }: OTPVerificationProp
         >
           <Card className="border-slate-200 shadow-xl rounded-2xl overflow-hidden">
             <CardHeader className="text-center pt-10">
-              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <RefreshCw className={`w-8 h-8 text-indigo-600 ${isVerifying ? 'animate-spin' : ''}`} />
+              <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <RefreshCw className={`w-8 h-8 text-emerald-600 ${isVerifying ? 'animate-spin' : ''}`} />
               </div>
               <CardTitle className="text-2xl font-bold">Verify your email</CardTitle>
               <CardDescription className="max-w-[280px] mx-auto mt-2">
@@ -92,7 +92,7 @@ export function OTPVerification({ email, onVerify, onBack }: OTPVerificationProp
               ) : (
                 <div className="space-y-6">
                   <Button 
-                    className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-lg"
+                    className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-lg"
                     disabled={otp.length !== 6 || isVerifying}
                     onClick={handleVerify}
                   >
@@ -102,9 +102,9 @@ export function OTPVerification({ email, onVerify, onBack }: OTPVerificationProp
                   <div className="text-sm text-slate-500">
                     Didn't receive the code? {" "}
                     {timer > 0 ? (
-                      <span className="text-indigo-600 font-medium">Resend in {timer}s</span>
+                      <span className="text-emerald-600 font-medium">Resend in {timer}s</span>
                     ) : (
-                      <button onClick={resendOTP} className="text-indigo-600 font-bold hover:underline">Resend Now</button>
+                      <button onClick={resendOTP} className="text-emerald-600 font-bold hover:underline">Resend Now</button>
                     )}
                   </div>
                 </div>

@@ -74,18 +74,18 @@ export function CollateralDetails({ onSubmit, onBack }: CollateralDetailsProps) 
                     <ShieldAlert className="w-8 h-8 text-amber-500" />
                   </div>
                   <h3 className="text-xl font-black">Legal Agreement & Risk Acknowledgment</h3>
-                  <div className="p-6 bg-white/5 rounded-2xl border border-white/10 italic text-indigo-100 leading-relaxed font-medium">
+                  <div className="p-6 bg-white/5 rounded-2xl border border-white/10 italic text-emerald-100 leading-relaxed font-medium">
                     "{DISCLOSURE_TEXT}"
                   </div>
                   
-                  <div className="flex items-center space-x-3 p-4 bg-indigo-600/20 rounded-xl border border-indigo-600/30">
+                  <div className="flex items-center space-x-3 p-4 bg-emerald-600/20 rounded-xl border border-emerald-600/30">
                     <Checkbox
                       id="disclosure-check"
                       checked={disclosureAccepted}
                       onCheckedChange={(checked) => setDisclosureAccepted(checked as boolean)}
-                      className="border-white/30 data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                      className="border-white/30 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
                     />
-                    <Label htmlFor="disclosure-check" className="text-xs font-bold cursor-pointer text-indigo-100">
+                    <Label htmlFor="disclosure-check" className="text-xs font-bold cursor-pointer text-emerald-100">
                       I have read, understood, and accept these collateral-based lending terms.
                     </Label>
                   </div>
@@ -118,7 +118,7 @@ export function CollateralDetails({ onSubmit, onBack }: CollateralDetailsProps) 
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-                  <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                  <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
                     <Calculator className="w-4 h-4" />
                   </div>
                   <div>
@@ -161,7 +161,7 @@ export function CollateralDetails({ onSubmit, onBack }: CollateralDetailsProps) 
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       rows={4}
-                      className="rounded-2xl border-slate-200 focus:ring-indigo-600 resize-none"
+                      className="rounded-2xl border-slate-200 focus:ring-emerald-600 resize-none"
                       required
                     />
                   </div>
@@ -169,16 +169,16 @@ export function CollateralDetails({ onSubmit, onBack }: CollateralDetailsProps) 
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
                     <Label className="font-bold text-slate-600 mb-2 block">Upload Asset Evidence (Front, Back, Serial)</Label>
                     <div className="flex gap-4">
-                      <div className="flex-1 h-24 bg-white rounded-xl border-2 border-dashed border-slate-100 flex items-center justify-center cursor-pointer hover:border-indigo-300 transition-all">
+                      <div className="flex-1 h-24 bg-white rounded-xl border-2 border-dashed border-slate-100 flex items-center justify-center cursor-pointer hover:border-emerald-300 transition-all">
                         <span className="text-[10px] font-black text-slate-400">UPLOAD PHOTO</span>
                       </div>
-                      <div className="flex-1 h-24 bg-white rounded-xl border-2 border-dashed border-slate-100 flex items-center justify-center cursor-pointer hover:border-indigo-300 transition-all">
+                      <div className="flex-1 h-24 bg-white rounded-xl border-2 border-dashed border-slate-100 flex items-center justify-center cursor-pointer hover:border-emerald-300 transition-all">
                         <span className="text-[10px] font-black text-slate-400">UPLOAD SERIAL</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                  <div className="flex items-start space-x-3 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
                     <Checkbox
                       id="ownership"
                       checked={confirmed}
@@ -196,7 +196,7 @@ export function CollateralDetails({ onSubmit, onBack }: CollateralDetailsProps) 
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-lg font-black shadow-xl shadow-indigo-100" disabled={!confirmed}>
+                  <Button type="submit" className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-black shadow-xl shadow-emerald-100" disabled={!confirmed}>
                     Generate Loan Limit
                   </Button>
                 </form>

@@ -9,11 +9,11 @@ interface AdminBiometricProps {
 
 export function AdminBiometric({ onVerify, onBack }: AdminBiometricProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
       <Card className="max-w-md w-full p-8 text-center">
         <div className="flex justify-center mb-6">
-          <div className="p-6 bg-blue-100 rounded-full animate-pulse">
-            <Fingerprint className="w-16 h-16 text-blue-600" />
+          <div className="p-6 bg-emerald-100 rounded-full animate-pulse">
+            <Fingerprint className="w-16 h-16 text-emerald-600" />
           </div>
         </div>
 

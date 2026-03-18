@@ -71,7 +71,7 @@ export function AdminOverview({
       {/* Admin Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg">
+          <div className="p-3 bg-emerald-600 rounded-2xl text-white shadow-lg">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
@@ -84,7 +84,7 @@ export function AdminOverview({
             <FileDown className="w-4 h-4 mr-2" />
             Export Audit
           </Button>
-          <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold">
+          <Button className="bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold">
             <UserPlus className="w-4 h-4 mr-2" />
             Add Admin
           </Button>
@@ -94,8 +94,8 @@ export function AdminOverview({
       {/* Main Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: "Total Capital", val: `$${totalCapital.toLocaleString()}`, color: "indigo" },
-          { label: "Active Portfolio", val: `$${activeCreditPortfolio.toLocaleString()}`, color: "blue" },
+          { label: "Total Capital", val: `$${totalCapital.toLocaleString()}`, color: "emerald" },
+          { label: "Active Portfolio", val: `$${activeCreditPortfolio.toLocaleString()}`, color: "emerald" },
           { label: "Repayment Rate", val: `${repaymentRate}%`, color: "green" },
           { label: "Total Members", val: totalUsers.toLocaleString(), color: "purple" },
         ].map((stat, i) => (
@@ -110,7 +110,7 @@ export function AdminOverview({
         {/* Risk Distribution Widget */}
         <Card className="p-6 border-slate-100 shadow-sm h-fit">
           <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-indigo-600" />
+            <Activity className="w-5 h-5 text-emerald-600" />
             Positive Risk Distribution
           </h3>
           <div className="h-48 w-full">
@@ -141,7 +141,7 @@ export function AdminOverview({
         <Card className="p-6 border-slate-100 shadow-sm h-fit">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-indigo-600" />
+              <UserPlus className="w-5 h-5 text-emerald-600" />
               Recent Onboarding
             </h3>
           </div>
@@ -149,7 +149,7 @@ export function AdminOverview({
             {recentMembers.map((member) => (
               <div key={member.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-transparent hover:border-slate-200 transition-all">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center font-black text-[10px] text-indigo-600 shadow-sm">
+                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center font-black text-[10px] text-emerald-600 shadow-sm">
                     {member.name.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div>
@@ -166,7 +166,7 @@ export function AdminOverview({
               </div>
             ))}
           </div>
-          <Button variant="ghost" className="w-full mt-4 h-8 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600">
+          <Button variant="ghost" className="w-full mt-4 h-8 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-emerald-600">
             View All Members
           </Button>
         </Card>
@@ -175,15 +175,15 @@ export function AdminOverview({
         <Card className="p-6 border-slate-100 shadow-sm h-fit">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-indigo-600" />
+              <TrendingUp className="w-5 h-5 text-emerald-600" />
               Pending Applications
             </h3>
           </div>
           <div className="space-y-4">
             {loanApplications.map((app) => (
-              <div key={app.id} className="flex flex-col p-3 rounded-xl bg-slate-50 border border-transparent hover:border-indigo-100 transition-all">
+              <div key={app.id} className="flex flex-col p-3 rounded-xl bg-slate-50 border border-transparent hover:border-emerald-100 transition-all">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black text-indigo-600">{app.id}</span>
+                  <span className="text-[10px] font-black text-emerald-600">{app.id}</span>
                   <span className="text-[10px] text-slate-400 font-bold">{app.time}</span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -203,7 +203,7 @@ export function AdminOverview({
               </div>
             ))}
           </div>
-          <Button variant="ghost" className="w-full mt-4 h-8 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600">
+          <Button variant="ghost" className="w-full mt-4 h-8 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-emerald-600">
             Open Credit Desk
           </Button>
         </Card>
@@ -214,7 +214,7 @@ export function AdminOverview({
         <Card className="p-6 border-slate-100 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <History className="w-5 h-5 text-indigo-600" />
+              <History className="w-5 h-5 text-emerald-600" />
               Real-time Audit Logs
             </h3>
             <span className="text-[10px] font-black text-green-600 px-2 py-1 bg-green-50 rounded-full animate-pulse">LIVE SYNC</span>
@@ -230,13 +230,13 @@ export function AdminOverview({
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">{log.time}</span>
+                  <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">{log.time}</span>
                   <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tighter">{log.status}</p>
                 </div>
               </div>
             ))}
           </div>
-          <Button variant="link" className="w-full mt-4 text-indigo-600 font-bold text-xs" onClick={() => toast.info("Full audit vault opening...")}>
+          <Button variant="link" className="w-full mt-4 text-emerald-600 font-bold text-xs" onClick={() => toast.info("Full audit vault opening...")}>
             View Full Audit Vault
           </Button>
         </Card>
@@ -249,8 +249,8 @@ export function AdminOverview({
           { title: "Academic Ties", desc: "Student portal restriction gates" },
           { title: "Payroll Recovery", desc: "Staff deduction schedule sync" }
         ].map((rule, i) => (
-          <Card key={i} className="p-4 border-slate-100 bg-white hover:border-indigo-100 transition-all cursor-pointer group">
-            <h4 className="font-black text-slate-900 group-hover:text-indigo-600">{rule.title}</h4>
+          <Card key={i} className="p-4 border-slate-100 bg-white hover:border-emerald-100 transition-all cursor-pointer group">
+            <h4 className="font-black text-slate-900 group-hover:text-emerald-600">{rule.title}</h4>
             <p className="text-xs text-slate-500 mt-1">{rule.desc}</p>
           </Card>
         ))}

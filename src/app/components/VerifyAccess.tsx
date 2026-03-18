@@ -69,7 +69,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
               exit={{ opacity: 0, scale: 0.9 }}
               className="space-y-6 text-center"
             >
-              <div className="w-24 h-24 bg-indigo-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl shadow-indigo-200">
+              <div className="w-24 h-24 bg-emerald-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl shadow-emerald-200">
                 <ShieldCheck className="w-12 h-12 text-white" />
               </div>
               <div className="space-y-2">
@@ -80,7 +80,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
               <Card className="p-6 border-slate-100 shadow-sm text-left space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100">
-                    <Camera className="w-5 h-5 text-indigo-600" />
+                    <Camera className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
                     <p className="text-sm font-black text-slate-900">Liveness Face Capture</p>
@@ -89,7 +89,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100">
-                    <Scan className="w-5 h-5 text-indigo-600" />
+                    <Scan className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
                     <p className="text-sm font-black text-slate-900">National ID Scan</p>
@@ -98,7 +98,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                 </div>
               </Card>
 
-              <Button onClick={handleNext} className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black gap-2 shadow-xl shadow-indigo-100">
+              <Button onClick={handleNext} className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black gap-2 shadow-xl shadow-emerald-100">
                 Begin Verification <ArrowRight className="w-5 h-5" />
               </Button>
             </motion.div>
@@ -121,9 +121,9 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                   <User className="w-32 h-32 text-slate-800" />
                 </div>
                 {/* Simulated Camera Feed Overlay */}
-                <div className="absolute inset-0 border-[3px] border-indigo-500/50 rounded-[2.5rem] m-8 animate-pulse" />
+                <div className="absolute inset-0 border-[3px] border-emerald-500/50 rounded-[2.5rem] m-8 animate-pulse" />
                 <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-                  <div className="px-4 py-1.5 bg-indigo-600 rounded-full text-[10px] font-black text-white uppercase tracking-widest">
+                  <div className="px-4 py-1.5 bg-emerald-600 rounded-full text-[10px] font-black text-white uppercase tracking-widest">
                     Liveness Check Active
                   </div>
                 </div>
@@ -131,7 +131,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
 
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep("intro")} className="flex-1 h-14 rounded-2xl font-black">Back</Button>
-                <Button onClick={handleNext} className="flex-[2] h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black gap-2">
+                <Button onClick={handleNext} className="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black gap-2">
                   Capture Photo <Camera className="w-5 h-5" />
                 </Button>
               </div>
@@ -150,8 +150,8 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                 <p className="text-slate-500 font-medium text-sm">Upload front of your National ID</p>
               </div>
 
-              <div className="aspect-[1.6/1] bg-white rounded-3xl border-4 border-dashed border-slate-200 flex flex-col items-center justify-center p-8 text-center group hover:border-indigo-600 transition-all cursor-pointer">
-                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all">
+              <div className="aspect-[1.6/1] bg-white rounded-3xl border-4 border-dashed border-slate-200 flex flex-col items-center justify-center p-8 text-center group hover:border-emerald-600 transition-all cursor-pointer">
+                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-all">
                   <Upload className="w-8 h-8 text-slate-400" />
                 </div>
                 <p className="font-black text-slate-900">Click to Upload</p>
@@ -179,8 +179,8 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                 <p className="text-slate-500 font-medium text-sm">Upload back of your National ID</p>
               </div>
 
-              <div className="aspect-[1.6/1] bg-white rounded-3xl border-4 border-dashed border-slate-200 flex flex-col items-center justify-center p-8 text-center group hover:border-indigo-600 transition-all cursor-pointer">
-                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all">
+              <div className="aspect-[1.6/1] bg-white rounded-3xl border-4 border-dashed border-slate-200 flex flex-col items-center justify-center p-8 text-center group hover:border-emerald-600 transition-all cursor-pointer">
+                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-all">
                   <Upload className="w-8 h-8 text-slate-400" />
                 </div>
                 <p className="font-black text-slate-900">Click to Upload</p>
@@ -189,7 +189,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
 
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep("id_front")} className="flex-1 h-14 rounded-2xl font-black">Back</Button>
-                <Button onClick={handleNext} className="flex-[2] h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black gap-2 shadow-xl shadow-indigo-100">
+                <Button onClick={handleNext} className="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black gap-2 shadow-xl shadow-emerald-100">
                   Finish & Match <CheckCircle2 className="w-5 h-5" />
                 </Button>
               </div>
@@ -223,7 +223,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                     fill="transparent"
                     strokeDasharray={377}
                     strokeDashoffset={377 - (377 * progress) / 100}
-                    className="text-indigo-600 transition-all duration-300"
+                    className="text-emerald-600 transition-all duration-300"
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">

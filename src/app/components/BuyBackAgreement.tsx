@@ -59,7 +59,7 @@ export function BuyBackAgreement({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 pb-24">
       <div className="max-w-3xl mx-auto space-y-6 pt-6">
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -67,8 +67,8 @@ export function BuyBackAgreement({
         </Button>
 
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-            <FileText className="w-8 h-8 text-blue-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-4">
+            <FileText className="w-8 h-8 text-emerald-600" />
           </div>
           <h1 className="text-3xl font-black text-slate-900">Digital Asset Sale & Buy-Back Agreement</h1>
           <p className="text-slate-600 font-medium mt-2 max-w-2xl mx-auto">
@@ -77,9 +77,9 @@ export function BuyBackAgreement({
         </div>
 
         {/* Explanation Card */}
-        <Card className="p-6 bg-blue-50 border-blue-200">
+        <Card className="p-6 bg-emerald-50 border-emerald-200">
           <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <Info className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-slate-800 font-bold mb-2">How This Works</p>
               <p className="text-slate-700 text-sm font-medium">
@@ -122,7 +122,7 @@ export function BuyBackAgreement({
               
               <div className="flex justify-between items-center pt-2">
                 <span className="text-base font-black text-slate-900">Total Buy-Back Amount:</span>
-                <span className="text-3xl font-black text-blue-600">USD ${totalBuyBackAmount.toFixed(2)}</span>
+                <span className="text-3xl font-black text-emerald-600">USD ${totalBuyBackAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ export function BuyBackAgreement({
                 whileHover={{ scale: 1.02 }}
                 className={`flex items-start space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                   repaymentOption === 'single' 
-                    ? 'border-blue-500 bg-blue-50' 
+                    ? 'border-emerald-500 bg-emerald-50' 
                     : 'border-slate-200 bg-white hover:border-slate-300'
                 }`}
                 onClick={() => setRepaymentOption('single')}
@@ -161,7 +161,7 @@ export function BuyBackAgreement({
                     <p className="text-lg font-black text-slate-900">
                       {formatDate(singlePaymentDueDate)} <span className="text-sm font-medium text-slate-500">(28 days)</span>
                     </p>
-                    <p className="text-sm font-black text-blue-600 mt-1">
+                    <p className="text-sm font-black text-emerald-600 mt-1">
                       Amount: USD ${totalBuyBackAmount.toFixed(2)}
                     </p>
                   </div>
@@ -173,7 +173,7 @@ export function BuyBackAgreement({
                 whileHover={{ scale: 1.02 }}
                 className={`flex items-start space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                   repaymentOption === 'biweekly' 
-                    ? 'border-blue-500 bg-blue-50' 
+                    ? 'border-emerald-500 bg-emerald-50' 
                     : 'border-slate-200 bg-white hover:border-slate-300'
                 }`}
                 onClick={() => setRepaymentOption('biweekly')}
@@ -201,7 +201,7 @@ export function BuyBackAgreement({
                         <p className="text-base font-black text-slate-900">
                           {formatDate(installment1DueDate)} <span className="text-sm font-medium text-slate-500">(Day 14)</span>
                         </p>
-                        <p className="text-sm font-black text-blue-600 mt-1">
+                        <p className="text-sm font-black text-emerald-600 mt-1">
                           Amount: USD ${installment1.toFixed(2)}
                         </p>
                       </div>
@@ -214,7 +214,7 @@ export function BuyBackAgreement({
                         <p className="text-base font-black text-slate-900">
                           {formatDate(installment2DueDate)} <span className="text-sm font-medium text-slate-500">(Day 28)</span>
                         </p>
-                        <p className="text-sm font-black text-blue-600 mt-1">
+                        <p className="text-sm font-black text-emerald-600 mt-1">
                           Amount: USD ${installment2.toFixed(2)}
                         </p>
                       </div>
@@ -271,7 +271,7 @@ export function BuyBackAgreement({
           <Button 
             onClick={handleAccept}
             disabled={!agreedToTerms}
-            className="flex-2 h-14 rounded-xl font-black text-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+            className="flex-2 h-14 rounded-xl font-black text-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
           >
             Accept & Activate Credit
           </Button>

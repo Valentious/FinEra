@@ -1,4 +1,6 @@
 import { forwardRef } from "react";
+import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
+import { FinEraLogoText } from "@/app/components/FinEraLogoText";
 
 interface FinEraInclusiveCreditLogoProps {
   /** Size variant */
@@ -55,54 +57,25 @@ export const FinEraInclusiveCreditLogo = forwardRef<
         ${className}
       `}
     >
-      {/* Icon: Rounded square with gradient, shield + checkmark */}
-      <div
-        className="flex-shrink-0 rounded-xl shadow-md"
-        style={{
-          width: iconSize,
-          height: iconSize,
-          background: "linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%)",
-          boxShadow: "0 2px 8px rgba(30, 58, 95, 0.25)",
-        }}
-      >
-        <svg
-          viewBox="0 0 48 48"
-          className="w-full h-full p-2"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Shield outline */}
-          <path
-            d="M24 6L8 12v10c0 8 6 14 16 18 10-4 16-10 16-18V12L24 6z"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-          {/* Checkmark inside shield */}
-          <path
-            d="M16 24l6 6 12-12"
-            stroke="white"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
+      {/* Icon: Reusable green shield with tick */}
+      <FinEraShieldIcon size={iconSize} className="rounded-xl" />
 
       {/* Text block */}
-      <div className="flex flex-col justify-center min-w-0">
-        <h1
+      <div className="hero-header flex flex-col items-center justify-center text-center min-w-0">
+        <FinEraLogoText
+          variant={dark ? "dark" : "light"}
+          size="md"
+          className={config.titleSize}
+        />
+        <p
           className={`
-            font-bold tracking-tight leading-tight
-            ${config.titleSize}
-            ${dark ? "text-white" : "text-slate-900"}
+            inclusive-text font-extrabold tracking-wide mt-0.5 mb-0
+            ${config.subtitleSize}
+            ${dark ? "text-slate-300" : "text-slate-600"}
           `}
         >
-          <span className="tracking-wide">FinEra</span>{" "}
-          <span className="font-extrabold">INCLUSIVE CREDIT</span>
-        </h1>
+          INCLUSIVE CREDIT
+        </p>
         <p
           className={`
             mt-0.5 font-medium

@@ -3,7 +3,7 @@ import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { Shield } from "lucide-react";
+import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 
 interface AdminLoginProps {
   onProceed: () => void;
@@ -20,12 +20,10 @@ export function AdminLogin({ onProceed, onBack }: AdminLoginProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <Card className="max-w-md w-full p-8">
         <div className="flex justify-center mb-6">
-          <div className="p-4 bg-blue-100 rounded-full">
-            <Shield className="w-12 h-12 text-blue-600" />
-          </div>
+          <FinEraShieldIcon size={56} />
         </div>
 
         <h1 className="text-3xl text-center mb-8">Administrator Login</h1>

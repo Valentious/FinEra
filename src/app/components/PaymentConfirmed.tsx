@@ -8,7 +8,7 @@ interface PaymentConfirmedProps {
 
 export function PaymentConfirmed({ onReturnToDashboard }: PaymentConfirmedProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <Card className="max-w-lg w-full p-8">
         <div className="flex justify-center mb-6">
           <CheckCircle2 className="w-20 h-20 text-green-500" />

@@ -1,6 +1,8 @@
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
-import { GraduationCap, Briefcase, Users, Shield, ArrowLeft } from "lucide-react";
+import { GraduationCap, Briefcase, Users, ArrowLeft } from "lucide-react";
+import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
+import { FinEraLogoText } from "@/app/components/FinEraLogoText";
 
 interface AccountTypeSelectionProps {
   onSelectType: (type: 'student' | 'staff' | 'alumni') => void;
@@ -9,7 +11,7 @@ interface AccountTypeSelectionProps {
 
 export function AccountTypeSelection({ onSelectType, onBack }: AccountTypeSelectionProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <div className="max-w-5xl w-full space-y-8">
         {/* Back Button */}
         {onBack && (
@@ -27,13 +29,12 @@ export function AccountTypeSelection({ onSelectType, onBack }: AccountTypeSelect
 
         {/* Logo/Badge */}
         <div className="flex flex-col items-center justify-center mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl shadow-lg">
-              <Shield className="w-10 h-10 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-black text-slate-900">FinEra INCLUSIVE CREDIT</h1>
-              <p className="text-sm text-slate-600 font-medium">For Formal Institutions/Organisation</p>
+          <div className="flex items-center gap-4 mb-4">
+            <FinEraShieldIcon size={56} />
+            <div className="hero-header flex flex-col items-center justify-center text-center">
+              <FinEraLogoText variant="light" size="lg" className="font-black" />
+              <p className="inclusive-text text-sm font-semibold text-slate-600 tracking-[0.2em] uppercase mt-2 mb-0">INCLUSIVE CREDIT</p>
+              <p className="text-sm text-slate-600 font-medium mt-1 mb-0">For Formal Institutions/Organisation</p>
             </div>
           </div>
         </div>
@@ -42,12 +43,12 @@ export function AccountTypeSelection({ onSelectType, onBack }: AccountTypeSelect
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card 
-            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all hover:border-blue-500"
+            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all hover:border-green-500"
             onClick={() => onSelectType('student')}
           >
             <div className="flex justify-center">
-              <div className="p-4 bg-blue-100 rounded-full">
-                <GraduationCap className="w-8 h-8 text-blue-600" />
+              <div className="p-4 bg-emerald-100 rounded-full">
+                <GraduationCap className="w-8 h-8 text-emerald-600" />
               </div>
             </div>
             <h3 className="text-xl">Student Account</h3>
@@ -56,7 +57,7 @@ export function AccountTypeSelection({ onSelectType, onBack }: AccountTypeSelect
           </Card>
 
           <Card 
-            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all hover:border-blue-500"
+            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all hover:border-green-500"
             onClick={() => onSelectType('staff')}
           >
             <div className="flex justify-center">
@@ -70,7 +71,7 @@ export function AccountTypeSelection({ onSelectType, onBack }: AccountTypeSelect
           </Card>
 
           <Card 
-            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all hover:border-blue-500"
+            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all hover:border-green-500"
             onClick={() => onSelectType('alumni')}
           >
             <div className="flex justify-center">

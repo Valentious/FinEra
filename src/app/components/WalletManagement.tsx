@@ -72,7 +72,7 @@ export function WalletManagement({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50 p-4 pb-24">
       <div className="max-w-4xl mx-auto space-y-6 pt-6">
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -94,7 +94,7 @@ export function WalletManagement({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="p-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white border-none shadow-2xl relative overflow-hidden">
+            <Card className="p-6 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white border-none shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl rounded-full -mr-16 -mt-16" />
               <div className="relative z-10">
                 <div className="flex justify-between items-start mb-4">
@@ -107,7 +107,7 @@ export function WalletManagement({
                   </div>
                 </div>
                 
-                <p className="text-blue-100 text-xs font-black uppercase tracking-widest mb-1">
+                <p className="text-emerald-100 text-xs font-black uppercase tracking-widest mb-1">
                   Approved Credit Wallet
                 </p>
                 <h3 className="text-5xl font-black mb-4">
@@ -116,8 +116,8 @@ export function WalletManagement({
                 
                 <div className="space-y-3 pt-4 border-t border-white/20">
                   <div className="flex items-center gap-2 text-sm">
-                    <Info className="w-4 h-4 text-blue-200" />
-                    <p className="text-blue-100 font-medium">
+                    <Info className="w-4 h-4 text-emerald-200" />
+                    <p className="text-emerald-100 font-medium">
                       Can only transfer to Savings Wallet
                     </p>
                   </div>
@@ -125,7 +125,7 @@ export function WalletManagement({
                   {approvedCreditWallet > 0 && (
                     <Button
                       onClick={() => setShowTransferModal(true)}
-                      className="w-full bg-white text-blue-600 hover:bg-blue-50 h-12 rounded-xl font-black gap-2 shadow-lg"
+                      className="w-full bg-white text-emerald-600 hover:bg-emerald-50 h-12 rounded-xl font-black gap-2 shadow-lg"
                     >
                       Transfer to Savings
                       <ArrowRight className="w-4 h-4" />
@@ -248,8 +248,8 @@ export function WalletManagement({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <Banknote className="w-5 h-5 text-indigo-600" />
+                  <div className="p-2 bg-emerald-100 rounded-lg">
+                    <Banknote className="w-5 h-5 text-emerald-600" />
                   </div>
                   <h4 className="font-black text-slate-900">ATM Access</h4>
                 </div>
@@ -328,7 +328,7 @@ export function WalletManagement({
                   <label className="text-sm font-bold text-slate-700 mb-2 block">
                     Available in Approved Credit Wallet
                   </label>
-                  <div className="text-3xl font-black text-blue-600">
+                  <div className="text-3xl font-black text-emerald-600">
                     ${approvedCreditWallet.toLocaleString()}
                   </div>
                 </div>
@@ -346,7 +346,7 @@ export function WalletManagement({
                       value={transferAmount}
                       onChange={(e) => setTransferAmount(e.target.value)}
                       placeholder="0.00"
-                      className="w-full h-14 pl-10 pr-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-2xl font-black"
+                      className="w-full h-14 pl-10 pr-4 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-2xl font-black"
                       step="0.01"
                       min="0"
                       max={approvedCreditWallet}
@@ -354,7 +354,7 @@ export function WalletManagement({
                   </div>
                   <button
                     onClick={() => setTransferAmount(approvedCreditWallet.toString())}
-                    className="text-xs font-bold text-blue-600 hover:text-blue-700 mt-2"
+                    className="text-xs font-bold text-emerald-600 hover:text-emerald-700 mt-2"
                   >
                     Transfer maximum amount
                   </button>
@@ -380,7 +380,7 @@ export function WalletManagement({
                 </Button>
                 <Button
                   onClick={handleTransfer}
-                  className="flex-1 h-12 rounded-xl font-black bg-blue-600 hover:bg-blue-700"
+                  className="flex-1 h-12 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700"
                 >
                   Transfer Funds
                 </Button>

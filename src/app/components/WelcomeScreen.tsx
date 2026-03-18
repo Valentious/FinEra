@@ -1,5 +1,6 @@
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
+import { FinEraLogoText } from "@/app/components/FinEraLogoText";
 
 interface WelcomeScreenProps {
   onGetStarted: () => void;
@@ -8,10 +9,14 @@ interface WelcomeScreenProps {
 
 export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <Card className="max-w-2xl w-full p-12 text-center space-y-8">
+        <div className="hero-header flex flex-col items-center justify-center text-center space-y-2">
+          <FinEraLogoText variant="light" size="xl" />
+          <p className="inclusive-text text-lg font-semibold text-slate-600 tracking-[0.25em] uppercase mt-2 mb-0">INCLUSIVE CREDIT</p>
+          <p className="text-base text-slate-600 font-medium mt-1 mb-0">for Formal Institutions/Organisation</p>
+        </div>
         <div className="space-y-4">
-          <h1 className="text-5xl">FinEra INCLUSIVE CREDIT for Formal Institutions/Organisation</h1>
           <div className="flex items-center justify-center gap-3 text-slate-600">
             <span>Secure</span>
             <span>•</span>

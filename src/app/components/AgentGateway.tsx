@@ -101,7 +101,7 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
                 <button
                   key={agent.id}
                   onClick={() => handleSelectAgent(agent)}
-                  className="w-full bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-indigo-600 transition-all text-left group"
+                  className="w-full bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-600 transition-all text-left group"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex gap-4">
@@ -114,7 +114,7 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
                         )}
                       </div>
                       <div>
-                        <h4 className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors">{agent.name}</h4>
+                        <h4 className="font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{agent.name}</h4>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
                             <MapPin className="w-3 h-3" /> {agent.location}
@@ -147,13 +147,13 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
             className="space-y-6"
           >
             <Card className="p-8 border-none bg-slate-900 text-white overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 blur-3xl rounded-full -mr-16 -mt-16" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 blur-3xl rounded-full -mr-16 -mt-16" />
               <div className="relative z-10 flex flex-col items-center text-center">
                 <div className="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center mb-4 backdrop-blur-md border border-white/20">
                   <UserCircle className="w-12 h-12 text-white" />
                 </div>
                 <h3 className="text-2xl font-black">{selectedAgent.name}</h3>
-                <p className="text-indigo-300 font-bold text-sm">{selectedAgent.location} Agent • {selectedAgent.agentCode}</p>
+                <p className="text-emerald-300 font-bold text-sm">{selectedAgent.location} Agent • {selectedAgent.agentCode}</p>
                 
                 <div className="flex gap-4 mt-8 w-full">
                   <button className="flex-1 bg-white/10 hover:bg-white/20 py-4 rounded-2xl border border-white/10 flex flex-col items-center gap-1 transition-all">
@@ -161,11 +161,11 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
                     <span className="text-[10px] font-black uppercase tracking-widest">Call</span>
                   </button>
                   <button className="flex-1 bg-white/10 hover:bg-white/20 py-4 rounded-2xl border border-white/10 flex flex-col items-center gap-1 transition-all">
-                    <MessageSquare className="w-5 h-5 text-blue-400" />
+                    <MessageSquare className="w-5 h-5 text-emerald-400" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Chat</span>
                   </button>
                   <button className="flex-1 bg-white/10 hover:bg-white/20 py-4 rounded-2xl border border-white/10 flex flex-col items-center gap-1 transition-all">
-                    <Navigation className="w-5 h-5 text-indigo-400" />
+                    <Navigation className="w-5 h-5 text-emerald-400" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Locate</span>
                   </button>
                 </div>
@@ -187,7 +187,7 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
 
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep("list")} className="flex-1 h-14 rounded-2xl font-black">Go Back</Button>
-              <Button onClick={handleConfirmInitiation} className="flex-[2] h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black gap-2 shadow-xl shadow-indigo-100">
+              <Button onClick={handleConfirmInitiation} className="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black gap-2 shadow-xl shadow-emerald-100">
                 Initiate Transaction <ArrowRight className="w-5 h-5" />
               </Button>
             </div>
@@ -202,8 +202,8 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
             className="space-y-6"
           >
             <div className="text-center space-y-2">
-              <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-8 h-8 text-indigo-600" />
+              <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="w-8 h-8 text-emerald-600" />
               </div>
               <h3 className="text-2xl font-black text-slate-900">Awaiting Agent Confirmation</h3>
               <p className="text-slate-500 font-medium">Ask the agent to confirm your request on their portal.</p>
@@ -221,7 +221,7 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
                   value={txnCode} 
                   onChange={(e) => setTxnCode(e.target.value)}
                   placeholder="Enter ID from Agent" 
-                  className="h-14 text-center text-xl font-black tracking-widest bg-white border-2 border-indigo-100 focus:border-indigo-600 rounded-2xl"
+                  className="h-14 text-center text-xl font-black tracking-widest bg-white border-2 border-emerald-100 focus:border-emerald-600 rounded-2xl"
                 />
               </div>
               <Button 
@@ -243,8 +243,8 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
             className="flex flex-col items-center justify-center py-20 text-center"
           >
             <div className="relative">
-              <div className="w-24 h-24 border-4 border-indigo-100 rounded-full" />
-              <Loader2 className="w-24 h-24 text-indigo-600 animate-spin absolute top-0 left-0" />
+              <div className="w-24 h-24 border-4 border-emerald-100 rounded-full" />
+              <Loader2 className="w-24 h-24 text-emerald-600 animate-spin absolute top-0 left-0" />
             </div>
             <h3 className="text-2xl font-black mt-8 text-slate-900">Validating Agent Data...</h3>
             <p className="text-slate-500 font-medium mt-2">Syncing with real-time financial logs.</p>
@@ -279,7 +279,7 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
                 <div className="h-[1px] bg-slate-100 my-2" />
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-bold text-[10px] uppercase">Verification Code</span>
-                  <span className="text-indigo-600 font-black">{txnCode}</span>
+                  <span className="text-emerald-600 font-black">{txnCode}</span>
                 </div>
               </div>
             </Card>
@@ -292,7 +292,7 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
 
             <Button 
               onClick={onCancel} // This will trigger the parent's success flow
-              className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-lg font-bold"
+              className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-bold"
             >
               Continue
             </Button>

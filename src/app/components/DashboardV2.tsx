@@ -69,14 +69,14 @@ const savingsData = [
 // Helper function to get discipline score color
 function getDisciplineScoreColor(score: number): string {
   if (score >= 80) return "from-emerald-500 to-emerald-600";
-  if (score >= 65) return "from-blue-500 to-blue-600";
+  if (score >= 65) return "from-emerald-500 to-emerald-600";
   if (score >= 50) return "from-amber-500 to-amber-600";
   return "from-red-400 to-red-500";
 }
 
 function getDisciplineScoreRingColor(score: number): string {
   if (score >= 80) return "#10b981"; // emerald-500
-  if (score >= 65) return "#3b82f6"; // blue-500
+  if (score >= 65) return "#22C55E"; // emerald-500
   if (score >= 50) return "#f59e0b"; // amber-500
   return "#ef4444"; // red-500
 }
@@ -84,7 +84,7 @@ function getDisciplineScoreRingColor(score: number): string {
 // Helper function to get credit score tier
 function getCreditScoreTier(score: number): { tier: string; color: string; bgColor: string } {
   if (score >= 85) return { tier: "Elite", color: "text-purple-600", bgColor: "bg-purple-100" };
-  if (score >= 70) return { tier: "Growth", color: "text-blue-600", bgColor: "bg-blue-100" };
+  if (score >= 70) return { tier: "Growth", color: "text-emerald-600", bgColor: "bg-emerald-100" };
   if (score >= 50) return { tier: "Standard", color: "text-green-600", bgColor: "bg-green-100" };
   if (score >= 30) return { tier: "Watch", color: "text-amber-600", bgColor: "bg-amber-100" };
   return { tier: "Restricted", color: "text-red-600", bgColor: "bg-red-100" };
@@ -100,8 +100,8 @@ function getSFISEligibilityTier(score: number): { tier: string; color: string; b
   };
   if (score >= 70) return { 
     tier: "Good", 
-    color: "text-blue-600", 
-    bgColor: "bg-blue-100",
+    color: "text-emerald-600", 
+    bgColor: "bg-emerald-100",
     description: "Strong eligibility & competitive terms"
   };
   if (score >= 50) return { 
@@ -168,7 +168,7 @@ export function DashboardV2({
                 onClick={() => onCurrencyChange(c)}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
                   selectedCurrency === c
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-emerald-600 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -191,7 +191,7 @@ export function DashboardV2({
           <p className="text-slate-500 font-medium text-sm">Empowering your financial literacy journey.</p>
         </div>
         <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
-          <Calendar className="w-4 h-4 text-blue-600" />
+          <Calendar className="w-4 h-4 text-emerald-600" />
           <span className="text-sm font-bold text-slate-700">Wednesday, Mar 4, 2026</span>
         </div>
       </div>
@@ -228,7 +228,7 @@ export function DashboardV2({
 
         {/* 2️⃣ Savings Balance */}
         <motion.div whileHover={{ y: -4 }} className="order-2">
-          <Card className="p-6 bg-gradient-to-br from-indigo-600 to-indigo-700 text-white border-none shadow-xl shadow-indigo-100 h-full flex flex-col justify-between">
+          <Card className="p-6 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white border-none shadow-xl shadow-emerald-100 h-full flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-start mb-4">
                 <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md">
@@ -239,11 +239,11 @@ export function DashboardV2({
                   <span className="text-[10px] font-bold">+12.5%</span>
                 </div>
               </div>
-              <p className="text-indigo-100 text-xs font-black uppercase tracking-widest">Savings Balance</p>
+              <p className="text-emerald-100 text-xs font-black uppercase tracking-widest">Savings Balance</p>
               <h3 className="text-3xl font-black mt-1">{symbol}{savingsBalance.toLocaleString()}</h3>
             </div>
             <div className="mt-6 flex gap-2">
-              <Button size="sm" className="bg-white text-indigo-600 hover:bg-indigo-50 font-black flex-1 h-10 rounded-xl" onClick={onAddSavings}>
+              <Button size="sm" className="bg-white text-emerald-600 hover:bg-emerald-50 font-black flex-1 h-10 rounded-xl" onClick={onAddSavings}>
                 Deposit
               </Button>
               <Button size="sm" variant="ghost" className="bg-white/10 hover:bg-white/20 text-white font-black flex-1 h-10 rounded-xl" onClick={onViewSavings}>
@@ -272,9 +272,9 @@ export function DashboardV2({
                 <span>MONTH 2/12</span>
               </div>
               <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-indigo-600 w-[16%]" />
+                <div className="h-full bg-emerald-600 w-[16%]" />
               </div>
-              <Button variant="ghost" className="w-full mt-2 h-8 text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:bg-indigo-50" onClick={onViewRepayment}>
+              <Button variant="ghost" className="w-full mt-2 h-8 text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:bg-emerald-50" onClick={onViewRepayment}>
                 View Repayment Plan
               </Button>
             </div>
@@ -285,7 +285,7 @@ export function DashboardV2({
       {/* 4️⃣ YOUR FINANCIAL IDENTITY SECTION */}
       <div>
         <h2 className="text-2xl font-black text-slate-900 mb-4 flex items-center gap-2">
-          <ShieldCheck className="w-6 h-6 text-blue-600" />
+          <ShieldCheck className="w-6 h-6 text-emerald-600" />
           Your Financial Identity
         </h2>
         
@@ -424,7 +424,7 @@ export function DashboardV2({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Button 
             onClick={onApplyForCredit}
-            className="h-24 flex flex-col items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-xl font-black"
+            className="h-24 flex flex-col items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-xl font-black"
           >
             <CreditCard className="w-6 h-6" />
             <span>Apply Loan</span>
@@ -440,7 +440,7 @@ export function DashboardV2({
 
           <Button 
             onClick={onAddSavings}
-            className="h-24 flex flex-col items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-xl font-black"
+            className="h-24 flex flex-col items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-xl font-black"
           >
             <Plus className="w-6 h-6" />
             <span>Deposit Savings</span>
@@ -497,7 +497,7 @@ export function DashboardV2({
         <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-black text-slate-900">Ledger Activity</h3>
-            <Button variant="ghost" size="sm" className="text-indigo-600 font-black uppercase text-[10px] tracking-widest">Export Logs</Button>
+            <Button variant="ghost" size="sm" className="text-emerald-600 font-black uppercase text-[10px] tracking-widest">Export Logs</Button>
           </div>
           <div className="space-y-4 flex-1">
             {transactions.length > 0 ? transactions.slice(-4).reverse().map((txn) => (
@@ -505,7 +505,7 @@ export function DashboardV2({
                 <div className="flex items-center gap-4">
                   <div className={`p-2 rounded-xl group-hover:scale-110 transition-transform ${
                     txn.type === 'deposit' ? 'bg-green-100 text-green-600' : 
-                    txn.type === 'withdrawal' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'
+                    txn.type === 'withdrawal' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
                   }`}>
                     {txn.type === 'deposit' ? <ArrowUpRight className="w-5 h-5" /> : 
                      txn.type === 'withdrawal' ? <ArrowDownLeft className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
@@ -530,7 +530,7 @@ export function DashboardV2({
                   <Info className="w-8 h-8 text-slate-300" />
                 </div>
                 <p className="text-slate-500 font-medium">No ledger activity found.</p>
-                <Button variant="link" onClick={onAddSavings} className="text-indigo-600 font-bold">Initiate first deposit</Button>
+                <Button variant="link" onClick={onAddSavings} className="text-emerald-600 font-bold">Initiate first deposit</Button>
               </div>
             )}
           </div>

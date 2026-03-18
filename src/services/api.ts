@@ -33,6 +33,7 @@ export interface UserData {
   memberId: string;
   fullName: string;
   title?: string;
+  dateOfBirth?: string; // ISO format YYYY-MM-DD (KYC-ready)
   phoneNumber: string;
   accountNumber: string;
   nationalIdNumber: string;
@@ -82,6 +83,7 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   fullName: string;
+  dateOfBirth: string; // ISO format YYYY-MM-DD, validated age >= 16
   phoneNumber: string;
   email: string;
   password: string;
@@ -349,6 +351,24 @@ export async function getTransactions(params?: {
 // ==================== CREDIT APPLICATION APIs ====================
 
 /**
+ * POST /loans/apply
+ * Alias for credit application - submit loan request
+ * Backend should implement same logic as /credit/apply
+ */
+export async function applyLoan(data: CreditApplication): Promise<{
+  applicationId: string;
+  status: 'pending' | 'approved' | 'rejected';
+  approvedAmount?: number;
+  totalCredit?: number;
+  message: string;
+}> {
+  return apiCall('/loans/apply', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
  * POST /credit/apply
  * Submit credit application
  * Backend should:
@@ -428,6 +448,23 @@ export async function approveCreditApplication(applicationId: string): Promise<{
 }
 
 // ==================== REPAYMENT APIs ====================
+
+/**
+ * POST /loans/repay
+ * Alias for repayment - make loan repayment
+ * Backend should implement same logic as /repayment/make-payment
+ */
+export async function repayLoan(data: RepaymentRequest): Promise<{
+  transaction: Transaction;
+  remainingBalance: number;
+  loanFullyPaid: boolean;
+  updatedScores: { disciplineScore: number; creditScore: number };
+}> {
+  return apiCall('/loans/repay', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
 
 /**
  * POST /repayment/make-payment
@@ -616,10 +653,12 @@ export default {
   transferCreditToSavings,
   getTransactions,
   applyCreditApplication,
+  applyLoan,
   getCreditApplicationStatus,
   getCreditLimits,
   approveCreditApplication,
   makeRepayment,
+  repayLoan,
   getRepaymentSchedule,
   getFinancialMetrics,
   getAdminOverview,

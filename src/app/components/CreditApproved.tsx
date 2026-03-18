@@ -16,7 +16,7 @@ export function CreditApproved({ approvedAmount, repaymentSchedule, onViewWallet
   const totalCost = principal + commission + interest;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
       <Card className="max-w-lg w-full p-8">
         <div className="flex justify-center mb-6">
           <CheckCircle2 className="w-20 h-20 text-green-500" />
@@ -37,7 +37,7 @@ export function CreditApproved({ approvedAmount, repaymentSchedule, onViewWallet
           </div>
 
           {/* Fee Breakdown */}
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 space-y-3">
+          <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 space-y-3">
             <p className="font-semibold text-sm text-slate-700">Loan Cost Breakdown</p>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
@@ -52,9 +52,9 @@ export function CreditApproved({ approvedAmount, repaymentSchedule, onViewWallet
                 <span className="text-sm text-slate-600">Interest (18%)</span>
                 <span className="font-semibold">${interest.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center pt-2 border-t border-blue-300">
+              <div className="flex justify-between items-center pt-2 border-t border-emerald-300">
                 <span className="font-semibold text-slate-700">Active Credit Balance</span>
-                <span className="font-bold text-blue-700">${totalCost.toFixed(2)}</span>
+                <span className="font-bold text-emerald-700">${totalCost.toFixed(2)}</span>
               </div>
             </div>
             <p className="text-xs text-slate-500 mt-2">

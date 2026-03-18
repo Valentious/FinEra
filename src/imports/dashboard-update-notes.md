@@ -10,7 +10,7 @@ Available Credit
 
 Replace Black With:
 
-Primary Color: Royal Blue (#2563EB)
+Primary Color: Brand Green (#22C55E)
 (Global fintech-trusted color: stability + opportunity)
 
 Button Text:

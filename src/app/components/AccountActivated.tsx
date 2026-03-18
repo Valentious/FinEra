@@ -8,7 +8,7 @@ interface AccountActivatedProps {
 
 export function AccountActivated({ onContinue }: AccountActivatedProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <Card className="max-w-lg w-full p-8">
         <div className="flex justify-center mb-6">
           <CheckCircle2 className="w-20 h-20 text-green-500" />
@@ -24,10 +24,10 @@ export function AccountActivated({ onContinue }: AccountActivatedProps) {
             </div>
           </div>
 
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
             <div className="flex justify-between items-center">
               <span className="text-slate-700">Savings Wallet</span>
-              <span className="text-blue-600 font-semibold">Active</span>
+              <span className="text-emerald-600 font-semibold">Active</span>
             </div>
           </div>
 

@@ -32,7 +32,7 @@ export function AccountCreationSuccess({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -58,7 +58,7 @@ export function AccountCreationSuccess({
           </CardHeader>
 
           <CardContent className="p-8 space-y-6">
-            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl p-6 border-2 border-indigo-100">
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-50 rounded-2xl p-6 border-2 border-emerald-100">
               <h3 className="text-lg font-black text-slate-900 mb-4 text-center">Your Account Details</h3>
               
               <div className="space-y-4">
@@ -66,8 +66,8 @@ export function AccountCreationSuccess({
                 <div className="bg-white rounded-xl p-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-indigo-100 rounded-lg">
-                        <User className="w-5 h-5 text-indigo-600" />
+                      <div className="p-2 bg-emerald-100 rounded-lg">
+                        <User className="w-5 h-5 text-emerald-600" />
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Account Holder</p>
@@ -121,8 +121,8 @@ export function AccountCreationSuccess({
                 <div className="bg-white rounded-xl p-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Phone className="w-5 h-5 text-blue-600" />
+                      <div className="p-2 bg-emerald-100 rounded-lg">
+                        <Phone className="w-5 h-5 text-emerald-600" />
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Linked Phone</p>
@@ -153,9 +153,9 @@ export function AccountCreationSuccess({
             </div>
 
             {/* Security Notice */}
-            <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
-              <h4 className="text-sm font-black text-blue-900 mb-2">🔒 Security Notice</h4>
-              <p className="text-sm text-blue-800 leading-relaxed">
+            <div className="bg-emerald-50 rounded-xl p-5 border border-emerald-200">
+              <h4 className="text-sm font-black text-emerald-900 mb-2">🔒 Security Notice</h4>
+              <p className="text-sm text-emerald-800 leading-relaxed">
                 Keep your account number secure. Never share your password or sensitive account details 
                 with anyone. Our team will never ask for your password via email or phone.
               </p>
@@ -163,7 +163,7 @@ export function AccountCreationSuccess({
 
             <Button 
               onClick={onContinue}
-              className="w-full h-14 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl font-black text-lg shadow-lg active:scale-[0.98] transition-all"
+              className="w-full h-14 bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700 text-white rounded-xl font-black text-lg shadow-lg active:scale-[0.98] transition-all"
             >
               Continue to Dashboard
             </Button>

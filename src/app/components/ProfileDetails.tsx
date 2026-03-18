@@ -145,7 +145,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
   return (
     <div className="max-w-md mx-auto space-y-6 animate-in fade-in duration-500">
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Icon className="w-8 h-8" />
         </div>
         <h2 className="text-2xl font-black text-slate-900">Complete Your Profile</h2>
@@ -159,13 +159,13 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
           {/* Title Selection */}
           <div className="space-y-2">
             <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
-              <Award className="w-4 h-4 text-indigo-600" />
+              <Award className="w-4 h-4 text-emerald-600" />
               Title
             </Label>
             <select
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full h-14 rounded-2xl border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 font-semibold text-base px-4 bg-white"
+              className="w-full h-14 rounded-2xl border-slate-200 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-semibold text-base px-4 bg-white"
             >
               <option value="">Select your title</option>
               {titleOptions.map((option) => (
@@ -182,14 +182,14 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
           {/* National ID Number */}
           <div className="space-y-2">
             <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
-              <UserSquare2 className="w-4 h-4 text-indigo-600" />
+              <UserSquare2 className="w-4 h-4 text-emerald-600" />
               National ID Number
             </Label>
             <Input 
               placeholder="XX-XXXXXX-X-XX" 
               value={nationalIdNumber}
               onChange={(e) => setNationalIdNumber(e.target.value)}
-              className="h-14 rounded-2xl border-slate-200 focus:ring-indigo-600 font-semibold text-base"
+              className="h-14 rounded-2xl border-slate-200 focus:ring-emerald-600 font-semibold text-base"
               maxLength={50}
             />
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 px-1">
@@ -200,14 +200,14 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
           {/* Student/Staff/Alumni ID */}
           <div className="space-y-2">
             <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
-              <Icon className="w-4 h-4 text-indigo-600" />
+              <Icon className="w-4 h-4 text-emerald-600" />
               {getIdLabel()}
             </Label>
             <Input 
               placeholder={getIdPlaceholder()}
               value={studentStaffId}
               onChange={(e) => setStudentStaffId(e.target.value)}
-              className="h-14 rounded-2xl border-slate-200 focus:ring-indigo-600 font-semibold text-base"
+              className="h-14 rounded-2xl border-slate-200 focus:ring-emerald-600 font-semibold text-base"
               maxLength={50}
             />
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 px-1">
@@ -219,13 +219,13 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
           {(accountType === 'staff' || accountType === 'alumni') && (
             <div className="space-y-2">
               <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-indigo-600" />
+                <DollarSign className="w-4 h-4 text-emerald-600" />
                 Monthly Salary Range
               </Label>
               <select
                 value={salaryRange}
                 onChange={(e) => setSalaryRange(e.target.value)}
-                className="w-full h-14 rounded-2xl border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 font-semibold text-base px-4 bg-white"
+                className="w-full h-14 rounded-2xl border-slate-200 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-semibold text-base px-4 bg-white"
               >
                 <option value="">Select your salary range</option>
                 {salaryRanges.map((range) => (
@@ -241,8 +241,8 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
           )}
 
           {/* Info Box */}
-          <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 mt-6">
-            <p className="text-xs text-indigo-800 font-medium leading-relaxed">
+          <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 mt-6">
+            <p className="text-xs text-emerald-800 font-medium leading-relaxed">
               <strong className="font-black">Privacy Note:</strong> Your identification details are encrypted and used solely for identity verification and account security purposes.
             </p>
           </div>
@@ -250,7 +250,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
           {/* Submit Button */}
           <Button 
             onClick={handleComplete}
-            className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 mt-6"
+            className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black shadow-xl shadow-emerald-100 mt-6"
           >
             Complete Profile Setup
             <ArrowRight className="w-5 h-5 ml-2" />

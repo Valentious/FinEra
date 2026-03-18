@@ -27,11 +27,11 @@ interface MakeRepaymentProps {
 }
 
 const LOCAL_METHODS = [
-  { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-blue-50 text-blue-600" },
+  { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
   { id: "innbucks", label: "Innbucks", icon: <Zap className="w-5 h-5" />, color: "bg-orange-50 text-orange-600" },
   { id: "onemoney", label: "One Money", icon: <Smartphone className="w-5 h-5" />, color: "bg-red-50 text-red-600" },
   { id: "savings", label: "Pay from Savings", icon: <Wallet className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
-  { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-indigo-50 text-indigo-600" },
+  { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
   { id: "bank", label: "Partner Banks", icon: <Building2 className="w-5 h-5" />, color: "bg-slate-50 text-slate-600" },
 ];
 
@@ -125,7 +125,7 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
                   </button>
                   <button 
                     onClick={() => setAmount(outstandingBalance.toString())}
-                    className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black hover:bg-indigo-100 transition-colors"
+                    className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black hover:bg-emerald-100 transition-colors"
                   >
                     FULL SETTLEMENT
                   </button>
@@ -146,7 +146,7 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
                         disabled={isSavingsDisabled}
                         className={`flex flex-col items-center p-4 rounded-2xl border-2 transition-all ${
                           isSavingsDisabled ? 'opacity-40 grayscale cursor-not-allowed border-slate-50' :
-                          selectedMethod === method.id ? 'border-indigo-600 bg-indigo-50/50' : 'border-slate-100 bg-white hover:border-slate-200'
+                          selectedMethod === method.id ? 'border-emerald-600 bg-emerald-50/50' : 'border-slate-100 bg-white hover:border-slate-200'
                         }`}
                       >
                         <div className={`p-3 rounded-xl mb-3 ${method.color}`}>
@@ -204,14 +204,14 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
               </div>
               <h3 className="text-xl font-black text-slate-900">Confirm Payment</h3>
               <p className="text-slate-500 text-sm mt-2 mb-8">
-                You are about to repay <span className="font-black text-slate-900">${amount}</span> using <span className="font-bold text-indigo-600">{LOCAL_METHODS.find(m => m.id === selectedMethod)?.label}</span>.
+                You are about to repay <span className="font-black text-slate-900">${amount}</span> using <span className="font-bold text-emerald-600">{LOCAL_METHODS.find(m => m.id === selectedMethod)?.label}</span>.
               </p>
               
               <div className="space-y-3">
                 <Button 
                   onClick={confirmProcess}
                   disabled={isProcessing}
-                  className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold"
+                  className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold"
                 >
                   {isProcessing ? "Verifying..." : "Confirm & Pay"}
                 </Button>

@@ -21,7 +21,7 @@ export function RepaymentDashboard({
   const repaymentPercentage = (amountRepaid / totalCredit) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
       <div className="max-w-2xl mx-auto space-y-6 pt-6">
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -41,7 +41,7 @@ export function RepaymentDashboard({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
+            <div className="p-4 bg-emerald-50 rounded-lg">
               <p className="text-sm text-slate-600 mb-1">Total Amount Due</p>
               <p className="text-2xl">${totalCredit.toLocaleString()}</p>
               <p className="text-xs text-slate-500 mt-1">Includes principal + fees</p>

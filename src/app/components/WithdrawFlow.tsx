@@ -36,9 +36,9 @@ const METHODS = [
   { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
   { id: "innbucks", label: "InnBucks", icon: <Smartphone className="w-5 h-5" />, color: "bg-orange-50 text-orange-600" },
   { id: "onemoney", label: "OneMoney", icon: <Smartphone className="w-5 h-5" />, color: "bg-red-50 text-red-600" },
-  { id: "mobilemoney", label: "Mobile Money", icon: <Smartphone className="w-5 h-5" />, color: "bg-blue-50 text-blue-600" },
+  { id: "mobilemoney", label: "Mobile Money", icon: <Smartphone className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
   { id: "cryptowallet", label: "Crypto Wallet", icon: <Wallet className="w-5 h-5" />, color: "bg-purple-50 text-purple-600" },
-  { id: "agent", label: "Verified Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-indigo-50 text-indigo-600" },
+  { id: "agent", label: "Verified Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
   { id: "atm", label: "ATM Cardless Withdrawal", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600", featured: true },
 ];
 
@@ -149,7 +149,7 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Available Balance</p>
                 <p className="text-2xl font-black text-slate-900">${balance.toLocaleString()}</p>
               </div>
-              <Wallet className="w-8 h-8 text-indigo-100" />
+              <Wallet className="w-8 h-8 text-emerald-100" />
             </div>
 
             <div className="space-y-3">
@@ -158,15 +158,15 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
                 <button
                   key={method.id}
                   onClick={() => handleMethodSelect(method.id)}
-                  className="w-full flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-indigo-600 hover:shadow-lg hover:shadow-indigo-50 transition-all group"
+                  className="w-full flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-emerald-600 hover:shadow-lg hover:shadow-emerald-50 transition-all group"
                 >
                   <div className="flex items-center gap-4">
                     <div className={`p-3 rounded-xl ${method.color}`}>
                       {method.icon}
                     </div>
-                    <span className="font-bold text-slate-700 group-hover:text-indigo-600">{method.label}</span>
+                    <span className="font-bold text-slate-700 group-hover:text-emerald-600">{method.label}</span>
                   </div>
-                  <div className="w-6 h-6 rounded-full border-2 border-slate-100 group-hover:border-indigo-600 group-hover:bg-indigo-600 flex items-center justify-center transition-all">
+                  <div className="w-6 h-6 rounded-full border-2 border-slate-100 group-hover:border-emerald-600 group-hover:bg-emerald-600 flex items-center justify-center transition-all">
                     <div className="w-2 h-2 rounded-full bg-white opacity-0 group-hover:opacity-100" />
                   </div>
                 </button>
@@ -191,21 +191,21 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
             </div>
 
             <div className="space-y-4">
-              <div className="p-6 bg-indigo-600 rounded-3xl text-white">
-                <p className="text-indigo-100 text-sm font-medium">To: {METHODS.find(m => m.id === selectedMethod)?.label}</p>
+              <div className="p-6 bg-emerald-600 rounded-3xl text-white">
+                <p className="text-emerald-100 text-sm font-medium">To: {METHODS.find(m => m.id === selectedMethod)?.label}</p>
                 <div className="relative mt-4">
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-4xl font-black text-indigo-200">$</span>
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-4xl font-black text-emerald-200">$</span>
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full bg-transparent border-none text-white text-5xl font-black focus:ring-0 placeholder:text-indigo-300 pl-8"
+                    className="w-full bg-transparent border-none text-white text-5xl font-black focus:ring-0 placeholder:text-emerald-300 pl-8"
                     autoFocus
                   />
                 </div>
                 <div className="mt-6 flex justify-between items-center pt-6 border-t border-white/10">
-                  <p className="text-xs font-bold text-indigo-200">AVAILABLE: ${balance.toLocaleString()}</p>
+                  <p className="text-xs font-bold text-emerald-200">AVAILABLE: ${balance.toLocaleString()}</p>
                   <button onClick={() => setAmount(balance.toString())} className="text-xs font-black bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full">MAX</button>
                 </div>
               </div>
@@ -255,21 +255,21 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
             </div>
 
             <div className="space-y-4">
-              <div className="p-6 bg-indigo-600 rounded-3xl text-white">
-                <p className="text-indigo-100 text-sm font-medium">To: {METHODS.find(m => m.id === selectedMethod)?.label}</p>
+              <div className="p-6 bg-emerald-600 rounded-3xl text-white">
+                <p className="text-emerald-100 text-sm font-medium">To: {METHODS.find(m => m.id === selectedMethod)?.label}</p>
                 <div className="relative mt-4">
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-4xl font-black text-indigo-200">$</span>
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-4xl font-black text-emerald-200">$</span>
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full bg-transparent border-none text-white text-5xl font-black focus:ring-0 placeholder:text-indigo-300 pl-8"
+                    className="w-full bg-transparent border-none text-white text-5xl font-black focus:ring-0 placeholder:text-emerald-300 pl-8"
                     autoFocus
                   />
                 </div>
                 <div className="mt-6 flex justify-between items-center pt-6 border-t border-white/10">
-                  <p className="text-xs font-bold text-indigo-200">AVAILABLE: ${balance.toLocaleString()}</p>
+                  <p className="text-xs font-bold text-emerald-200">AVAILABLE: ${balance.toLocaleString()}</p>
                   <button onClick={() => setAmount(balance.toString())} className="text-xs font-black bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full">MAX</button>
                 </div>
               </div>
@@ -311,7 +311,7 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
 
               <Button 
                 onClick={completeATMWithdrawal}
-                className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-lg font-bold"
+                className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-bold"
               >
                 Complete Withdrawal
               </Button>
@@ -327,8 +327,8 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
             className="flex flex-col items-center justify-center py-20 text-center"
           >
             <div className="relative">
-              <div className="w-24 h-24 border-4 border-indigo-100 rounded-full" />
-              <Loader2 className="w-24 h-24 text-indigo-600 animate-spin absolute top-0 left-0" />
+              <div className="w-24 h-24 border-4 border-emerald-100 rounded-full" />
+              <Loader2 className="w-24 h-24 text-emerald-600 animate-spin absolute top-0 left-0" />
             </div>
             <h3 className="text-2xl font-black mt-8 text-slate-900">Processing...</h3>
             <p className="text-slate-500 font-medium mt-2">Moving your funds securely.</p>
@@ -363,14 +363,14 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
                 <div className="h-[1px] bg-slate-200 my-2" />
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-bold text-xs uppercase">Updated Balance</span>
-                  <span className="text-indigo-600 font-black">${(balance - parseFloat(amount)).toLocaleString()}</span>
+                  <span className="text-emerald-600 font-black">${(balance - parseFloat(amount)).toLocaleString()}</span>
                 </div>
               </div>
             </Card>
 
             <Button 
               onClick={onSuccess}
-              className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-lg font-bold"
+              className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-bold"
             >
               Back to Dashboard
             </Button>

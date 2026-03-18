@@ -8,10 +8,11 @@ import {
   Settings, 
   LogOut, 
   Bell, 
-  ShieldCheck,
   Menu,
   X
 } from "lucide-react";
+import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
+import { FinEraLogoText } from "@/app/components/FinEraLogoText";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -38,7 +39,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
   return (
     <>
       {/* Topbar */}
-      <header className="fixed top-0 left-0 right-0 h-16 border-b border-slate-600/30 z-40 px-4 flex items-center justify-between" style={{ backgroundColor: "#1e3a5f" }}>
+      <header className="fixed top-0 left-0 right-0 h-16 border-b border-slate-600/30 z-40 px-4 flex items-center justify-between bg-slate-800">
         <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
@@ -49,11 +50,9 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
             <Menu className="w-6 h-6" />
           </Button>
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate("dashboard")}>
-            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5 text-white" />
-            </div>
+            <FinEraShieldIcon size={32} className="rounded-lg" />
             <div className="hidden sm:flex flex-col leading-tight">
-              <span className="font-bold text-lg text-white">FinEra</span>
+              <FinEraLogoText variant="dark" size="md" as="span" className="font-bold text-lg [&_.fin]:text-white [&_.era]:text-emerald-400" />
               <span className="font-semibold text-xs text-slate-300 tracking-wider uppercase">INCLUSIVE CREDIT</span>
             </div>
           </div>
@@ -62,7 +61,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" className="relative text-slate-200 hover:text-white hover:bg-white/10">
             <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#1e3a5f]" />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-800" />
           </Button>
           <div className="h-8 w-[1px] bg-slate-500/50 mx-1" />
           <div className="flex items-center gap-2 pl-2">
@@ -88,14 +87,14 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
               onClick={() => onNavigate(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                 activeScreen === item.id 
-                  ? "bg-indigo-50 text-indigo-600 shadow-sm shadow-indigo-100/50" 
+                  ? "bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100/50" 
                   : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
-              <item.icon className={`w-5 h-5 ${activeScreen === item.id ? "text-indigo-600" : "text-slate-400"}`} />
+              <item.icon className={`w-5 h-5 ${activeScreen === item.id ? "text-emerald-600" : "text-slate-400"}`} />
               <span className="font-medium">{item.label}</span>
               {activeScreen === item.id && (
-                <motion.div layoutId="activeNav" className="ml-auto w-1.5 h-1.5 bg-indigo-600 rounded-full" />
+                <motion.div layoutId="activeNav" className="ml-auto w-1.5 h-1.5 bg-emerald-600 rounded-full" />
               )}
             </button>
           ))}
@@ -132,11 +131,9 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
             >
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                    <ShieldCheck className="w-5 h-5 text-white" />
-                  </div>
+                  <FinEraShieldIcon size={32} className="rounded-lg" />
                   <div className="flex flex-col leading-tight">
-                    <span className="font-bold text-lg text-slate-900">FinEra</span>
+                    <FinEraLogoText variant="light" size="md" as="span" className="font-bold text-lg" />
                     <span className="font-semibold text-xs text-slate-600 tracking-wider uppercase">INCLUSIVE CREDIT</span>
                   </div>
                 </div>
@@ -155,7 +152,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
                     }}
                     className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${
                       activeScreen === item.id 
-                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" 
+                        ? "bg-emerald-600 text-white shadow-lg shadow-emerald-200" 
                         : "text-slate-500 hover:bg-slate-50"
                     }`}
                   >

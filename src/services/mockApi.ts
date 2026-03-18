@@ -76,6 +76,7 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     memberId: generateMemberId(),
     fullName: data.fullName,
     title: '',
+    dateOfBirth: data.dateOfBirth,
     phoneNumber: data.phoneNumber,
     accountNumber: generateAccountNumber(),
     nationalIdNumber: '',

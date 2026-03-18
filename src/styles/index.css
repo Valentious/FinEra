@@ -9,3 +9,43 @@
 .react-tel-input .form-control {
   width: 100% !important;
 }
+
+/* FinEra hero header - mathematically centered alignment */
+.hero-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.hero-header .finera-title {
+  line-height: 1.1;
+  margin: 0;
+}
+.hero-header .inclusive-text {
+  letter-spacing: 0.2em;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+/* FinEra Logo - Fin (white) + Era (green) */
+.finera-logo {
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0;
+}
+.finera-logo .fin {
+  color: var(--text-white);
+}
+.finera-logo .era {
+  color: var(--primary-green);
+}
+/* Dark mode: Fin on light backgrounds */
+.finera-logo-light .fin {
+  color: #0f172a;
+}
+.finera-logo-light .era {
+  color: var(--primary-green);
+}

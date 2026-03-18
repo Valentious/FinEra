@@ -6,7 +6,9 @@ import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
 import { PhoneInputField } from "@/app/components/PhoneInputField";
 import { motion } from "motion/react";
-import { LogIn, UserPlus, Mail, Lock, User, ShieldCheck, ArrowLeft } from "lucide-react";
+import { LogIn, UserPlus, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
+import { FinEraLogoText } from "@/app/components/FinEraLogoText";
 
 interface LoginRegisterProps {
   onLogin: (email: string) => void;
@@ -18,11 +20,13 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({ 
     fullName: "", 
+    dateOfBirth: "",
     phoneNumber: "",
     email: "", 
     password: "", 
     confirmPassword: "" 
   });
+  const [dobError, setDobError] = useState("");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,11 +36,39 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
   const passwordsMatch = registerData.password === registerData.confirmPassword;
   const showPasswordMismatch = registerData.confirmPassword.length > 0 && !passwordsMatch;
 
+  const getDobMinMax = () => {
+    const today = new Date();
+    const maxD = new Date(today);
+    maxD.setFullYear(maxD.getFullYear() - 16);
+    const minD = new Date(today);
+    minD.setFullYear(minD.getFullYear() - 120);
+    const fmt = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return { min: fmt(minD), max: fmt(maxD) };
+  };
+
+  const validateAge = (dob: string): boolean => {
+    if (!dob) return false;
+    const birth = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age >= 16;
+  };
+
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    if (registerData.password !== registerData.confirmPassword) {
-      return; // Validation prevents submission
+    if (registerData.password !== registerData.confirmPassword) return;
+    if (!registerData.dateOfBirth) {
+      setDobError("Date of birth is required");
+      return;
     }
+    if (!validateAge(registerData.dateOfBirth)) {
+      setDobError("You must be at least 16 years old to register");
+      return;
+    }
+    setDobError("");
     const { confirmPassword, ...dataToSubmit } = registerData;
     onRegister(dataToSubmit);
   };
@@ -59,11 +91,12 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
         )}
 
         <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-indigo-600 rounded-lg">
-              <ShieldCheck className="w-8 h-8 text-white" />
+          <div className="flex items-center gap-4">
+            <FinEraShieldIcon size={48} className="rounded-xl" />
+            <div className="hero-header flex flex-col items-center justify-center text-center">
+              <FinEraLogoText variant="light" size="md" />
+              <p className="inclusive-text text-xs font-semibold text-slate-600 tracking-[0.2em] uppercase mt-1 mb-0">INCLUSIVE CREDIT</p>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">FinEra INCLUSIVE CREDIT</h1>
           </div>
         </div>
 
@@ -101,7 +134,7 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
                         <Input 
                           id="email" 
                           placeholder="name@university.edu" 
-                          className="pl-10 h-12 rounded-lg border-slate-200 focus:ring-indigo-500"
+                          className="pl-10 h-12 rounded-lg border-slate-200 focus:ring-emerald-500"
                           value={loginData.email}
                           onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                           required 
@@ -111,21 +144,21 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="password">Password</Label>
-                        <Button variant="link" className="px-0 h-auto text-xs text-indigo-600">Forgot password?</Button>
+                        <Button variant="link" className="px-0 h-auto text-xs text-emerald-600">Forgot password?</Button>
                       </div>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input 
                           id="password" 
                           type="password" 
-                          className="pl-10 h-12 rounded-lg border-slate-200 focus:ring-indigo-500"
+                          className="pl-10 h-12 rounded-lg border-slate-200 focus:ring-emerald-500"
                           value={loginData.password}
                           onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                           required 
                         />
                       </div>
                     </div>
-                    <Button type="submit" className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold text-lg transition-all active:scale-[0.98]">
+                    <Button type="submit" className="w-full h-12 bg-primary hover:bg-emerald-700 rounded-xl font-semibold text-lg text-primary-foreground transition-all active:scale-[0.98]">
                       Sign In
                     </Button>
                   </form>
@@ -158,6 +191,26 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
                       </div>
                     </div>
                     <div className="space-y-2">
+                      <Label htmlFor="reg-dob">Date of Birth</Label>
+                      <Input
+                        id="reg-dob"
+                        name="dateOfBirth"
+                        type="date"
+                        value={registerData.dateOfBirth}
+                        onChange={(e) => {
+                          setRegisterData({ ...registerData, dateOfBirth: e.target.value });
+                          setDobError("");
+                        }}
+                        required
+                        {...getDobMinMax()}
+                        className={`h-12 rounded-lg cursor-pointer ${dobError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                        aria-invalid={!!dobError}
+                      />
+                      {dobError && (
+                        <p className="text-sm text-red-600 font-medium">{dobError}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="reg-phone">Phone Number</Label>
                       <PhoneInputField
                         id="reg-phone"
@@ -165,7 +218,7 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
                         onChange={(value) => setRegisterData({ ...registerData, phoneNumber: value })}
                         placeholder="Enter phone number"
                         required
-                        inputClassName="!border-slate-200 focus:!ring-indigo-500 focus:!border-indigo-500"
+                        inputClassName="!border-slate-200 focus:!ring-emerald-500 focus:!border-emerald-500"
                         buttonClassName="!border-slate-200"
                       />
                     </div>
@@ -218,7 +271,7 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
                     <Button 
                       type="submit" 
                       disabled={showPasswordMismatch}
-                      className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold text-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full h-12 bg-primary hover:bg-emerald-700 rounded-xl font-semibold text-lg text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Create Account
                     </Button>
@@ -230,7 +283,7 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
         </motion.div>
 
         <p className="mt-8 text-center text-sm text-slate-500">
-          By continuing, you agree to our <span className="text-indigo-600 font-medium">Terms of Service</span> and <span className="text-indigo-600 font-medium">Privacy Policy</span>.
+          By continuing, you agree to our <span className="text-emerald-600 font-medium">Terms of Service</span> and <span className="text-emerald-600 font-medium">Privacy Policy</span>.
         </p>
       </div>
     </div>

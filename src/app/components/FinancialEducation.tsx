@@ -36,7 +36,7 @@ interface FinancialEducationProps {
 }
 
 const freeLessons = [
-  { title: "Budgeting Basics", duration: "15 min", icon: <Target className="w-5 h-5" />, color: "bg-blue-50 text-blue-600" },
+  { title: "Budgeting Basics", duration: "15 min", icon: <Target className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
   { title: "Building Saving Habits", duration: "20 min", icon: <PiggyBank className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
   { title: "Understanding Debt Responsibility", duration: "25 min", icon: <ShieldCheck className="w-5 h-5" />, color: "bg-red-50 text-red-600" },
   { title: "Smart Spending Behavior", duration: "18 min", icon: <Wallet className="w-5 h-5" />, color: "bg-purple-50 text-purple-600" },
@@ -44,9 +44,9 @@ const freeLessons = [
 ];
 
 const premiumLessons = [
-  { title: "Advanced Financial Discipline Programs", duration: "45 min", icon: <Crown className="w-5 h-5" />, color: "bg-indigo-50 text-indigo-600" },
+  { title: "Advanced Financial Discipline Programs", duration: "45 min", icon: <Crown className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
   { title: "Investment Fundamentals", duration: "60 min", icon: <TrendingUp className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
-  { title: "Credit Power Strategy", duration: "50 min", icon: <CreditCard className="w-5 h-5" />, color: "bg-blue-50 text-blue-600" },
+  { title: "Credit Power Strategy", duration: "50 min", icon: <CreditCard className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
   { title: "Digital Financial Systems", duration: "40 min", icon: <Lightbulb className="w-5 h-5" />, color: "bg-yellow-50 text-yellow-600" },
   { title: "Curated Financial eBooks & Resources", duration: "Self-paced", icon: <BookMarked className="w-5 h-5" />, color: "bg-pink-50 text-pink-600" },
 ];
@@ -62,9 +62,9 @@ export function FinancialEducation({ onBack, onApplyPartner }: FinancialEducatio
         <div className="relative z-10 max-w-2xl">
           <div className="flex items-center gap-2 mb-4">
             <div className="p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
-              <GraduationCap className="w-6 h-6 text-indigo-400" />
+              <GraduationCap className="w-6 h-6 text-emerald-400" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Learning & Growth Hub</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300">Learning & Growth Hub</span>
           </div>
           <h1 className="text-4xl font-black mb-4 leading-tight">Empower Your Financial Future.</h1>
           
@@ -77,14 +77,14 @@ export function FinancialEducation({ onBack, onApplyPartner }: FinancialEducatio
             </button>
             <button 
               onClick={() => setActiveTab("partner")}
-              className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${activeTab === 'partner' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/30' : 'text-slate-400 hover:text-white'}`}
+              className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${activeTab === 'partner' ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-500/30' : 'text-slate-400 hover:text-white'}`}
             >
               PARTNER PROGRAM
             </button>
           </div>
         </div>
         
-        <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[140%] bg-indigo-500/20 rounded-full blur-[80px]" />
+        <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[140%] bg-emerald-500/20 rounded-full blur-[80px]" />
       </div>
 
       <AnimatePresence mode="wait">
@@ -111,7 +111,7 @@ export function FinancialEducation({ onBack, onApplyPartner }: FinancialEducatio
                   </button>
                   <button 
                     onClick={() => setLearningTab("premium")}
-                    className={`px-8 py-3 rounded-xl text-sm font-black transition-all ${learningTab === 'premium' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
+                    className={`px-8 py-3 rounded-xl text-sm font-black transition-all ${learningTab === 'premium' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-900'}`}
                   >
                     PREMIUM LEARNING
                   </button>
@@ -125,7 +125,7 @@ export function FinancialEducation({ onBack, onApplyPartner }: FinancialEducatio
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {freeLessons.map((m, i) => (
-                        <Card key={i} className="p-6 border-slate-100 hover:border-indigo-100 transition-all cursor-pointer group">
+                        <Card key={i} className="p-6 border-slate-100 hover:border-emerald-100 transition-all cursor-pointer group">
                           <div className={`p-3 rounded-2xl w-fit mb-4 ${m.color} group-hover:scale-110 transition-transform`}>
                             {m.icon}
                           </div>
@@ -152,7 +152,7 @@ export function FinancialEducation({ onBack, onApplyPartner }: FinancialEducatio
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {premiumLessons.map((m, i) => (
-                        <Card key={i} className="p-6 border-indigo-100 bg-gradient-to-br from-white to-indigo-50/30 hover:border-indigo-200 transition-all cursor-pointer group relative overflow-hidden">
+                        <Card key={i} className="p-6 border-emerald-100 bg-gradient-to-br from-white to-emerald-50/30 hover:border-emerald-200 transition-all cursor-pointer group relative overflow-hidden">
                           <div className="absolute top-2 right-2">
                             <Crown className="w-4 h-4 text-amber-500" />
                           </div>
@@ -164,7 +164,7 @@ export function FinancialEducation({ onBack, onApplyPartner }: FinancialEducatio
                             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
                               <Clock className="w-3 h-3" /> {m.duration}
                             </div>
-                            <div className="px-2 py-1 bg-indigo-50 text-indigo-600 text-[9px] font-black rounded-full uppercase flex items-center gap-1">
+                            <div className="px-2 py-1 bg-emerald-50 text-emerald-600 text-[9px] font-black rounded-full uppercase flex items-center gap-1">
                               <Lock className="w-2.5 h-2.5" /> Premium
                             </div>
                           </div>
@@ -173,15 +173,15 @@ export function FinancialEducation({ onBack, onApplyPartner }: FinancialEducatio
                     </div>
                     
                     {/* Upgrade Button */}
-                    <Card className="p-6 bg-gradient-to-r from-indigo-600 to-indigo-700 border-none text-white">
+                    <Card className="p-6 bg-gradient-to-r from-emerald-600 to-emerald-700 border-none text-white">
                       <div className="flex items-center justify-between">
                         <div>
                           <h4 className="font-black text-lg mb-1">Upgrade to Premium</h4>
-                          <p className="text-indigo-100 text-xs font-medium">
+                          <p className="text-emerald-100 text-xs font-medium">
                             Subscription unlocks exclusive learning materials and advanced financial development tools.
                           </p>
                         </div>
-                        <Button className="bg-white text-indigo-600 hover:bg-indigo-50 font-black rounded-xl px-6 whitespace-nowrap">
+                        <Button className="bg-white text-emerald-600 hover:bg-emerald-50 font-black rounded-xl px-6 whitespace-nowrap">
                           Get Premium
                         </Button>
                       </div>
@@ -193,10 +193,10 @@ export function FinancialEducation({ onBack, onApplyPartner }: FinancialEducatio
 
             {/* Sidebar Achievements */}
             <div className="space-y-6">
-              <Card className="p-6 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white border-none shadow-2xl">
+              <Card className="p-6 bg-gradient-to-br from-emerald-600 to-emerald-800 text-white border-none shadow-2xl">
                 <Trophy className="w-12 h-12 text-amber-400 mb-4" />
                 <h3 className="text-xl font-black mb-2">Academic Rewards</h3>
-                <p className="text-indigo-100 text-xs font-medium mb-6 opacity-80">Complete any 3 modules to unlock a Tier-2 Credit Limit upgrade automatically.</p>
+                <p className="text-emerald-100 text-xs font-medium mb-6 opacity-80">Complete any 3 modules to unlock a Tier-2 Credit Limit upgrade automatically.</p>
                 <div className="space-y-2">
                   <div className="flex justify-between text-[10px] font-black uppercase">
                     <span>Progress</span>
@@ -235,9 +235,9 @@ export function FinancialEducation({ onBack, onApplyPartner }: FinancialEducatio
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="p-8 border-none bg-white shadow-xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
+                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
                 <div className="relative z-10">
-                  <Users className="w-10 h-10 text-indigo-600 mb-6" />
+                  <Users className="w-10 h-10 text-emerald-600 mb-6" />
                   <h3 className="text-xl font-black text-slate-900 mb-2">Become an Agent</h3>
                   <p className="text-slate-500 text-sm font-medium mb-6">Earn commissions by facilitating deposits and withdrawals for your community.</p>
                   <Button 
@@ -281,7 +281,7 @@ export function FinancialEducation({ onBack, onApplyPartner }: FinancialEducatio
                     { step: 4, title: "Go Live", desc: "Start appearing on the platform's nearby agent map." }
                   ].map((s, i) => (
                     <div key={i} className="flex gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                      <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black shrink-0">
                         {s.step}
                       </div>
                       <div>
@@ -294,10 +294,10 @@ export function FinancialEducation({ onBack, onApplyPartner }: FinancialEducatio
               </div>
 
               <Card className="p-8 border-slate-100 bg-slate-50 flex flex-col items-center justify-center text-center">
-                <UserPlus className="w-16 h-16 text-indigo-600 mb-4" />
+                <UserPlus className="w-16 h-16 text-emerald-600 mb-4" />
                 <h3 className="text-2xl font-black text-slate-900 mb-2">Join 450+ Campus Agents</h3>
                 <p className="text-slate-500 font-medium mb-6 max-w-xs">Facilitate academic financial inclusion and earn a steady income while you study or work.</p>
-                <Button className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-lg font-black shadow-xl shadow-indigo-100">
+                <Button className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-black shadow-xl shadow-emerald-100">
                   Join Partner Network
                 </Button>
               </Card>

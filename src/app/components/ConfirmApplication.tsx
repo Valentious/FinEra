@@ -32,7 +32,7 @@ export function ConfirmApplication({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 pb-12">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 pb-12">
       <div className="max-w-2xl mx-auto space-y-6 pt-6">
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -40,12 +40,12 @@ export function ConfirmApplication({
         </Button>
 
         <div className="flex items-center gap-3">
-          <FileText className="w-8 h-8 text-indigo-600" />
+          <FileText className="w-8 h-8 text-emerald-600" />
           <h1 className="text-3xl font-bold">Loan Terms Agreement</h1>
         </div>
 
         {/* Loan Type Display */}
-        <Card className="p-6 border-2 border-indigo-100 bg-white">
+        <Card className="p-6 border-2 border-emerald-100 bg-white">
           <div className="flex items-start gap-4 mb-6">
             <div className={`p-3 rounded-xl ${withCollateral ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
               {withCollateral ? <ShieldCheck className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6" />}
@@ -68,22 +68,22 @@ export function ConfirmApplication({
               {withCollateral ? (
                 <>
                   <li className="flex gap-2 text-sm text-slate-700">
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
                     Asset details provided are true and correct to the best of my knowledge.
                   </li>
                   <li className="flex gap-2 text-sm text-slate-700">
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
                     The provided asset may be used to recover the loan if repayment fails according to the terms.
                   </li>
                 </>
               ) : (
                 <>
                   <li className="flex gap-2 text-sm text-slate-700">
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
                     I understand that repayment is mandatory regardless of the lack of physical collateral.
                   </li>
                   <li className="flex gap-2 text-sm text-slate-700">
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
                     I acknowledge that late payments or defaults will negatively affect my future credit eligibility.
                   </li>
                 </>
@@ -103,7 +103,7 @@ export function ConfirmApplication({
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-all ${acknowledged ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-100'}`}>
+            <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 transition-all ${acknowledged ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-100'}`}>
               <Checkbox
                 id="acknowledge"
                 checked={acknowledged}
@@ -122,7 +122,7 @@ export function ConfirmApplication({
 
             <Button 
               type="submit" 
-              className="w-full h-14 text-lg font-bold shadow-lg shadow-indigo-200" 
+              className="w-full h-14 text-lg font-bold shadow-lg shadow-emerald-200" 
               disabled={!acknowledged}
             >
               Submit Loan Application

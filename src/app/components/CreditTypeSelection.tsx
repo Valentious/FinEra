@@ -31,9 +31,9 @@ export function CreditTypeSelection({ onSelect, onBack }: CreditTypeSelectionPro
         <motion.div whileHover={{ y: -5 }}>
           <button 
             onClick={() => onSelect(false)}
-            className="w-full text-left h-full flex flex-col p-6 bg-white border-2 border-slate-100 rounded-3xl hover:border-indigo-600 hover:shadow-2xl hover:shadow-indigo-50 transition-all group"
+            className="w-full text-left h-full flex flex-col p-6 bg-white border-2 border-slate-100 rounded-3xl hover:border-emerald-600 hover:shadow-2xl hover:shadow-emerald-50 transition-all group"
           >
-            <div className="p-4 bg-indigo-50 text-indigo-600 rounded-2xl mb-6 group-hover:scale-110 transition-transform">
+            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl mb-6 group-hover:scale-110 transition-transform">
               <UserCheck className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-black text-slate-900 mb-2">Non-Collateral</h3>
@@ -41,11 +41,11 @@ export function CreditTypeSelection({ onSelect, onBack }: CreditTypeSelectionPro
               Approved based on your member eligibility without asset security.
             </p>
             <div className="mt-auto space-y-3">
-              <div className="flex items-center gap-2 text-[10px] font-black text-indigo-600 uppercase">
+              <div className="flex items-center gap-2 text-[10px] font-black text-emerald-600 uppercase">
                 <CheckCircle2 className="w-3 h-3" />
                 Repayment Mandatory
               </div>
-              <div className="flex items-center gap-2 text-[10px] font-black text-indigo-600 uppercase">
+              <div className="flex items-center gap-2 text-[10px] font-black text-emerald-600 uppercase">
                 <CheckCircle2 className="w-3 h-3" />
                 Credit Score Impact
               </div>
@@ -57,7 +57,7 @@ export function CreditTypeSelection({ onSelect, onBack }: CreditTypeSelectionPro
         <motion.div whileHover={{ y: -5 }}>
           <button 
             onClick={() => onSelect(true)}
-            className="w-full text-left h-full flex flex-col p-6 bg-white border-2 border-slate-100 rounded-3xl hover:border-indigo-600 hover:shadow-2xl hover:shadow-indigo-50 transition-all group"
+            className="w-full text-left h-full flex flex-col p-6 bg-white border-2 border-slate-100 rounded-3xl hover:border-emerald-600 hover:shadow-2xl hover:shadow-emerald-50 transition-all group"
           >
             <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl mb-6 group-hover:scale-110 transition-transform">
               <ShieldCheck className="w-8 h-8" />

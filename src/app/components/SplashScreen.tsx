@@ -16,7 +16,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-indigo-700 via-blue-800 to-indigo-950 flex flex-col items-center text-white overflow-hidden">
+    <div className="fixed inset-0 bg-gradient-to-br from-emerald-800 via-green-800 to-emerald-950 flex flex-col items-center text-white overflow-hidden">
       <div className="flex-1 flex items-center justify-center w-full">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
@@ -81,7 +81,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           opacity: [0.3, 0.5, 0.3],
         }}
         transition={{ duration: 8, repeat: Infinity }}
-        className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500 rounded-full blur-[120px]"
+        className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500 rounded-full blur-[120px]"
       />
       <motion.div 
         animate={{ 
@@ -89,7 +89,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           opacity: [0.2, 0.4, 0.2],
         }}
         transition={{ duration: 10, repeat: Infinity, delay: 1 }}
-        className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600 rounded-full blur-[150px]"
+        className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-green-600 rounded-full blur-[150px]"
       />
 
       <motion.div 

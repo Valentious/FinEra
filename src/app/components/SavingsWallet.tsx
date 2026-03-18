@@ -24,7 +24,7 @@ export function SavingsWallet({
   const totalFinancialAccess = totalSavings + availableCreditFacility;
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <div className="max-w-2xl mx-auto space-y-6 pt-6">
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -53,7 +53,7 @@ export function SavingsWallet({
 
         {/* Available Credit Facility (if exists) */}
         {availableCreditFacility > 0 && (
-          <Card className="p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
+          <Card className="p-6 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
             <p className="text-sm opacity-90 mb-2">Available Credit Facility</p>
             <p className="text-4xl mb-2">${availableCreditFacility.toLocaleString()}</p>
             <p className="text-xs opacity-70 font-medium">Approved credit limit (borrowed facility)</p>

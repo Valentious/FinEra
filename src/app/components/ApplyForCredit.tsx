@@ -26,7 +26,7 @@ const CREDIT_TYPES = [
     title: "Essential Credit",
     desc: "For daily needs and campus essentials.",
     icon: <PiggyBank className="w-6 h-6" />,
-    color: "indigo",
+    color: "emerald",
     rule: "Requires 20% savings discipline"
   },
   {
@@ -119,7 +119,7 @@ export function ApplyForCredit({ savingsBalance, hasActiveLoan, onSelectCreditTy
                 disabled={isDisabled}
                 onClick={() => onSelectCreditType(type.id as any)}
                 className={`w-full flex items-center justify-between p-6 bg-white border-2 border-slate-100 rounded-3xl transition-all group relative overflow-hidden ${
-                  isDisabled ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-50'
+                  isDisabled ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:border-emerald-600 hover:shadow-xl hover:shadow-emerald-50'
                 }`}
               >
                 <div className="flex items-center gap-6">
@@ -135,7 +135,7 @@ export function ApplyForCredit({ savingsBalance, hasActiveLoan, onSelectCreditTy
                     </div>
                   </div>
                 </div>
-                {!isDisabled && <ArrowRight className="w-6 h-6 text-slate-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />}
+                {!isDisabled && <ArrowRight className="w-6 h-6 text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />}
               </button>
             </motion.div>
           );

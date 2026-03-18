@@ -44,7 +44,7 @@ export function PartnerApplication({ onBack }: PartnerApplicationProps) {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 p-4 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-purple-100 p-4 flex items-center justify-center">
         <Card className="max-w-lg w-full p-10 text-center">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-12 h-12 text-green-600" />
@@ -56,7 +56,7 @@ export function PartnerApplication({ onBack }: PartnerApplicationProps) {
           <p className="text-sm text-slate-500 font-medium mb-8 bg-slate-50 p-4 rounded-xl">
             <strong className="text-slate-700">System Note:</strong> Approval is required before partner access is activated.
           </p>
-          <Button onClick={onBack} className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 font-black rounded-xl">
+          <Button onClick={onBack} className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 font-black rounded-xl">
             Return to Learning Hub
           </Button>
         </Card>
@@ -65,7 +65,7 @@ export function PartnerApplication({ onBack }: PartnerApplicationProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-purple-100 p-4">
       <div className="max-w-3xl mx-auto space-y-6 pt-6 pb-12">
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -77,22 +77,22 @@ export function PartnerApplication({ onBack }: PartnerApplicationProps) {
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-4">
               <div className="p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
-                <UserPlus className="w-6 h-6 text-indigo-400" />
+                <UserPlus className="w-6 h-6 text-emerald-400" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">Partner Program</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300">Partner Program</span>
             </div>
             <h1 className="text-4xl font-black mb-2 leading-tight">Transaction Partner Registration</h1>
-            <p className="text-indigo-100 text-sm font-medium">
+            <p className="text-emerald-100 text-sm font-medium">
               Become a registered transaction agent and earn through system-based financial services.
             </p>
           </div>
-          <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[140%] bg-indigo-500/20 rounded-full blur-[80px]" />
+          <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[140%] bg-emerald-500/20 rounded-full blur-[80px]" />
         </div>
 
         {/* Application Form */}
         <Card className="p-8">
           <div className="flex items-center gap-2 mb-6">
-            <FileText className="w-5 h-5 text-indigo-600" />
+            <FileText className="w-5 h-5 text-emerald-600" />
             <h2 className="text-2xl font-black text-slate-900">Application Details</h2>
           </div>
 
@@ -175,7 +175,7 @@ export function PartnerApplication({ onBack }: PartnerApplicationProps) {
                     onClick={() => handleServiceToggle(service)}
                     className={`p-4 rounded-xl border-2 font-bold text-sm transition-all ${
                       formData.services.includes(service)
-                        ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                        ? "border-emerald-600 bg-emerald-50 text-emerald-700"
                         : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                     }`}
                   >
@@ -191,7 +191,7 @@ export function PartnerApplication({ onBack }: PartnerApplicationProps) {
               <Button
                 type="submit"
                 disabled={formData.services.length === 0}
-                className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl text-lg shadow-xl shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-lg shadow-xl shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Submit Application
               </Button>
@@ -203,22 +203,22 @@ export function PartnerApplication({ onBack }: PartnerApplicationProps) {
         </Card>
 
         {/* Info Card */}
-        <Card className="p-6 bg-blue-50 border-blue-200">
+        <Card className="p-6 bg-emerald-50 border-emerald-200">
           <h3 className="font-black text-slate-900 mb-2 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-600" />
+            <FileText className="w-4 h-4 text-emerald-600" />
             What Happens Next?
           </h3>
           <ul className="space-y-2 text-sm text-slate-700">
             <li className="flex gap-2">
-              <span className="text-blue-600 font-bold">1.</span>
+              <span className="text-emerald-600 font-bold">1.</span>
               <span className="font-medium">Your application will be reviewed by our verification team</span>
             </li>
             <li className="flex gap-2">
-              <span className="text-blue-600 font-bold">2.</span>
+              <span className="text-emerald-600 font-bold">2.</span>
               <span className="font-medium">You'll receive an email/SMS within 3-5 business days</span>
             </li>
             <li className="flex gap-2">
-              <span className="text-blue-600 font-bold">3.</span>
+              <span className="text-emerald-600 font-bold">3.</span>
               <span className="font-medium">Once approved, you'll undergo training before activation</span>
             </li>
           </ul>

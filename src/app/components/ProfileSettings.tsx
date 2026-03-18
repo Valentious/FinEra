@@ -86,7 +86,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               checked={darkMode} 
               onCheckedChange={setDarkMode}
             />
-            <Moon className="w-4 h-4 text-indigo-600" />
+            <Moon className="w-4 h-4 text-emerald-600" />
           </div>
           <Button 
             variant="ghost" 
@@ -109,7 +109,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               onClick={() => setActiveTab('profile')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                 activeTab === 'profile' 
-                  ? 'bg-indigo-50 text-indigo-600 font-bold' 
+                  ? 'bg-emerald-50 text-emerald-600 font-bold' 
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
@@ -124,7 +124,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               onClick={() => setActiveTab('verification')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                 activeTab === 'verification' 
-                  ? 'bg-indigo-50 text-indigo-600 font-bold' 
+                  ? 'bg-emerald-50 text-emerald-600 font-bold' 
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
@@ -139,7 +139,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               onClick={() => setActiveTab('security')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                 activeTab === 'security' 
-                  ? 'bg-indigo-50 text-indigo-600 font-bold' 
+                  ? 'bg-emerald-50 text-emerald-600 font-bold' 
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
@@ -154,7 +154,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               onClick={() => setActiveTab('cashier')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                 activeTab === 'cashier' 
-                  ? 'bg-indigo-50 text-indigo-600 font-bold' 
+                  ? 'bg-emerald-50 text-emerald-600 font-bold' 
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
@@ -169,7 +169,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               onClick={() => setActiveTab('help')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                 activeTab === 'help' 
-                  ? 'bg-indigo-50 text-indigo-600 font-bold' 
+                  ? 'bg-emerald-50 text-emerald-600 font-bold' 
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
@@ -195,8 +195,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <User className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <User className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">Personal Details</CardTitle>
@@ -208,10 +208,10 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   {/* Profile Picture */}
                   <div className="flex items-center gap-6">
                     <div className="relative group">
-                      <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-                        <User className="w-10 h-10 text-indigo-600" />
+                      <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                        <User className="w-10 h-10 text-emerald-600" />
                       </div>
-                      <button className="absolute bottom-0 right-0 p-2 bg-indigo-600 text-white rounded-full border-2 border-white shadow-md hover:bg-indigo-700 transition-colors">
+                      <button className="absolute bottom-0 right-0 p-2 bg-emerald-600 text-white rounded-full border-2 border-white shadow-md hover:bg-emerald-700 transition-colors">
                         <Camera className="w-3 h-3" />
                       </button>
                     </div>
@@ -259,7 +259,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   </div>
 
                   <div className="pt-4 border-t border-slate-50 flex justify-end">
-                    <Button onClick={handleSaveProfile} className="bg-indigo-600 hover:bg-indigo-700 rounded-xl px-8 font-bold">
+                    <Button onClick={handleSaveProfile} className="bg-emerald-600 hover:bg-emerald-700 rounded-xl px-8 font-bold">
                       Save Changes
                     </Button>
                   </div>
@@ -270,8 +270,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <Globe className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <Globe className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">Languages</CardTitle>
@@ -285,7 +285,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                     <select 
                       value={language}
                       onChange={(e) => setLanguage(e.target.value)}
-                      className="w-full h-11 rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 px-3"
+                      className="w-full h-11 rounded-xl border-slate-200 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 px-3"
                     >
                       <option value="en">English</option>
                       <option value="es">Spanish</option>
@@ -301,8 +301,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <HelpCircle className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <HelpCircle className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">Support</CardTitle>
@@ -313,18 +313,18 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                 <CardContent className="pt-6 space-y-3">
                   <button 
                     onClick={() => toast.success("Opening Help Centre...")}
-                    className="w-full p-4 rounded-xl border-2 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all flex items-center justify-between group"
+                    className="w-full p-4 rounded-xl border-2 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all flex items-center justify-between group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                        <HelpCircle className="w-5 h-5 text-indigo-600" />
+                      <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                        <HelpCircle className="w-5 h-5 text-emerald-600" />
                       </div>
                       <div className="text-left">
                         <p className="text-sm font-bold text-slate-900">Help Centre</p>
                         <p className="text-xs text-slate-500">Browse FAQs and guides</p>
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
                   </button>
 
                   <button 
@@ -360,8 +360,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <FileCheck className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <FileCheck className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">Identity Verification</CardTitle>
@@ -371,7 +371,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
                   {/* Proof of Identity */}
-                  <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-indigo-300 transition-all">
+                  <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-emerald-300 transition-all">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <FileText className="w-5 h-5 text-slate-600" />
@@ -391,7 +391,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   </div>
 
                   {/* Proof of Address */}
-                  <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-indigo-300 transition-all">
+                  <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-emerald-300 transition-all">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Home className="w-5 h-5 text-slate-600" />
@@ -411,7 +411,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   </div>
 
                   {/* Proof of Ownership */}
-                  <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-indigo-300 transition-all">
+                  <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-emerald-300 transition-all">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Briefcase className="w-5 h-5 text-slate-600" />
@@ -429,7 +429,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
 
                   {/* Proof of Income */}
                   {(userData.accountType === 'staff' || userData.accountType === 'alumni') && (
-                    <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-indigo-300 transition-all">
+                    <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-emerald-300 transition-all">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <DollarSign className="w-5 h-5 text-slate-600" />
@@ -461,8 +461,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <Lock className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <Lock className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">Email and Password</CardTitle>
@@ -487,8 +487,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <Key className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <Key className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -500,12 +500,12 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="p-4 bg-indigo-50 rounded-xl flex items-start gap-3">
-                    <ShieldCheck className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+                  <div className="p-4 bg-emerald-50 rounded-xl flex items-start gap-3">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-bold text-indigo-900">Enable Passkeys</p>
-                      <p className="text-xs text-indigo-700 mt-1">Use biometric authentication or security keys to sign in faster and more securely.</p>
-                      <Button size="sm" className="mt-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg">
+                      <p className="text-sm font-bold text-emerald-900">Enable Passkeys</p>
+                      <p className="text-xs text-emerald-700 mt-1">Use biometric authentication or security keys to sign in faster and more securely.</p>
+                      <Button size="sm" className="mt-3 bg-emerald-600 hover:bg-emerald-700 rounded-lg">
                         Set Up Passkey
                       </Button>
                     </div>
@@ -517,8 +517,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <ShieldCheck className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <ShieldCheck className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">Two-Factor Authentication</CardTitle>
@@ -550,8 +550,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <Gauge className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <Gauge className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">Account Limits</CardTitle>
@@ -575,8 +575,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <History className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <History className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">Login History</CardTitle>
@@ -608,8 +608,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <Code className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <Code className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">API Token</CardTitle>
@@ -631,8 +631,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <Link2 className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <Link2 className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">Connected Apps</CardTitle>
@@ -707,8 +707,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <Wallet className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <Wallet className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">Payment Methods</CardTitle>
@@ -732,8 +732,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
 
                   <div className="p-4 rounded-xl border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition-all">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <CreditCard className="w-5 h-5 text-blue-600" />
+                      <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        <CreditCard className="w-5 h-5 text-emerald-600" />
                       </div>
                       <div>
                         <p className="text-sm font-bold text-slate-900">InnBucks</p>
@@ -770,8 +770,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               <Card className="border-slate-100 shadow-lg rounded-2xl">
                 <CardHeader className="border-b border-slate-50">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <HelpCircle className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <HelpCircle className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">Help & Support</CardTitle>
@@ -810,7 +810,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                     className="w-full p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <MessageSquare className="w-5 h-5 text-indigo-600" />
+                      <MessageSquare className="w-5 h-5 text-emerald-600" />
                       <div className="text-left">
                         <p className="text-sm font-bold text-slate-900">Live Chat</p>
                         <p className="text-xs text-slate-500">Get instant help from our agents</p>

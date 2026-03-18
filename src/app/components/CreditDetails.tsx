@@ -48,7 +48,7 @@ export function CreditDetails({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 pb-24">
       <div className="max-w-2xl mx-auto space-y-6 pt-6">
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -142,7 +142,7 @@ export function CreditDetails({
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-slate-600 font-medium">Required Savings (20%):</span>
-                            <span className="font-black text-blue-600">${requiredSavings.toLocaleString()}</span>
+                            <span className="font-black text-emerald-600">${requiredSavings.toLocaleString()}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-slate-600 font-medium">Your Current Savings:</span>
@@ -193,14 +193,14 @@ export function CreditDetails({
                 </Card>
 
                 {/* 20% Minimum Savings Tooltip */}
-                <Card className="p-3 bg-blue-50 border-blue-200">
+                <Card className="p-3 bg-emerald-50 border-emerald-200">
                   <div className="flex items-start gap-2">
-                    <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <Info className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs text-blue-900 font-bold">
+                      <p className="text-xs text-emerald-900 font-bold">
                         Financial Discipline Rule: 20% minimum savings required
                       </p>
-                      <p className="text-xs text-blue-700 mt-1">
+                      <p className="text-xs text-emerald-700 mt-1">
                         This ensures responsible borrowing and demonstrates your commitment to financial stability.
                       </p>
                     </div>

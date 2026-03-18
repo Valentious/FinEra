@@ -27,10 +27,10 @@ interface DepositFlowProps {
 }
 
 const METHODS = [
-  { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-blue-50 text-blue-600" },
+  { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
   { id: "innbucks", label: "Innbucks", icon: <Zap className="w-5 h-5" />, color: "bg-orange-50 text-orange-600" },
   { id: "onemoney", label: "One Money", icon: <Smartphone className="w-5 h-5" />, color: "bg-red-50 text-red-600" },
-  { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-indigo-50 text-indigo-600" },
+  { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
   { id: "institution", label: "Official Partner Banks", icon: <Building2 className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
   { id: "mastercard", label: "Mastercard", icon: <CreditCard className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
 ];
@@ -124,7 +124,7 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
                       key={m.id}
                       onClick={() => setMethod(m.id)}
                       className={`flex items-center justify-between p-3 rounded-2xl border-2 transition-all ${
-                        method === m.id ? 'border-indigo-600 bg-indigo-50/50' : 'border-slate-100 bg-white hover:border-slate-200'
+                        method === m.id ? 'border-emerald-600 bg-emerald-50/50' : 'border-slate-100 bg-white hover:border-slate-200'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -133,7 +133,7 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
                         </div>
                         <span className="font-bold text-slate-700">{m.label}</span>
                       </div>
-                      {method === m.id && <CheckCircle2 className="w-5 h-5 text-indigo-600" />}
+                      {method === m.id && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
                     </button>
                   ))}
                 </div>
@@ -148,7 +148,7 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
                       key={p.id}
                       onClick={() => setPurpose(p.id)}
                       className={`px-4 py-3 rounded-xl border-2 text-sm font-bold transition-all ${
-                        purpose === p.id ? 'border-indigo-600 bg-indigo-600 text-white shadow-lg' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200'
+                        purpose === p.id ? 'border-emerald-600 bg-emerald-600 text-white shadow-lg' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200'
                       }`}
                     >
                       {p.label}
@@ -160,7 +160,7 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
               <Button 
                 onClick={handleDeposit}
                 disabled={loading}
-                className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-lg font-bold shadow-xl shadow-indigo-200 disabled:opacity-50"
+                className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-bold shadow-xl shadow-emerald-200 disabled:opacity-50"
               >
                 {loading ? "Processing..." : "Confirm Deposit"}
               </Button>
@@ -195,8 +195,8 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
             className="flex flex-col items-center justify-center py-20 text-center"
           >
             <div className="relative">
-              <div className="w-24 h-24 border-4 border-indigo-100 rounded-full" />
-              <Loader2 className="w-24 h-24 text-indigo-600 animate-spin absolute top-0 left-0" />
+              <div className="w-24 h-24 border-4 border-emerald-100 rounded-full" />
+              <Loader2 className="w-24 h-24 text-emerald-600 animate-spin absolute top-0 left-0" />
             </div>
             <h3 className="text-2xl font-black mt-8 text-slate-900">Connecting Gateway...</h3>
             <p className="text-slate-500 font-medium mt-2">Securing your payment channel.</p>
@@ -231,14 +231,14 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
                 <div className="h-[1px] bg-slate-200 my-2" />
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-bold text-xs uppercase">New Balance</span>
-                  <span className="text-indigo-600 font-black">${(currentBalance + parseFloat(amount)).toLocaleString()}</span>
+                  <span className="text-emerald-600 font-black">${(currentBalance + parseFloat(amount)).toLocaleString()}</span>
                 </div>
               </div>
             </Card>
 
             <Button 
               onClick={onSuccess}
-              className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-lg font-bold"
+              className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-bold"
             >
               Back to Dashboard
             </Button>
