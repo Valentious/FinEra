@@ -9,11 +9,10 @@ import { Badge } from "@/app/components/ui/badge";
 import { 
   ArrowLeft, 
   ShieldAlert, 
-  Info, 
   Calculator,
-  CheckCircle2,
   FileCheck
 } from "lucide-react";
+import { CollateralMultiUpload } from "./CollateralMultiUpload";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -28,6 +27,7 @@ export function CollateralDetails({ onSubmit, onBack }: CollateralDetailsProps) 
   const [confirmed, setConfirmed] = useState(false);
   const [disclosureAccepted, setDisclosureAccepted] = useState(false);
   const [step, setStep] = useState<"disclosure" | "form">("disclosure");
+  const [collateralFiles, setCollateralFiles] = useState<string[]>([]);
 
   const DISCLOSURE_TEXT = "Your approved loan amount is based on: (1) Asset condition assessment, (2) Current market value, and (3) Secure storage verification. The final amount is calculated as a percentage of the liquidation value, not market value. Important: If you default and the asset is liquidated, no refund will be issued for any difference between asset value and loan balance.";
 
@@ -44,7 +44,8 @@ export function CollateralDetails({ onSubmit, onBack }: CollateralDetailsProps) 
       liquidationValue,
       insuranceMandate,
       description,
-      marketValue
+      marketValue,
+      collateral: collateralFiles,
     });
   };
 
@@ -166,16 +167,9 @@ export function CollateralDetails({ onSubmit, onBack }: CollateralDetailsProps) 
                     />
                   </div>
 
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
-                    <Label className="font-bold text-slate-600 mb-2 block">Upload Asset Evidence (Front, Back, Serial)</Label>
-                    <div className="flex gap-4">
-                      <div className="flex-1 h-24 bg-white rounded-xl border-2 border-dashed border-slate-100 flex items-center justify-center cursor-pointer hover:border-emerald-300 transition-all">
-                        <span className="text-[10px] font-black text-slate-400">UPLOAD PHOTO</span>
-                      </div>
-                      <div className="flex-1 h-24 bg-white rounded-xl border-2 border-dashed border-slate-100 flex items-center justify-center cursor-pointer hover:border-emerald-300 transition-all">
-                        <span className="text-[10px] font-black text-slate-400">UPLOAD SERIAL</span>
-                      </div>
-                    </div>
+                  <div className="space-y-2">
+                    <Label className="font-bold text-slate-600">Upload Asset Evidence (Front, Back, Serial)</Label>
+                    <CollateralMultiUpload files={collateralFiles} onChange={setCollateralFiles} />
                   </div>
 
                   <div className="flex items-start space-x-3 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">

@@ -1,0 +1,491 @@
+// FinEra Inclusive Credit - Production Database Schema (Genius Mode)
+// PostgreSQL 15+ with Prisma ORM 5+
+// ACID-compliant, 8 decimal precision for financial data
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum AccountType {
+  STUDENT
+  STAFF
+  ALUMNI
+}
+
+enum AccountTier {
+  TIER_0
+  TIER_1
+  TIER_2
+  TIER_3
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum CurrencyCode {
+  USD
+  ZIG
+  ZAR
+  EUR
+  GBP
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PAYMENT
+  LOAN_DISBURSEMENT
+  LOAN_REPAYMENT
+  FEE
+  INTEREST
+  TRANSFER
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REVERSED
+}
+
+enum LoanStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  COMPLETED
+  DEFAULTED
+  WRITTEN_OFF
+  RESTRUCTURED
+}
+
+enum InterestType {
+  FIXED
+  VARIABLE
+  TIERED
+}
+
+enum InterestCalculationMethod {
+  SIMPLE
+  COMPOUND
+  REDUCING_BALANCE
+}
+
+enum PaymentFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
+enum RepaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  SKIPPED
+  DEFAULTED
+}
+
+enum KycDocumentType {
+  PASSPORT
+  NATIONAL_ID
+  DRIVERS_LICENSE
+  PROOF_OF_ADDRESS
+  SELFIE
+  UTILITY_BILL
+}
+
+enum KycDocumentSide {
+  FRONT
+  BACK
+  SINGLE
+}
+
+enum KycDocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum NotificationType {
+  TRANSACTION
+  LOAN_REMINDER
+  KYC_UPDATE
+  SYSTEM_ALERT
+  PROMOTIONAL
+  SECURITY_ALERT
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  VERY_HIGH
+}
+
+enum FraudRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum FraudAction {
+  ALLOW
+  FLAG
+  REQUIRE_2FA
+  BLOCK
+}
+
+// ==================== MODELS ====================
+
+model User {
+  id                      String    @id @default(uuid())
+  email                   String    @unique
+  fullName                String
+  accountType             AccountType
+  accountTier             AccountTier @default(TIER_0)
+  countryCode             String    // ISO 3166-1 alpha-2/3
+  city                    String?
+  institution             String?
+  institutionId           String?
+  phoneNumber             String?   @unique
+  phoneVerified           Boolean   @default(false)
+  passwordHash            String
+  emailVerified           Boolean   @default(false)
+  emailVerificationToken  String?
+  emailVerificationExpiry DateTime?
+  refreshToken            String?
+  refreshTokenExpiry      DateTime?
+  twoFactorEnabled        Boolean   @default(false)
+  twoFactorSecret         String?
+  deviceFingerprints      Json?     // Array of known device hashes
+  lastLoginAt             DateTime?
+  lastLoginIP             String?
+  loginAttempts           Int       @default(0)
+  lockedUntil             DateTime?
+  status                  UserStatus @default(PENDING_VERIFICATION)
+  statusReason            String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  deletedAt               DateTime?
+  metadata                Json?
+
+  wallets           Wallet[]
+  transactions      Transaction[]
+  creditProfile     CreditProfile?
+  repayments        Repayment[]
+  loans             Loan[]
+  kycDocuments      KycDocument[]
+  notifications     Notification[]
+  fraudLogs         FraudLog[]
+  auditLogs         AuditLog[]
+
+  @@index([email])
+  @@index([countryCode, accountType])
+  @@index([status, createdAt])
+}
+
+model Wallet {
+  id                    String      @id @default(uuid())
+  userId                String
+  currencyCode          CurrencyCode
+  accountNumber         String      @unique // FIN + 12 digits
+  balance               Decimal     @default(0) @db.Decimal(18, 8)
+  availableBalance      Decimal     @default(0) @db.Decimal(18, 8)
+  holdBalance           Decimal     @default(0) @db.Decimal(18, 8)
+  savingsBalance        Decimal     @default(0) @db.Decimal(18, 8)
+  savingsGoal           Decimal?    @db.Decimal(18, 8)
+  activeLoanBalance     Decimal     @default(0) @db.Decimal(18, 8)
+  totalLoanAmount       Decimal     @default(0) @db.Decimal(18, 8)
+  totalRepaidAmount     Decimal     @default(0) @db.Decimal(18, 8)
+  isActive              Boolean     @default(true)
+  lastTransactionAt     DateTime?
+  dailyTransactionTotal  Decimal    @default(0) @db.Decimal(18, 8)
+  dailyTransactionCount  Int        @default(0)
+  monthlyTransactionTotal Decimal   @default(0) @db.Decimal(18, 8)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  loans        Loan[]
+
+  @@unique([userId, currencyCode])
+  @@index([userId])
+  @@index([accountNumber])
+}
+
+model Transaction {
+  id               String            @id @default(uuid())
+  reference        String            @unique // TXN-YYYYMMDD-8chars
+  userId           String
+  walletId         String
+  transactionType  TransactionType
+  amount           Decimal           @db.Decimal(18, 8)
+  fee              Decimal           @default(0) @db.Decimal(18, 8)
+  netAmount        Decimal           @db.Decimal(18, 8)
+  currency         CurrencyCode
+  exchangeRate     Decimal?          @db.Decimal(18, 8)
+  originalCurrency CurrencyCode?
+  originalAmount   Decimal?          @db.Decimal(18, 8)
+  status           TransactionStatus @default(PENDING)
+  failureReason    String?
+  failureCode      String?
+  metadata         Json?
+  externalReference String?
+  reversalReference String?
+  reversalReason   String?
+  approvedBy       String?
+  approvalNote     String?
+  completedAt      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  repayments Repayment[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([reference])
+  @@index([status, createdAt])
+  @@index([walletId, transactionType])
+}
+
+model Loan {
+  id                    String     @id @default(uuid())
+  loanNumber            String     @unique // LN-YYYYMM-6random
+  userId                String
+  walletId              String
+  principalAmount       Decimal    @db.Decimal(18, 8)
+  interestRate          Decimal    @db.Decimal(5, 2)
+  interestType          InterestType @default(FIXED)
+  interestCalculationMethod InterestCalculationMethod @default(REDUCING_BALANCE)
+  totalInterest         Decimal    @db.Decimal(18, 8)
+  fees                  Decimal    @default(0) @db.Decimal(18, 8)
+  totalRepayable       Decimal    @db.Decimal(18, 8)
+  amountDisbursed      Decimal    @default(0) @db.Decimal(18, 8)
+  remainingBalance     Decimal    @db.Decimal(18, 8)
+  currency              CurrencyCode
+  term                  Int
+  termUnit              String     @default("MONTHS")
+  paymentFrequency      PaymentFrequency @default(MONTHLY)
+  installmentAmount     Decimal    @db.Decimal(18, 8)
+  disbursementDate      DateTime?
+  firstPaymentDate      DateTime?
+  nextPaymentDate       DateTime?
+  lastPaymentDate       DateTime?
+  maturityDate          DateTime
+  status                LoanStatus @default(PENDING)
+  defaultDate           DateTime?
+  delinquencyStage      Int        @default(0)
+  collateral            Json?
+  guarantor             Json?
+  approvalDate          DateTime?
+  approvedBy            String?
+  approvalNotes         String?
+  disbursedBy           String?
+  disbursedAt           DateTime?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet     Wallet      @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  repayments Repayment[]
+
+  @@index([userId, status])
+  @@index([status, nextPaymentDate])
+  @@index([loanNumber])
+}
+
+model Repayment {
+  id              String         @id @default(uuid())
+  loanId          String
+  userId          String
+  transactionId   String?
+  scheduledDate   DateTime
+  expectedAmount  Decimal        @db.Decimal(18, 8)
+  paidAmount      Decimal        @default(0) @db.Decimal(18, 8)
+  principalPortion Decimal       @default(0) @db.Decimal(18, 8)
+  interestPortion Decimal       @default(0) @db.Decimal(18, 8)
+  feePortion      Decimal       @default(0) @db.Decimal(18, 8)
+  paidDate        DateTime?
+  daysLate        Int           @default(0)
+  paidOnTime      Boolean?
+  status          RepaymentStatus @default(PENDING)
+  paymentMethod   String?
+  receiptGenerated Boolean      @default(false)
+  receiptUrl      String?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loan        Loan         @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([loanId, scheduledDate])
+  @@index([userId, paidDate])
+}
+
+model CreditProfile {
+  id                      String   @id @default(uuid())
+  userId                  String   @unique
+  financialDisciplineScore Int
+  previousScore           Int?
+  scoreFactors            Json?
+  scoreHistory            Json?
+  creditLimit             Decimal @db.Decimal(18, 8)
+  availableCredit         Decimal @db.Decimal(18, 8)
+  totalCreditUtilized     Decimal @default(0) @db.Decimal(18, 8)
+  creditUtilizationRatio  Decimal @default(0) @db.Decimal(5, 2)
+  repaymentReliability    Decimal @db.Decimal(5, 2)
+  savingsConsistency      Decimal @db.Decimal(5, 2)
+  transactionHealth       Decimal @db.Decimal(5, 2)
+  accountLongevity        Int
+  kycLevelBonus           Int
+  lastScoreUpdate         DateTime?
+  nextScoreUpdate         DateTime?
+  scoreVersion            String?
+  riskLevel               RiskLevel
+  riskNotes               String?
+  manualOverrideLimit     Decimal? @db.Decimal(18, 8)
+  manualOverrideReason    String?
+  manualOverrideExpiry    DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([riskLevel, lastScoreUpdate])
+}
+
+model KycDocument {
+  id               String           @id @default(uuid())
+  userId           String
+  documentType     KycDocumentType
+  documentSide     KycDocumentSide? @default(SINGLE)
+  status           KycDocumentStatus @default(PENDING)
+  filePath         String
+  fileHash         String?
+  fileName         String?
+  fileSize         Int?
+  mimeType         String?
+  extractedData    Json?
+  verificationMethod String?
+  verifiedBy       String?
+  verifiedAt       DateTime?
+  rejectionReason  String?
+  rejectionDetails Json?
+  expiryDate       DateTime?
+  uploadedAt       DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, documentType, status])
+}
+
+model FraudLog {
+  id            String         @id @default(uuid())
+  userId        String?
+  sessionId     String?
+  ruleTriggered String
+  riskScore     Int
+  riskLevel     FraudRiskLevel
+  action        String
+  actionTaken   String
+  details       Json?
+  metadata      Json?
+  resolved      Boolean        @default(false)
+  resolvedBy    String?
+  resolvedAt    DateTime?
+  resolution    String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([riskLevel, resolved])
+  @@index([createdAt])
+}
+
+model Notification {
+  id           String             @id @default(uuid())
+  userId       String
+  type         NotificationType
+  priority     NotificationPriority @default(MEDIUM)
+  title        String
+  message      String
+  data         Json?
+  isRead       Boolean            @default(false)
+  readAt       DateTime?
+  isDelivered  Boolean            @default(false)
+  deliveredAt  DateTime?
+  actionTaken  Boolean            @default(false)
+  actionUrl    String?
+  expiresAt    DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt(sort: Desc)])
+  @@index([type, priority])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  adminId    String?
+  action     String
+  entityType String
+  entityId   String
+  oldValues  Json?
+  newValues  Json?
+  changes    Json?
+  ipAddress  String?
+  userAgent  String?
+  sessionId  String?
+  requestId  String?
+  timestamp  DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, timestamp(sort: Desc)])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+}
+
+model RefreshTokenBlacklist {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([tokenHash])
+  @@index([expiresAt])
+}

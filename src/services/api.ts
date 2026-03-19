@@ -12,7 +12,7 @@
  * - Financial Metrics Calculation
  */
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const BASE_URL = (import.meta.env?.VITE_API_URL as string) || 'http://localhost:4000/api/v1';
 
 // ==================== TYPES ====================
 
@@ -58,6 +58,8 @@ export interface UserData {
   finEraAccountNumbers?: FinEraAccountNumbers;
   /** Bank linking data (Staff & Alumni only) */
   bankLinkingData?: BankLinkingData;
+  /** User's country (from profile) - used for payment options */
+  countryId?: string;
 }
 
 export interface Transaction {
@@ -88,6 +90,12 @@ export interface RegisterRequest {
   email: string;
   password: string;
   accountType: 'student' | 'staff' | 'alumni';
+  /** Country 2-letter ISO code (e.g. ZW) - from reference data */
+  country?: string;
+  /** City name - from reference data */
+  city?: string;
+  /** Institution name - from reference data */
+  institution?: string;
 }
 
 export interface OTPVerificationRequest {
@@ -112,13 +120,21 @@ export interface RepaymentRequest {
   method: string;
 }
 
+// ==================== API RESPONSE TYPES ====================
+
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  message: string;
+  data?: T;
+}
+
 // ==================== HELPER FUNCTIONS ====================
 
 async function apiCall<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = localStorage.getItem('auth_token');
+  const token = localStorage.getItem('auth_token') || localStorage.getItem('accessToken');
   
   const config: RequestInit = {
     ...options,
@@ -159,11 +175,45 @@ async function apiCall<T>(
  * - Return user object
  */
 export async function register(data: RegisterRequest): Promise<{ user: UserData; message: string }> {
-  // TODO: Replace with actual API call
-  return apiCall('/auth/register', {
+  const res = await apiCall<{ success: boolean; data: { userId: string; email: string }; message?: string }>('/auth/register', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      email: data.email,
+      password: data.password,
+      fullName: data.fullName,
+      accountType: data.accountType.toUpperCase(),
+      country: data.country || 'ZW',
+      city: data.city || '',
+      institution: data.institution || '',
+    }),
   });
+  return {
+    user: {
+      memberId: res.data?.userId || '',
+      fullName: data.fullName,
+      dateOfBirth: data.dateOfBirth,
+      phoneNumber: data.phoneNumber,
+      accountNumber: '',
+      nationalIdNumber: '',
+      studentStaffId: '',
+      salaryRange: null,
+      email: data.email,
+      mobile: data.phoneNumber,
+      accountType: data.accountType,
+      savingsBalance: 0,
+      approvedCreditWallet: 0,
+      activeCredit: 0,
+      availableCreditLimit: 200,
+      loanPrincipal: 0,
+      transactions: [],
+      disciplineScore: 50,
+      creditScore: 82,
+      loyaltyProgress: 0,
+      missedPayments: 0,
+      onTimePayments: 0,
+    },
+    message: res.message || 'Registration successful. Please verify your OTP.',
+  };
 }
 
 /**
@@ -176,11 +226,17 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
  * - Return user data and token
  */
 export async function login(data: LoginRequest): Promise<{ user: UserData; token: string }> {
-  // TODO: Replace with actual API call
-  return apiCall('/auth/login', {
+  const res = await apiCall<{ success: boolean; data: { accessToken: string; refreshToken: string; expiresIn: number } }>('/auth/login', {
     method: 'POST',
     body: JSON.stringify(data),
   });
+  if (res.data?.accessToken) {
+    localStorage.setItem('auth_token', res.data.accessToken);
+    localStorage.setItem('accessToken', res.data.accessToken);
+    localStorage.setItem('refreshToken', res.data.refreshToken || '');
+  }
+  const user = await getUserProfile();
+  return { user, token: res.data?.accessToken || '' };
 }
 
 /**
@@ -216,10 +272,72 @@ export async function resendOTP(email: string): Promise<{ success: boolean; mess
  * Logout user and invalidate token
  */
 export async function logout(): Promise<{ success: boolean }> {
-  // TODO: Replace with actual API call
+  const refreshToken = localStorage.getItem('refreshToken');
   return apiCall('/auth/logout', {
     method: 'POST',
+    body: JSON.stringify({ refreshToken: refreshToken || '' }),
   });
+}
+
+// ==================== REFERENCE DATA APIs ====================
+
+export interface ReferenceCountry {
+  id: string;
+  name: string;
+  code: string;
+}
+
+export interface ReferenceCity {
+  id: string;
+  name: string;
+  countryId: string;
+}
+
+export interface ReferenceInstitution {
+  id: string;
+  name: string;
+  type: string;
+  cityId: string;
+}
+
+export interface RegistrationData {
+  countries: ReferenceCountry[];
+  cities: ReferenceCity[];
+  institutions: ReferenceInstitution[];
+}
+
+/** Fetch all registration data in one request (preferred - avoids CORS/race issues) */
+export async function getRegistrationData(): Promise<RegistrationData> {
+  const base = (import.meta.env?.VITE_API_URL as string) || "http://localhost:4000/api/v1";
+  const url = `${base}/reference/registration-data`;
+  const res = await fetch(url, { credentials: "include" });
+  if (!res.ok) throw new Error(`Registration data failed: ${res.status}`);
+  const data = await res.json();
+  return {
+    countries: Array.isArray(data.countries) ? data.countries : [],
+    cities: Array.isArray(data.cities) ? data.cities : [],
+    institutions: Array.isArray(data.institutions) ? data.institutions : [],
+  };
+}
+
+export async function getCountries(): Promise<ReferenceCountry[]> {
+  const res = await apiCall<ReferenceCountry[]>("/reference/countries");
+  return Array.isArray(res) ? res : [];
+}
+
+export async function getCities(countryId?: string): Promise<ReferenceCity[]> {
+  const url = countryId ? `/reference/cities?countryId=${encodeURIComponent(countryId)}` : "/reference/cities";
+  const res = await apiCall<ReferenceCity[]>(url);
+  return Array.isArray(res) ? res : [];
+}
+
+export async function getInstitutions(countryId?: string, type?: "student" | "staff" | "alumni"): Promise<ReferenceInstitution[]> {
+  const params = new URLSearchParams();
+  if (countryId) params.set("countryId", countryId);
+  if (type) params.set("type", type);
+  const url = `/reference/institutions${params.toString() ? "?" + params.toString() : ""}`;
+  const res = await apiCall<ReferenceInstitution[]>(url);
+  return Array.isArray(res) ? res : [];
 }
 
 // ==================== USER MANAGEMENT APIs ====================
@@ -233,8 +351,47 @@ export async function logout(): Promise<{ success: boolean }> {
  * - Return complete user data
  */
 export async function getUserProfile(): Promise<UserData> {
-  // TODO: Replace with actual API call
-  return apiCall('/users/profile');
+  const [profileRes, walletsRes, limitRes] = await Promise.all([
+    apiCall<{ success: boolean; data: Record<string, unknown> }>('/user/profile'),
+    apiCall<{ success: boolean; data: Array<{ currencyCode: string; balance: string; accountNumber: string }> }>('/user/wallets'),
+    apiCall<{ success: boolean; data: { creditLimit: number; availableCredit: number; financialDisciplineScore: number } }>('/credit/limit').catch(() => ({ success: false, data: { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 } })),
+  ]);
+  const p = profileRes.data || {};
+  const wallets = walletsRes.data || [];
+  const usdWallet = wallets.find((w) => w.currencyCode === 'USD');
+  const zigWallet = wallets.find((w) => w.currencyCode === 'ZIG');
+  const zarWallet = wallets.find((w) => w.currencyCode === 'ZAR');
+  const limit = limitRes.data || { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 };
+  return {
+    memberId: (p.id as string) || '',
+    fullName: (p.fullName as string) || '',
+    title: '',
+    dateOfBirth: '',
+    phoneNumber: '',
+    accountNumber: usdWallet?.accountNumber || '',
+    nationalIdNumber: '',
+    studentStaffId: '',
+    salaryRange: null,
+    email: (p.email as string) || '',
+    mobile: '',
+    accountType: ((p.accountType as string) || 'student').toLowerCase(),
+    savingsBalance: parseFloat(usdWallet?.balance || '0') || 0,
+    approvedCreditWallet: 0,
+    activeCredit: 0,
+    availableCreditLimit: limit.availableCredit || 200,
+    loanPrincipal: 0,
+    transactions: [],
+    disciplineScore: limit.financialDisciplineScore || 50,
+    creditScore: limit.financialDisciplineScore || 82,
+    loyaltyProgress: 0,
+    missedPayments: 0,
+    onTimePayments: 0,
+    finEraAccountNumbers: {
+      usd: usdWallet?.accountNumber || '',
+      zig: zigWallet?.accountNumber || '',
+      zar: zarWallet?.accountNumber || '',
+    },
+  };
 }
 
 /**
@@ -595,6 +752,132 @@ export async function getAllUsers(params?: {
   // TODO: Replace with actual API call
   const queryString = params ? '?' + new URLSearchParams(params as any).toString() : '';
   return apiCall(`/admin/users${queryString}`);
+}
+
+// ==================== BIOMETRIC APIs ====================
+
+/** POST /api/biometric/liveness - Liveness check payload */
+export interface LivenessRequest {
+  image: string; // base64
+  type: "liveness_check";
+}
+
+export async function submitLivenessCheck(data: LivenessRequest): Promise<ApiResponse<{ verified: boolean }>> {
+  try {
+    return await apiCall('/biometric/liveness', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  } catch (e) {
+    return { success: false, message: e instanceof Error ? e.message : 'Liveness check failed' };
+  }
+}
+
+/** POST /api/biometric/id-verify - ID verification */
+export interface IdVerifyRequest {
+  id_front: string;
+  id_back: string;
+}
+
+export async function submitIdVerification(data: IdVerifyRequest): Promise<ApiResponse<{ verified: boolean }>> {
+  try {
+    return await apiCall('/biometric/id-verify', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  } catch (e) {
+    return { success: false, message: e instanceof Error ? e.message : 'ID verification failed' };
+  }
+}
+
+/** Convert base64 (data URL or raw) to Blob */
+function base64ToBlob(base64: string, mimeType = 'image/jpeg'): Blob {
+  const dataUrl = base64.startsWith('data:') ? base64 : `data:${mimeType};base64,${base64}`;
+  const [, b64] = dataUrl.split(',');
+  const bytes = atob(b64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([arr], { type: mimeType });
+}
+
+/** POST /kyc/upload - Upload KYC document (multipart). documentType: ID_FRONT | ID_BACK | SELFIE | PROOF_OF_ADDRESS */
+export async function uploadKycDocument(
+  base64Image: string,
+  documentType: 'ID_FRONT' | 'ID_BACK' | 'SELFIE' | 'PROOF_OF_ADDRESS'
+): Promise<ApiResponse<{ documentId: string; status: string }>> {
+  const token = localStorage.getItem('auth_token') || localStorage.getItem('accessToken');
+  const blob = base64ToBlob(base64Image);
+  const file = new File([blob], `kyc-${documentType.toLowerCase()}.jpg`, { type: 'image/jpeg' });
+  const formData = new FormData();
+  formData.append('documentType', documentType);
+  formData.append('file', file);
+
+  const res = await fetch(`${BASE_URL}/kyc/upload`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return { success: false, message: data.message || `Upload failed (${res.status})` };
+  }
+  return { success: true, message: 'Uploaded', data: data.data };
+}
+
+// ==================== NOTIFICATIONS API ====================
+
+export interface NotificationItem {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  date: string;
+  read: boolean;
+}
+
+export async function getNotifications(): Promise<ApiResponse<NotificationItem[]>> {
+  try {
+    return await apiCall('/notifications');
+  } catch (e) {
+    return { success: false, message: e instanceof Error ? e.message : 'Failed to load notifications', data: [] };
+  }
+}
+
+// ==================== PAYMENTS API ====================
+
+export interface MobileMoneyDepositRequest {
+  amount: number;
+  phoneNumber: string;
+  provider: string;
+}
+
+export async function mobileMoneyDeposit(data: MobileMoneyDepositRequest): Promise<ApiResponse> {
+  try {
+    return await apiCall('/payments/deposit', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  } catch (e) {
+    return { success: false, message: e instanceof Error ? e.message : 'Deposit failed' };
+  }
+}
+
+export interface BankDepositRequest {
+  amount: number;
+  bankId: string;
+  accountNumber: string;
+}
+
+export async function bankDeposit(data: BankDepositRequest): Promise<ApiResponse> {
+  try {
+    return await apiCall('/bank/deposit', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  } catch (e) {
+    return { success: false, message: e instanceof Error ? e.message : 'Bank deposit failed' };
+  }
 }
 
 // ==================== HELPER: Mock Mode for Development ====================

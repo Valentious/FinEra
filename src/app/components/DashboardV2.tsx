@@ -54,6 +54,7 @@ interface DashboardV2Props {
   onViewSavings: () => void;
   onViewRepayment: () => void;
   onWithdrawFunds: () => void;
+  onMakePayment?: () => void;
   transactions: any[];
 }
 
@@ -140,6 +141,7 @@ export function DashboardV2({
   onViewSavings,
   onViewRepayment,
   onWithdrawFunds,
+  onMakePayment,
   transactions
 }: DashboardV2Props) {
   const [showDisciplineDetails, setShowDisciplineDetails] = useState(false);
@@ -453,6 +455,16 @@ export function DashboardV2({
             <ArrowDown className="w-6 h-6" />
             <span>Withdraw Funds</span>
           </Button>
+
+          {onMakePayment && (
+            <Button 
+              onClick={onMakePayment}
+              className="h-24 flex flex-col items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl shadow-xl font-black"
+            >
+              <HandCoins className="w-6 h-6" />
+              <span>Make Payment</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -461,7 +473,7 @@ export function DashboardV2({
         {/* Savings Growth Chart */}
         <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-black text-slate-900">Performance Portfolio</h3>
+            <h3 className="text-lg font-black text-slate-900">Performance Portfolio ({selectedCurrency})</h3>
             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase">
               <ShieldCheck className="w-3 h-3 text-green-500" />
               Verified Assets

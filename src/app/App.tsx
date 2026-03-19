@@ -26,6 +26,7 @@ import { ProfileSettings } from "@/app/components/ProfileSettings";
 import { AdminOverview } from "@/app/components/AdminOverview";
 import { MemberAgreement } from "@/app/components/MemberAgreement";
 import { MakeRepayment } from "@/app/components/MakeRepayment";
+import { MakePayment } from "@/app/components/MakePayment";
 import { AccountCreationSuccess } from "@/app/components/AccountCreationSuccess";
 import { Toaster, toast } from "sonner";
 import { apiService, type UserData, type Transaction, type CreditApplication, type FinEraAccountNumbers } from "@/services/index";
@@ -59,7 +60,8 @@ type Screen =
   | "financialEducation"
   | "profileSettings"
   | "adminOverview"
-  | "makeRepayment";
+  | "makeRepayment"
+  | "makePayment";
 
 // NOTE: These limits are now defined in the backend
 // Kept here for UI reference only - backend is the source of truth
@@ -191,46 +193,47 @@ export default function App() {
     return userData.accountNumber;
   })();
 
-  const handleLogin = (email: string) => {
-    const saved = loadUserData(email);
-    if (saved) {
-      // Add backwards compatibility for approvedCreditWallet
-      if (!saved.hasOwnProperty('approvedCreditWallet')) {
-        saved.approvedCreditWallet = 0;
+  const handleLogin = async (email: string, password?: string) => {
+    try {
+      const { user, token } = await apiService.login({ email, password: password || '' });
+      if (user && token) {
+        const updated = { ...user, lastLogin: Date.now() };
+        if (!updated.finEraAccountNumbers) {
+          (updated as UserData).finEraAccountNumbers = generateFinEraAccountNumbers();
+        }
+        setUserData(updated);
+        saveUserData(updated);
+        localStorage.setItem("active_user_email", email);
+        setCurrentScreen("dashboard");
+        toast.success(`Welcome back, ${updated.fullName}!`);
+      } else {
+        toast.error("Login failed. Please check your credentials.");
       }
-      // Migrate legacy users: generate FinEra account numbers if missing
-      let updated: UserData = { ...saved, lastLogin: Date.now() };
-      if (!saved.finEraAccountNumbers) {
-        updated = { ...updated, finEraAccountNumbers: generateFinEraAccountNumbers() };
-      }
-      setUserData(updated);
-      saveUserData(updated);
-      localStorage.setItem("active_user_email", email);
-      setCurrentScreen("dashboard");
-      toast.success(`Welcome back, ${saved.fullName}!`);
-    } else {
-      toast.error("Account not found. Please register.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Login failed. Please try again.");
     }
   };
 
-  const handleRegister = (data: any) => {
-    // Use pre-selected account type if available
+  const handleRegister = async (data: any) => {
     const accountType = preSelectedAccountType || 'student';
     const limit = CREDIT_LIMITS[accountType].max;
-    const newUser = { 
-      ...userData, 
-      ...data, 
-      accountType, 
-      availableCreditLimit: limit,
-      memberId: generateMemberId(), 
-      accountNumber: generateAccountNumber(), 
-      lastLogin: Date.now(),
-      disciplineScore: 50, // New users start at 50
-      loyaltyProgress: 0,  // New users start at 0
-    };
-    setUserData(newUser);
-    localStorage.setItem("active_user_email", data.email);
-    setCurrentScreen("otpVerification");
+    try {
+      const { user } = await apiService.register({
+        ...data,
+        accountType,
+      });
+      const newUser = {
+        ...user,
+        availableCreditLimit: limit,
+        lastLogin: Date.now(),
+      };
+      setUserData(newUser);
+      saveUserData(newUser);
+      localStorage.setItem("active_user_email", data.email);
+      setCurrentScreen("otpVerification");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Registration failed.");
+    }
   };
 
   const handlePreSelectAccountType = (type: 'student' | 'staff' | 'alumni') => {
@@ -248,11 +251,19 @@ export default function App() {
     "dashboard", "savingsWallet", "walletManagement", "withdrawFlow", "depositFlow", "applyForCredit", 
     "creditDetails", "creditTypeSelection", "collateralDetails", "confirmApplication", 
     "buyBackAgreement", "creditApproved", "walletCredited", "repaymentDashboard", "financialEducation", 
-    "profileSettings", "adminOverview", "memberAgreement", "makeRepayment"
+    "profileSettings", "adminOverview", "memberAgreement", "makeRepayment", "makePayment"
   ].includes(currentScreen);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await apiService.logout();
+    } catch {
+      // Ignore logout API errors
+    }
     localStorage.removeItem("active_user_email");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     setCurrentScreen("loginRegister");
   };
 
@@ -287,7 +298,7 @@ export default function App() {
       <main className={`${isAuthScreen ? "pt-20 md:pl-64 p-4 md:p-8" : ""}`}>
         {currentScreen === "splash" && <SplashScreen onComplete={() => setCurrentScreen("accountType")} />}
         {currentScreen === "accountType" && <AccountTypeSelection onSelectType={handlePreSelectAccountType} onBack={() => setCurrentScreen("splash")} />}
-        {currentScreen === "loginRegister" && <LoginRegister onLogin={handleLogin} onRegister={handleRegister} onBack={() => setCurrentScreen("accountType")} />}
+        {currentScreen === "loginRegister" && <LoginRegister accountType={preSelectedAccountType || 'student'} onLogin={handleLogin} onRegister={handleRegister} onBack={() => setCurrentScreen("accountType")} />}
         {currentScreen === "otpVerification" && <OTPVerification email={userData.email} onVerify={() => setCurrentScreen("verify")} onBack={() => setCurrentScreen("loginRegister")} />}
         {currentScreen === "verify" && <VerifyAccess onVerify={() => setCurrentScreen("profileDetails")} />}
         {currentScreen === "profileDetails" && (
@@ -359,6 +370,7 @@ export default function App() {
             }}
             onViewRepayment={() => setCurrentScreen("repaymentDashboard")}
             onWithdrawFunds={() => setCurrentScreen("withdrawFlow")}
+            onMakePayment={() => setCurrentScreen("makePayment")}
             transactions={userData.transactions}
           />
         )}
@@ -560,6 +572,13 @@ export default function App() {
         )}
 
         {currentScreen === "financialEducation" && <FinancialEducation onBack={() => setCurrentScreen("dashboard")} />}
+        {currentScreen === "makePayment" && (
+          <MakePayment
+            countryCode={userData.countryId || "zw"}
+            onBack={() => setCurrentScreen("dashboard")}
+            onSuccess={() => setCurrentScreen("dashboard")}
+          />
+        )}
         {currentScreen === "profileSettings" && <ProfileSettings userData={userData} onLogout={handleLogout} onUpdate={(d) => updateAndSave({ ...userData, ...d })} />}
       </main>
     </div>

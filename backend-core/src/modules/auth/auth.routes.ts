@@ -1,0 +1,63 @@
+/**
+ * FinEra Backend - Auth Routes
+ */
+
+import { Router } from "express";
+import * as authService from "./auth.service.js";
+import { registerSchema, loginSchema, refreshSchema } from "./auth.validation.js";
+import { validationError } from "../../middlewares/errorHandler.js";
+
+const router = Router();
+
+router.post("/register", async (req, res, next) => {
+  try {
+    const parsed = registerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw validationError("Validation failed", parsed.error.flatten().fieldErrors as Record<string, unknown>);
+    }
+    const result = await authService.register(parsed.data);
+    res.status(201).json({ success: true, message: "Registration successful", data: result });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/login", async (req, res, next) => {
+  try {
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw validationError("Validation failed", parsed.error.flatten().fieldErrors as Record<string, unknown>);
+    }
+    const tokens = await authService.login(parsed.data);
+    res.json({ success: true, data: tokens });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/refresh", async (req, res, next) => {
+  try {
+    const parsed = refreshSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw validationError("Validation failed");
+    }
+    const tokens = await authService.refresh(parsed.data.refreshToken);
+    res.json({ success: true, data: tokens });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/logout", async (req, res, next) => {
+  try {
+    const parsed = refreshSchema.safeParse(req.body);
+    if (parsed.success) {
+      await authService.logout(parsed.data.refreshToken);
+    }
+    res.json({ success: true, message: "Logged out" });
+  } catch (e) {
+    next(e);
+  }
+});
+
+export default router;

@@ -43,15 +43,21 @@ const METHODS = [
 ];
 
 export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: WithdrawFlowProps) {
-  const [step, setStep] = useState<"method" | "amount" | "agent" | "atm-code" | "processing" | "success">("method");
+  const [step, setStep] = useState<"method" | "amount" | "recipient" | "confirmCode" | "agent" | "atm-code" | "processing" | "success">("method");
   const [selectedMethod, setSelectedMethod] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
+  const [recipientDetails, setRecipientDetails] = useState<string>("");
+  const [confirmCode, setConfirmCode] = useState<string>("");
+  const [sentCode, setSentCode] = useState<string>("");
   const [otpVerified, setOtpVerified] = useState(false);
   const [atmCode, setAtmCode] = useState("");
   const [atmReference, setAtmReference] = useState("");
   const [atmExpiry, setAtmExpiry] = useState<Date | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
   const [refCopied, setRefCopied] = useState(false);
+
+  const MOBILE_METHODS = ["ecocash", "onemoney", "innbucks", "mobilemoney"];
+  const needsConfirmCode = MOBILE_METHODS.includes(selectedMethod);
 
   const handleMethodSelect = (methodId: string) => {
     setSelectedMethod(methodId);
@@ -74,17 +80,39 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
     if (selectedMethod === 'agent') {
       setStep("agent");
     } else if (selectedMethod === 'atm') {
-      // Generate ATM withdrawal code
       generateATMCode();
+    } else if (needsConfirmCode) {
+      setStep("recipient");
     } else {
       setStep("processing");
-      
-      // Simulate processing
       setTimeout(() => {
         onConfirm(numAmount, selectedMethod);
         setStep("success");
       }, 2000);
     }
+  };
+
+  const handleRecipientSubmit = () => {
+    if (!recipientDetails.trim()) {
+      toast.error("Enter recipient phone or account details");
+      return;
+    }
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setSentCode(code);
+    toast.success("Confirmation code sent to your device");
+    setStep("confirmCode");
+  };
+
+  const handleConfirmCodeSubmit = () => {
+    if (confirmCode !== sentCode) {
+      toast.error("Invalid confirmation code");
+      return;
+    }
+    setStep("processing");
+    setTimeout(() => {
+      onConfirm(parseFloat(amount), selectedMethod);
+      setStep("success");
+    }, 1500);
   };
 
   const generateATMCode = () => {
@@ -217,6 +245,72 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
                 Confirm Withdrawal
               </Button>
             </div>
+          </motion.div>
+        )}
+
+        {step === "recipient" && (
+          <motion.div
+            key="recipient"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <Button variant="ghost" size="icon" onClick={() => setStep("amount")} className="rounded-full">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h2 className="text-xl font-black text-slate-900">Recipient Details</h2>
+            <p className="text-slate-600 text-sm">
+              Enter the phone number or account to receive the withdrawal via {METHODS.find(m => m.id === selectedMethod)?.label}
+            </p>
+            <div className="space-y-2">
+              <Label>Phone / Account Number</Label>
+              <Input
+                placeholder="+263 77 123 4567"
+                value={recipientDetails}
+                onChange={(e) => setRecipientDetails(e.target.value)}
+                className="h-14 rounded-2xl"
+              />
+            </div>
+            <Button onClick={handleRecipientSubmit} className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-black">
+              Send Confirmation Code
+            </Button>
+          </motion.div>
+        )}
+
+        {step === "confirmCode" && (
+          <motion.div
+            key="confirmCode"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <Button variant="ghost" size="icon" onClick={() => setStep("recipient")} className="rounded-full">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200">
+              <p className="text-sm font-bold text-amber-900">
+                Enter the confirmation code sent to your device to complete withdrawal.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Confirmation Code</Label>
+              <Input
+                placeholder="Enter 6-digit code"
+                value={confirmCode}
+                onChange={(e) => setConfirmCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="h-14 rounded-2xl text-center text-2xl font-black tracking-[0.5em]"
+                maxLength={6}
+              />
+            </div>
+            <Button
+              onClick={handleConfirmCodeSubmit}
+              disabled={confirmCode.length !== 6}
+              className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-black disabled:opacity-50"
+            >
+              Complete Withdrawal
+            </Button>
           </motion.div>
         )}
 

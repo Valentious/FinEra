@@ -1,21 +1,19 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { 
   Camera, 
-  Upload, 
   CheckCircle2, 
-  User, 
-  CreditCard, 
   ShieldCheck, 
   ArrowRight,
-  Loader2,
   Scan,
-  Smartphone,
   AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { CameraCapture } from "./CameraCapture";
+import { FileOrCameraInput } from "./FileOrCameraInput";
+import { uploadKycDocument } from "@/services/api";
 
 interface VerifyAccessProps {
   onVerify: (data: any) => void;
@@ -38,7 +36,32 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
     }
   };
 
-  const startOcrMatch = () => {
+  const startOcrMatch = async () => {
+    // Upload captured images to backend for storage/analysis
+    const uploads: Promise<void>[] = [];
+    if (faceImage) {
+      uploads.push(
+        uploadKycDocument(faceImage, "SELFIE").then((r) => {
+          if (!r.success) toast.error("Selfie upload failed. Verification saved locally.");
+        }).catch(() => toast.error("Selfie upload failed. Verification saved locally."))
+      );
+    }
+    if (idFront) {
+      uploads.push(
+        uploadKycDocument(idFront, "ID_FRONT").then((r) => {
+          if (!r.success) toast.error("ID front upload failed. Verification saved locally.");
+        }).catch(() => toast.error("ID front upload failed. Verification saved locally."))
+      );
+    }
+    if (idBack) {
+      uploads.push(
+        uploadKycDocument(idBack, "ID_BACK").then((r) => {
+          if (!r.success) toast.error("ID back upload failed. Verification saved locally.");
+        }).catch(() => toast.error("ID back upload failed. Verification saved locally."))
+      );
+    }
+    void Promise.all(uploads);
+
     let p = 0;
     const interval = setInterval(() => {
       p += 5;
@@ -116,23 +139,17 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                 <p className="text-slate-500 font-medium text-sm">Position your face within the frame</p>
               </div>
               
-              <div className="aspect-square bg-slate-900 rounded-[3rem] border-8 border-white shadow-2xl relative overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <User className="w-32 h-32 text-slate-800" />
-                </div>
-                {/* Simulated Camera Feed Overlay */}
-                <div className="absolute inset-0 border-[3px] border-emerald-500/50 rounded-[2.5rem] m-8 animate-pulse" />
-                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-                  <div className="px-4 py-1.5 bg-emerald-600 rounded-full text-[10px] font-black text-white uppercase tracking-widest">
-                    Liveness Check Active
-                  </div>
-                </div>
-              </div>
+              <CameraCapture
+                mode="selfie"
+                onCapture={(base64) => setFaceImage(base64)}
+                instructionText="Position your face within the frame"
+                guideShape="oval"
+              />
 
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep("intro")} className="flex-1 h-14 rounded-2xl font-black">Back</Button>
-                <Button onClick={handleNext} className="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black gap-2">
-                  Capture Photo <Camera className="w-5 h-5" />
+                <Button onClick={handleNext} disabled={!faceImage} className="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black gap-2 disabled:opacity-50">
+                  Next Step <ArrowRight className="w-5 h-5" />
                 </Button>
               </div>
             </motion.div>
@@ -147,20 +164,20 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
             >
               <div className="text-center space-y-2">
                 <h2 className="text-2xl font-black text-slate-900">ID Front Scan</h2>
-                <p className="text-slate-500 font-medium text-sm">Upload front of your National ID</p>
+                <p className="text-slate-500 font-medium text-sm">Upload or capture front of your National ID</p>
               </div>
 
-              <div className="aspect-[1.6/1] bg-white rounded-3xl border-4 border-dashed border-slate-200 flex flex-col items-center justify-center p-8 text-center group hover:border-emerald-600 transition-all cursor-pointer">
-                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-all">
-                  <Upload className="w-8 h-8 text-slate-400" />
-                </div>
-                <p className="font-black text-slate-900">Click to Upload</p>
-                <p className="text-[10px] text-slate-400 font-bold mt-1">SUPPORTED: PNG, JPG (MAX 5MB)</p>
-              </div>
+              <FileOrCameraInput
+                value={idFront}
+                onChange={(b) => setIdFront(b)}
+                onClear={() => setIdFront(null)}
+                label="National ID"
+                sideLabel="Front"
+              />
 
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep("face")} className="flex-1 h-14 rounded-2xl font-black">Back</Button>
-                <Button onClick={handleNext} className="flex-[2] h-14 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black gap-2">
+                <Button onClick={handleNext} disabled={!idFront} className="flex-[2] h-14 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black gap-2 disabled:opacity-50">
                   Next Step <ArrowRight className="w-5 h-5" />
                 </Button>
               </div>
@@ -176,20 +193,20 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
             >
               <div className="text-center space-y-2">
                 <h2 className="text-2xl font-black text-slate-900">ID Back Scan</h2>
-                <p className="text-slate-500 font-medium text-sm">Upload back of your National ID</p>
+                <p className="text-slate-500 font-medium text-sm">Upload or capture back of your National ID</p>
               </div>
 
-              <div className="aspect-[1.6/1] bg-white rounded-3xl border-4 border-dashed border-slate-200 flex flex-col items-center justify-center p-8 text-center group hover:border-emerald-600 transition-all cursor-pointer">
-                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-all">
-                  <Upload className="w-8 h-8 text-slate-400" />
-                </div>
-                <p className="font-black text-slate-900">Click to Upload</p>
-                <p className="text-[10px] text-slate-400 font-bold mt-1">EXTRACTING: EXPIRY, SERIAL</p>
-              </div>
+              <FileOrCameraInput
+                value={idBack}
+                onChange={(b) => setIdBack(b)}
+                onClear={() => setIdBack(null)}
+                label="National ID"
+                sideLabel="Back"
+              />
 
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep("id_front")} className="flex-1 h-14 rounded-2xl font-black">Back</Button>
-                <Button onClick={handleNext} className="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black gap-2 shadow-xl shadow-emerald-100">
+                <Button onClick={handleNext} disabled={!idBack} className="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black gap-2 shadow-xl shadow-emerald-100 disabled:opacity-50">
                   Finish & Match <CheckCircle2 className="w-5 h-5" />
                 </Button>
               </div>

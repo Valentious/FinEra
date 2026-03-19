@@ -7,12 +7,12 @@ import {
   User, 
   Settings, 
   LogOut, 
-  Bell, 
   Menu,
   X
 } from "lucide-react";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 import { FinEraLogoText } from "@/app/components/FinEraLogoText";
+import { NotificationsDropdown } from "@/app/components/NotificationsDropdown";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -59,10 +59,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="relative text-slate-200 hover:text-white hover:bg-white/10">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-800" />
-          </Button>
+          <NotificationsDropdown />
           <div className="h-8 w-[1px] bg-slate-500/50 mx-1" />
           <div className="flex items-center gap-2 pl-2">
             <div className="text-right hidden sm:block">

@@ -36,6 +36,21 @@ export function validateEmail(email: string): boolean {
   return VALIDATION.EMAIL_REGEX.test(email);
 }
 
+/** Institutional domain patterns: .edu, .ac.*, .gov, org domains */
+const INSTITUTIONAL_DOMAIN_REGEX = /@([a-z0-9-]+\.(edu|ac\.[a-z]{2,}|gov\.[a-z]{2,}|gov)|[a-z0-9-]+\.(edu|ac\.[a-z]{2,}|gov\.[a-z]{2,}|gov)(\.[a-z]{2})?)$/i;
+
+/** Validate institutional email (Staff & Alumni): academic, research, government, org domains */
+export function validateInstitutionalEmail(email: string): boolean {
+  if (!VALIDATION.EMAIL_REGEX.test(email)) return false;
+  return INSTITUTIONAL_DOMAIN_REGEX.test(email) || /\.(edu|ac\.|gov)\.?/i.test(email);
+}
+
+/** Validate student email: university/college educational institution domains */
+export function validateStudentEmail(email: string): boolean {
+  if (!VALIDATION.EMAIL_REGEX.test(email)) return false;
+  return /\.(edu|ac\.[a-z]{2,}|ac\.uk|ac\.za|ac\.zw)/i.test(email) || /@[a-z0-9-]+\.(edu|ac\.)/i.test(email);
+}
+
 /** Validate phone in E.164 format */
 export function validatePhoneE164(phone: string): boolean {
   return VALIDATION.PHONE_E164_REGEX.test(phone);

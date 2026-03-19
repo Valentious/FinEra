@@ -1,22 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { PhoneInputField } from "@/app/components/PhoneInputField";
 import { motion } from "motion/react";
-import { LogIn, UserPlus, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { LogIn, UserPlus, Mail, Lock, User, ArrowLeft, MapPin, Building2 } from "lucide-react";
+import { validateInstitutionalEmail, validateStudentEmail } from "@/lib/validation";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 import { FinEraLogoText } from "@/app/components/FinEraLogoText";
+import { getRegistrationData } from "@/services/api";
+import { COUNTRIES, getCitiesByCountry, getInstitutionsByCountryAndType } from "@/data/locations";
 
 interface LoginRegisterProps {
-  onLogin: (email: string) => void;
+  onLogin: (email: string, password?: string) => void;
   onRegister: (data: any) => void;
   onBack?: () => void;
+  /** Pre-selected account type from AccountTypeSelection - affects email label & validation */
+  accountType?: 'student' | 'staff' | 'alumni';
 }
 
-export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProps) {
+export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'student' }: LoginRegisterProps) {
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({ 
     fullName: "", 
@@ -24,13 +30,69 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
     phoneNumber: "",
     email: "", 
     password: "", 
-    confirmPassword: "" 
+    confirmPassword: "",
+    countryId: "",
+    cityId: "",
+    institutionId: "",
   });
   const [dobError, setDobError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [countries, setCountries] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [cities, setCities] = useState<{ id: string; name: string; countryId: string }[]>([]);
+  const [institutions, setInstitutions] = useState<{ id: string; name: string; type: string; cityId: string }[]>([]);
+  const [refLoading, setRefLoading] = useState(true);
+  const [refError, setRefError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchRegistrationData = async () => {
+      try {
+        setRefLoading(true);
+        setRefError(null);
+        const data = await getRegistrationData();
+        if (data.countries.length > 0) {
+          setCountries(data.countries);
+          setCities(data.cities);
+          setInstitutions(data.institutions);
+        } else {
+          setCountries(COUNTRIES);
+        }
+      } catch (err) {
+        console.error("Error fetching registration data:", err);
+        setRefError("Failed to load registration data. Using fallback.");
+        setCountries(COUNTRIES);
+        setCities([]);
+        setInstitutions([]);
+      } finally {
+        setRefLoading(false);
+      }
+    };
+    fetchRegistrationData();
+  }, []);
+
+  const citiesForCountry = useMemo(() => {
+    if (cities.length > 0) return cities;
+    return getCitiesByCountry(registerData.countryId);
+  }, [cities, registerData.countryId]);
+
+  const institutionsForCountry = useMemo(() => {
+    let list = institutions.length > 0
+      ? institutions.filter((i) => {
+          const city = citiesForCountry.find((c) => c.id === i.cityId);
+          return city != null;
+        })
+      : getInstitutionsByCountryAndType(registerData.countryId, accountType);
+    if (accountType !== "staff") {
+      list = list.filter((i) => i.type === "university" || i.type === "polytechnic");
+    }
+    if (registerData.cityId) {
+      return list.filter((i) => i.cityId === registerData.cityId);
+    }
+    return list;
+  }, [institutions, registerData.countryId, registerData.cityId, accountType, citiesForCountry]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(loginData.email);
+    onLogin(loginData.email, loginData.password);
   };
 
   const passwordsMatch = registerData.password === registerData.confirmPassword;
@@ -68,10 +130,56 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
       setDobError("You must be at least 16 years old to register");
       return;
     }
+    if (!registerData.countryId) {
+      setEmailError("Please select your country");
+      return;
+    }
+    if (!registerData.cityId) {
+      setEmailError("Please select your city");
+      return;
+    }
+    if (!registerData.institutionId) {
+      setEmailError("Please select your institution");
+      return;
+    }
     setDobError("");
-    const { confirmPassword, ...dataToSubmit } = registerData;
-    onRegister(dataToSubmit);
+    setEmailError("");
+    const isStudent = accountType === 'student';
+    const isValidEmail = isStudent
+      ? validateStudentEmail(registerData.email)
+      : validateInstitutionalEmail(registerData.email);
+    if (!isValidEmail) {
+      setEmailError(isStudent
+        ? "Please use a valid University/College student email (e.g. @university.edu, .ac.zw)"
+        : "Please use a valid Institutional email (e.g. .edu, .ac.*, .gov, organisation domains)");
+      return;
+    }
+    const country = countries.find((c) => c.id === registerData.countryId);
+    const city = citiesForCountry.find((c) => c.id === registerData.cityId);
+    const institution = institutionsForCountry.find((i) => i.id === registerData.institutionId);
+    const { confirmPassword, countryId, cityId, institutionId, ...rest } = registerData;
+    onRegister({
+      ...rest,
+      country: country?.code || "ZW",
+      city: city?.name || "",
+      institution: institution?.name || "",
+    });
   };
+
+  const handleCountryChange = (id: string) => {
+    setRegisterData({ ...registerData, countryId: id, cityId: "", institutionId: "" });
+  };
+
+  const handleCityChange = (id: string) => {
+    setRegisterData({ ...registerData, cityId: id, institutionId: "" });
+  };
+
+  const emailLabel = accountType === 'student'
+    ? "University/College Student Email"
+    : "Institutional Email";
+  const emailPlaceholder = accountType === 'student'
+    ? "student@university.edu"
+    : "name@institution.edu";
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -222,20 +330,93 @@ export function LoginRegister({ onLogin, onRegister, onBack }: LoginRegisterProp
                         buttonClassName="!border-slate-200"
                       />
                     </div>
+                    {refError && (
+                      <p className="text-sm text-amber-600 font-medium">{refError}</p>
+                    )}
                     <div className="space-y-2">
-                      <Label htmlFor="reg-email">University Email</Label>
+                      <Label className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        Country
+                      </Label>
+                      <Select
+                        value={registerData.countryId}
+                        onValueChange={handleCountryChange}
+                        disabled={refLoading}
+                      >
+                        <SelectTrigger className="h-12 rounded-lg border-slate-200">
+                          <SelectValue placeholder="Select country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {countries.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        City
+                      </Label>
+                      <Select
+                        value={registerData.cityId}
+                        onValueChange={handleCityChange}
+                        disabled={!registerData.countryId || refLoading}
+                      >
+                        <SelectTrigger className="h-12 rounded-lg border-slate-200">
+                          <SelectValue placeholder="Select city" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {citiesForCountry.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4" />
+                        Institution
+                      </Label>
+                      <Select
+                        value={registerData.institutionId}
+                        onValueChange={(id) => setRegisterData({ ...registerData, institutionId: id })}
+                        disabled={!registerData.cityId || refLoading}
+                      >
+                        <SelectTrigger className="h-12 rounded-lg border-slate-200">
+                          <SelectValue placeholder="Select institution" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {institutionsForCountry.map((i) => (
+                            <SelectItem key={i.id} value={i.id}>
+                              {i.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="reg-email">{emailLabel}</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input 
                           id="reg-email" 
                           type="email" 
-                          placeholder="j.doe@campus.edu" 
-                          className="pl-10 h-12 rounded-lg"
+                          placeholder={emailPlaceholder} 
+                          className={`pl-10 h-12 rounded-lg ${emailError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                           value={registerData.email}
-                          onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                          onChange={(e) => {
+                            setRegisterData({ ...registerData, email: e.target.value });
+                            setEmailError("");
+                          }}
                           required 
                         />
                       </div>
+                      {emailError && <p className="text-sm text-red-600 font-medium">{emailError}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="reg-password">Create Password</Label>

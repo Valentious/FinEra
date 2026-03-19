@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -10,9 +10,13 @@ import {
   Briefcase,
   Users,
   DollarSign,
-  Award
+  Award,
+  MapPin,
+  Building2,
+  Search
 } from "lucide-react";
 import { toast } from "sonner";
+import { COUNTRIES, getCitiesByCountry, getInstitutionsByCountryAndType, searchInstitutions } from "@/data/locations";
 
 interface ProfileDetailsProps {
   accountType: 'student' | 'staff' | 'alumni';
@@ -24,6 +28,17 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
   const [nationalIdNumber, setNationalIdNumber] = useState("");
   const [studentStaffId, setStudentStaffId] = useState("");
   const [salaryRange, setSalaryRange] = useState("");
+  const [countryId, setCountryId] = useState("");
+  const [cityId, setCityId] = useState("");
+  const [institutionId, setInstitutionId] = useState("");
+  const [institutionName, setInstitutionName] = useState("");
+  const [institutionSearch, setInstitutionSearch] = useState("");
+
+  const cities = useMemo(() => getCitiesByCountry(countryId), [countryId]);
+  const institutions = useMemo(
+    () => searchInstitutions(countryId, accountType, institutionSearch),
+    [countryId, accountType, institutionSearch]
+  );
 
   const handleComplete = () => {
     if (!title) {
@@ -42,6 +57,21 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
       return;
     }
 
+    if (!countryId) {
+      toast.error("Please select your country");
+      return;
+    }
+
+    if (!cityId) {
+      toast.error("Please select your city");
+      return;
+    }
+
+    if (!institutionId || !institutionName) {
+      toast.error("Please select your institution/organization");
+      return;
+    }
+
     // Validate salary range for staff and alumni
     if ((accountType === 'staff' || accountType === 'alumni') && !salaryRange) {
       toast.error("Salary range is required");
@@ -52,8 +82,30 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
       title,
       nationalIdNumber: nationalIdNumber.trim(), 
       studentStaffId: studentStaffId.trim(),
-      salaryRange: salaryRange || null
+      salaryRange: salaryRange || null,
+      countryId,
+      cityId,
+      institutionId,
+      institutionName,
     });
+  };
+
+  const handleCountryChange = (id: string) => {
+    setCountryId(id);
+    setCityId("");
+    setInstitutionId("");
+    setInstitutionName("");
+  };
+
+  const handleCityChange = (id: string) => {
+    setCityId(id);
+    setInstitutionId("");
+    setInstitutionName("");
+  };
+
+  const handleInstitutionSelect = (id: string, name: string) => {
+    setInstitutionId(id);
+    setInstitutionName(name);
   };
 
   const getIdLabel = () => {
@@ -156,6 +208,79 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
 
       <Card className="border-slate-100 shadow-xl shadow-slate-200/50 rounded-3xl p-6">
         <div className="space-y-5">
+          {/* Step 1: Country Selection */}
+          <div className="space-y-2">
+            <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-emerald-600" />
+              Country
+            </Label>
+            <select
+              value={countryId}
+              onChange={(e) => handleCountryChange(e.target.value)}
+              className="w-full h-14 rounded-2xl border-slate-200 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-semibold text-base px-4 bg-white"
+            >
+              <option value="">Select your country</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Step 2: City Selection */}
+          {countryId && (
+            <div className="space-y-2">
+              <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-emerald-600" />
+                City
+              </Label>
+              <select
+                value={cityId}
+                onChange={(e) => handleCityChange(e.target.value)}
+                className="w-full h-14 rounded-2xl border-slate-200 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-semibold text-base px-4 bg-white"
+              >
+                <option value="">Select your city</option>
+                {cities.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Step 3: Institution Selection */}
+          {countryId && (
+            <div className="space-y-2">
+              <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-emerald-600" />
+                {accountType === 'staff' ? 'Organization (Universities, Companies, Government)' : 'University / Polytechnic'}
+              </Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Search institutions..."
+                  value={institutionSearch}
+                  onChange={(e) => setInstitutionSearch(e.target.value)}
+                  className="pl-10 h-12 rounded-2xl border-slate-200 mb-2"
+                />
+              </div>
+              <select
+                value={institutionId}
+                onChange={(e) => {
+                  const opt = e.target.options[e.target.selectedIndex];
+                  handleInstitutionSelect(opt.value, opt.text);
+                }}
+                className="w-full h-14 rounded-2xl border-slate-200 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-semibold text-base px-4 bg-white"
+              >
+                <option value="">Select institution</option>
+                {institutions.map((i) => (
+                  <option key={i.id} value={i.id}>{i.name}</option>
+                ))}
+              </select>
+              {institutions.length === 0 && countryId && (
+                <p className="text-xs text-slate-500">No institutions found. Try a different search.</p>
+              )}
+            </div>
+          )}
+
           {/* Title Selection */}
           <div className="space-y-2">
             <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">

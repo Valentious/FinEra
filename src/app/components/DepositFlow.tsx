@@ -42,12 +42,17 @@ const PURPOSES = [
   { id: "other", label: "Other" },
 ];
 
+const MOBILE_MONEY_METHODS = ["ecocash", "innbucks", "onemoney"];
+
 export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: DepositFlowProps) {
-  const [step, setStep] = useState<"details" | "agent" | "processing" | "success">("details");
+  const [step, setStep] = useState<"details" | "mobileMoney" | "agent" | "processing" | "success">("details");
   const [amount, setAmount] = useState<string>("");
   const [method, setMethod] = useState<string>("");
   const [purpose, setPurpose] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [loading, setLoading] = useState(false);
+
+  const isMobileMoney = MOBILE_MONEY_METHODS.includes(method);
 
   const handleDeposit = () => {
     const numAmount = parseFloat(amount);
@@ -69,16 +74,31 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
 
     if (method === 'agent') {
       setStep("agent");
+    } else if (isMobileMoney) {
+      setStep("mobileMoney");
     } else {
       setLoading(true);
       setStep("processing");
-      // Simulate payment gateway
       setTimeout(() => {
         onConfirm(numAmount, method, purpose);
         setLoading(false);
         setStep("success");
       }, 2000);
     }
+  };
+
+  const handleMobileMoneySubmit = () => {
+    if (!phoneNumber.trim()) {
+      toast.error("Enter your registered phone number");
+      return;
+    }
+    setLoading(true);
+    setStep("processing");
+    setTimeout(() => {
+      onConfirm(parseFloat(amount), method, purpose);
+      setLoading(false);
+      setStep("success");
+    }, 2500);
   };
 
   return (
@@ -168,6 +188,40 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
           </motion.div>
         )}
 
+        {step === "mobileMoney" && (
+          <motion.div
+            key="mobileMoney"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <Button variant="ghost" size="sm" onClick={() => setStep("details")}>
+              ← Back
+            </Button>
+            <h3 className="text-xl font-black text-slate-900">Mobile Money Deposit</h3>
+            <p className="text-slate-600 text-sm">
+              {METHODS.find(m => m.id === method)?.label} - Enter the phone number linked to your account
+            </p>
+            <div className="space-y-2">
+              <Label>Phone Number</Label>
+              <Input
+                type="tel"
+                placeholder="+263 77 123 4567"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="h-14 rounded-2xl"
+              />
+            </div>
+            <Button
+              onClick={handleMobileMoneySubmit}
+              className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-black"
+            >
+              Send Payment Request
+            </Button>
+          </motion.div>
+        )}
+
         {step === "agent" && (
           <motion.div
             key="agent"
@@ -198,8 +252,14 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
               <div className="w-24 h-24 border-4 border-emerald-100 rounded-full" />
               <Loader2 className="w-24 h-24 text-emerald-600 animate-spin absolute top-0 left-0" />
             </div>
-            <h3 className="text-2xl font-black mt-8 text-slate-900">Connecting Gateway...</h3>
-            <p className="text-slate-500 font-medium mt-2">Securing your payment channel.</p>
+            <h3 className="text-2xl font-black mt-8 text-slate-900">
+              {isMobileMoney ? "Payment Request Sent" : "Connecting Gateway..."}
+            </h3>
+            <p className="text-slate-500 font-medium mt-2 max-w-[280px]">
+              {isMobileMoney
+                ? "A payment request has been sent to your mobile device. Please enter your PIN to complete the transaction."
+                : "Securing your payment channel."}
+            </p>
           </motion.div>
         )}
 

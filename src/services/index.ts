@@ -18,7 +18,7 @@ import * as mockApi from './mockApi';
  * Set to false when backend is ready
  * Set to true to use mock data for development
  */
-export const USE_MOCK_DATA = true;
+export const USE_MOCK_DATA = false;
 
 // ==================== API SELECTOR ====================
 

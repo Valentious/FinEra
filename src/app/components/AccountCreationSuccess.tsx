@@ -146,9 +146,8 @@ export function AccountCreationSuccess({
             <div className="bg-amber-50 rounded-xl p-5 border border-amber-200">
               <h4 className="text-sm font-black text-amber-900 mb-2">📌 Account Purpose</h4>
               <p className="text-sm text-amber-800 leading-relaxed">
-                Your FinEra multi-currency account numbers allow you to securely receive allowances and financial 
-                support in USD, ZiG, and ZAR. Use these numbers for deposits, transfers, and accessing credit 
-                services within the FinEra INCLUSIVE CREDIT platform.
+                All currency-specific account numbers displayed enable you to access loans in your preferred currency. 
+                These accounts support deposits, withdrawals, loan repayments, and payments within the FinEra Inclusive Credit Platform.
               </p>
             </div>
 
