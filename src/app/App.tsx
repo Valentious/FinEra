@@ -20,6 +20,7 @@ import { CreditApproved } from "@/app/components/CreditApproved";
 import { WalletCredited } from "@/app/components/WalletCredited";
 import { RepaymentDashboard } from "@/app/components/RepaymentDashboard";
 import { FinancialEducation } from "@/app/components/FinancialEducation";
+import { PartnerProgram } from "@/app/components/PartnerProgram";
 import { WithdrawFlow } from "@/app/components/WithdrawFlow";
 import { DepositFlow } from "@/app/components/DepositFlow";
 import { ProfileSettings } from "@/app/components/ProfileSettings";
@@ -59,6 +60,7 @@ type Screen =
   | "repaymentDashboard"
   | "financialEducation"
   | "profileSettings"
+  | "partnerProgram"
   | "adminOverview"
   | "makeRepayment"
   | "makePayment";
@@ -210,12 +212,15 @@ export default function App() {
         toast.error("Login failed. Please check your credentials.");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Login failed. Please try again.");
+      const msg = err instanceof Error ? err.message : "Login failed. Please try again.";
+      const isConnectionError =
+        msg.includes("Unable to connect") || msg.includes("Failed to fetch") || msg.includes("NetworkError");
+      toast.error(isConnectionError ? "Unable to connect. Please check your connection." : msg);
     }
   };
 
   const handleRegister = async (data: any) => {
-    const accountType = preSelectedAccountType || 'student';
+    const accountType = preSelectedAccountType || "student";
     const limit = CREDIT_LIMITS[accountType].max;
     try {
       const { user } = await apiService.register({
@@ -231,8 +236,12 @@ export default function App() {
       saveUserData(newUser);
       localStorage.setItem("active_user_email", data.email);
       setCurrentScreen("otpVerification");
+      toast.success("Registration successful!");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Registration failed.");
+      const msg = err instanceof Error ? err.message : "Registration failed.";
+      const isConnectionError =
+        msg.includes("Unable to connect") || msg.includes("Failed to fetch") || msg.includes("NetworkError");
+      toast.error(isConnectionError ? "Unable to connect. Please check your connection." : msg);
     }
   };
 
@@ -251,7 +260,7 @@ export default function App() {
     "dashboard", "savingsWallet", "walletManagement", "withdrawFlow", "depositFlow", "applyForCredit", 
     "creditDetails", "creditTypeSelection", "collateralDetails", "confirmApplication", 
     "buyBackAgreement", "creditApproved", "walletCredited", "repaymentDashboard", "financialEducation", 
-    "profileSettings", "adminOverview", "memberAgreement", "makeRepayment", "makePayment"
+    "profileSettings", "partnerProgram", "adminOverview", "memberAgreement", "makeRepayment", "makePayment"
   ].includes(currentScreen);
 
   const handleLogout = async () => {
@@ -571,7 +580,12 @@ export default function App() {
           />
         )}
 
-        {currentScreen === "financialEducation" && <FinancialEducation onBack={() => setCurrentScreen("dashboard")} />}
+        {currentScreen === "financialEducation" && (
+          <FinancialEducation
+            onBack={() => setCurrentScreen("dashboard")}
+            userData={userData}
+          />
+        )}
         {currentScreen === "makePayment" && (
           <MakePayment
             countryCode={userData.countryId || "zw"}
@@ -580,6 +594,7 @@ export default function App() {
           />
         )}
         {currentScreen === "profileSettings" && <ProfileSettings userData={userData} onLogout={handleLogout} onUpdate={(d) => updateAndSave({ ...userData, ...d })} />}
+        {currentScreen === "partnerProgram" && <PartnerProgram />}
       </main>
     </div>
   );

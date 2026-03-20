@@ -33,7 +33,7 @@ router.get("/cities", (req: Request, res: Response) => {
     return res.json([]);
   }
   const cities = getCitiesByCountry(countryId);
-  res.json(cities);
+  return res.json(cities);
 });
 
 router.get("/institutions", (req: Request, res: Response) => {
@@ -45,7 +45,7 @@ router.get("/institutions", (req: Request, res: Response) => {
     return res.json(INSTITUTIONS);
   }
   const institutions = getInstitutionsByCountryAndType(countryId, accountType);
-  res.json(institutions);
+  return res.json(institutions);
 });
 
 router.get("/health", (_req: Request, res: Response) => {

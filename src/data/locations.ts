@@ -177,6 +177,12 @@ export function getInstitutionsByCountryAndType(
   );
 }
 
+/** Full registration data for fallback when API is unavailable */
+export function getFallbackRegistrationData() {
+  const allCities = [...CITIES, ...FALLBACK_CITIES];
+  return { countries: COUNTRIES, cities: allCities, institutions: INSTITUTIONS };
+}
+
 /** Search institutions by name */
 export function searchInstitutions(
   countryId: string,

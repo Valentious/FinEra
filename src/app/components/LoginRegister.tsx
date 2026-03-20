@@ -41,24 +41,16 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
   const [cities, setCities] = useState<{ id: string; name: string; countryId: string }[]>([]);
   const [institutions, setInstitutions] = useState<{ id: string; name: string; type: string; cityId: string }[]>([]);
   const [refLoading, setRefLoading] = useState(true);
-  const [refError, setRefError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRegistrationData = async () => {
       try {
         setRefLoading(true);
-        setRefError(null);
         const data = await getRegistrationData();
-        if (data.countries.length > 0) {
-          setCountries(data.countries);
-          setCities(data.cities);
-          setInstitutions(data.institutions);
-        } else {
-          setCountries(COUNTRIES);
-        }
-      } catch (err) {
-        console.error("Error fetching registration data:", err);
-        setRefError("Failed to load registration data. Using fallback.");
+        setCountries(data.countries.length > 0 ? data.countries : COUNTRIES);
+        setCities(data.cities ?? []);
+        setInstitutions(data.institutions ?? []);
+      } catch {
         setCountries(COUNTRIES);
         setCities([]);
         setInstitutions([]);
@@ -330,9 +322,6 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                         buttonClassName="!border-slate-200"
                       />
                     </div>
-                    {refError && (
-                      <p className="text-sm text-amber-600 font-medium">{refError}</p>
-                    )}
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <MapPin className="w-4 h-4" />

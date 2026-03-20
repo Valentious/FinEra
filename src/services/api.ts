@@ -12,7 +12,13 @@
  * - Financial Metrics Calculation
  */
 
-const BASE_URL = (import.meta.env?.VITE_API_URL as string) || 'http://localhost:4000/api/v1';
+import { fetchWithRetry } from "@/utils/fetchWithRetry";
+
+/** API base URL - use full URL in dev (backend on different port than frontend) */
+export const API_BASE_URL =
+  (import.meta.env?.VITE_API_URL as string) || "http://localhost:4000/api/v1";
+
+const BASE_URL = API_BASE_URL;
 
 // ==================== TYPES ====================
 
@@ -147,15 +153,24 @@ async function apiCall<T>(
 
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, config);
-    
+
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Request failed' }));
+      const error = await response.json().catch(() => ({ message: "Request failed" }));
       throw new Error(error.message || `HTTP ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
-    console.error('API Error:', error);
+    console.error("API Error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    if (
+      msg.includes("Failed to fetch") ||
+      msg.includes("NetworkError") ||
+      msg.includes("Load failed") ||
+      (error instanceof TypeError && msg.toLowerCase().includes("fetch"))
+    ) {
+      throw new Error("Unable to connect. Please check your connection.");
+    }
     throw error;
   }
 }
@@ -306,18 +321,51 @@ export interface RegistrationData {
   institutions: ReferenceInstitution[];
 }
 
-/** Fetch all registration data in one request (preferred - avoids CORS/race issues) */
+const REGISTRATION_CACHE_KEY = "finera_registration_data";
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** Fetch all registration data with retry. Returns fallback on failure - never throws. */
 export async function getRegistrationData(): Promise<RegistrationData> {
   const base = (import.meta.env?.VITE_API_URL as string) || "http://localhost:4000/api/v1";
   const url = `${base}/reference/registration-data`;
-  const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) throw new Error(`Registration data failed: ${res.status}`);
-  const data = await res.json();
-  return {
-    countries: Array.isArray(data.countries) ? data.countries : [],
-    cities: Array.isArray(data.cities) ? data.cities : [],
-    institutions: Array.isArray(data.institutions) ? data.institutions : [],
-  };
+
+  try {
+    const cached = localStorage.getItem(REGISTRATION_CACHE_KEY);
+    if (cached) {
+      const { data, ts } = JSON.parse(cached) as { data: RegistrationData; ts: number };
+      if (Date.now() - ts < CACHE_TTL_MS && data?.countries?.length) {
+        return data;
+      }
+    }
+  } catch {
+    /* ignore cache parse errors */
+  }
+
+  try {
+    const data = await fetchWithRetry<{ countries?: unknown[]; cities?: unknown[]; institutions?: unknown[] }>(
+      url,
+      {},
+      3
+    );
+    const countries = Array.isArray(data?.countries) ? data.countries : [];
+    const cities = Array.isArray(data?.cities) ? data.cities : [];
+    const institutions = Array.isArray(data?.institutions) ? data.institutions : [];
+
+    if (countries.length > 0) {
+      const result = { countries, cities, institutions } as RegistrationData;
+      try {
+        localStorage.setItem(REGISTRATION_CACHE_KEY, JSON.stringify({ data: result, ts: Date.now() }));
+      } catch {
+        /* ignore */
+      }
+      return result;
+    }
+  } catch (err) {
+    console.warn("Registration data API unavailable, using fallback:", err);
+  }
+
+  const { getFallbackRegistrationData } = await import("@/data/locations");
+  return getFallbackRegistrationData() as RegistrationData;
 }
 
 export async function getCountries(): Promise<ReferenceCountry[]> {
@@ -842,6 +890,197 @@ export async function getNotifications(): Promise<ApiResponse<NotificationItem[]
   } catch (e) {
     return { success: false, message: e instanceof Error ? e.message : 'Failed to load notifications', data: [] };
   }
+}
+
+// ==================== LEARNING HUB API ====================
+
+export interface FinancialTerm {
+  id: string;
+  term: string;
+  slug: string;
+  simpleDefinition: string;
+  advancedDefinition: string | null;
+  example: string | null;
+  relatedTerms: string[];
+}
+
+export interface LearningModule {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  durationMinutes: number | null;
+  tier: "FREE" | "PREMIUM";
+  status: string;
+  orderIndex: number;
+  icon: string | null;
+  color: string | null;
+  termsIncluded: string[];
+}
+
+export interface ProgressItem {
+  id: string;
+  moduleId: string;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  progressPercent: number;
+  timeSpentSeconds: number;
+  completedAt: string | null;
+  module: LearningModule;
+}
+
+export interface LearningRecommendation {
+  type: "LESSON" | "MICRO_COURSE" | "WARNING" | "NUDGE";
+  moduleId?: string;
+  moduleSlug?: string;
+  title: string;
+  message: string;
+  reason?: string;
+}
+
+export async function getLearningModules(tier?: "FREE" | "PREMIUM"): Promise<{ success: boolean; data: LearningModule[] }> {
+  const q = tier ? `?tier=${tier}` : "";
+  return apiCall<{ success: boolean; data: LearningModule[] }>(`/learning/modules${q}`);
+}
+
+export async function getFinancialTerms(): Promise<{ success: boolean; data: FinancialTerm[] }> {
+  return apiCall<{ success: boolean; data: FinancialTerm[] }>("/learning/terms");
+}
+
+export async function getFinancialTerm(slug: string): Promise<{ success: boolean; data: FinancialTerm }> {
+  return apiCall<{ success: boolean; data: FinancialTerm }>(`/learning/terms/${encodeURIComponent(slug)}`);
+}
+
+export async function recordTermInteraction(
+  termSlug: string,
+  interactionType: "click" | "hover" | "ask_ai",
+  context?: string
+): Promise<{ success: boolean }> {
+  return apiCall<{ success: boolean }>("/learning/terms/interact", {
+    method: "POST",
+    body: JSON.stringify({ termSlug, interactionType, context }),
+  });
+}
+
+export async function getLearningProgress(): Promise<{
+  success: boolean;
+  data: { progress: ProgressItem[]; completedCount: number; totalModules: number };
+}> {
+  return apiCall("/learning/progress");
+}
+
+export async function updateLearningProgress(
+  moduleId: string,
+  data: { status?: string; progressPercent?: number; timeSpentSeconds?: number }
+): Promise<{ success: boolean; data: ProgressItem }> {
+  return apiCall(`/learning/progress/${moduleId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getLearningRecommendations(): Promise<{
+  success: boolean;
+  data: LearningRecommendation[];
+}> {
+  return apiCall("/learning/recommendations");
+}
+
+export async function logRecommendationShown(
+  type: string,
+  opts?: { moduleId?: string; termId?: string; context?: string; reason?: string }
+): Promise<{ success: boolean }> {
+  return apiCall("/learning/recommendations/log", {
+    method: "POST",
+    body: JSON.stringify({ type, ...opts }),
+  });
+}
+
+/** GET /learning/content - Combined modules + progress + recommendations (user spec) */
+export async function getLearningContent(): Promise<{
+  modules: Array<LearningModule & { progress: { status: string; progress_percentage: number } }>;
+  profile: { financial_discipline_score: number; learning_streak_days: number; last_active_at?: string };
+  recommendations: LearningRecommendation[];
+  financialTerms: string[];
+}> {
+  return apiCall("/learning/content");
+}
+
+/** POST /learning/term-interaction - User spec (term, interaction_type, context_module_id) */
+export async function recordTermInteractionSpec(
+  term: string,
+  interactionType: string,
+  contextModuleId?: string
+): Promise<{ success: boolean }> {
+  return apiCall("/learning/term-interaction", {
+    method: "POST",
+    body: JSON.stringify({
+      term,
+      interaction_type: interactionType,
+      context_module_id: contextModuleId,
+    }),
+  });
+}
+
+/** GET /learning/term/:term - Get term definition with contextual relevance */
+export interface TermDefinition {
+  simple: string;
+  advanced: string;
+  example: string;
+  contextual: string;
+}
+
+export async function getTermDefinition(term: string): Promise<TermDefinition> {
+  const res = await apiCall<TermDefinition>(`/learning/term/${encodeURIComponent(term)}`);
+  return res;
+}
+
+/** POST /learning/progress - User spec (module_id, progress_percentage, time_spent, quiz_scores) */
+export async function updateLearningProgressSpec(
+  moduleId: string,
+  data: { progress_percentage?: number; time_spent?: number; quiz_scores?: unknown[] }
+): Promise<unknown> {
+  return apiCall("/learning/progress", {
+    method: "POST",
+    body: JSON.stringify({
+      module_id: moduleId,
+      progress_percentage: data.progress_percentage,
+      time_spent: data.time_spent,
+      quiz_scores: data.quiz_scores,
+    }),
+  });
+}
+
+// ==================== PARTNER PROGRAM API ====================
+
+export interface PartnerProgramApplication {
+  fullName?: string;
+  idNumber?: string;
+  contactNumber?: string;
+  location?: string;
+  services?: string[];
+}
+
+export interface PartnerProgramData {
+  id?: string;
+  status: "NOT_APPLIED" | "PENDING" | "APPROVED" | "REJECTED";
+  applicationData?: PartnerProgramApplication | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export async function getPartnerProgram(): Promise<{ success: boolean; data: PartnerProgramData }> {
+  return apiCall("/partner-program");
+}
+
+export async function getPartnerProgramStatus(): Promise<{ success: boolean; data: PartnerProgramData }> {
+  return apiCall("/partner-program/status");
+}
+
+export async function applyPartnerProgram(data: PartnerProgramApplication): Promise<{ success: boolean; data: PartnerProgramData }> {
+  return apiCall("/partner-program/apply", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 // ==================== PAYMENTS API ====================

@@ -1,5 +1,7 @@
 # FinEra Inclusive Credit - Setup Guide
 
+> **FinEra uses port 4000** (not 5000). All API URLs use `http://localhost:4000`.
+
 ## Quick Start Checklist
 
 ### Step 1: Environment Configuration ✅
@@ -77,11 +79,14 @@ Configuration loads `.env` from `backend-core/`.
 
 ## Success Criteria
 
-| Check | Command |
-|-------|---------|
-| Backend healthy | `curl http://localhost:4000/health` |
-| Database ready | `curl http://localhost:4000/ready` |
+| Check | Command / URL |
+|-------|---------------|
+| Backend healthy | Open: http://localhost:4000/health |
+| Registration data | Open: http://localhost:4000/api/v1/reference/registration-data |
+| Database ready | Open: http://localhost:4000/ready |
 | Full stack test | `node test-connection.js` |
+
+**Verify backend is alive:** Open http://localhost:4000/api/v1/reference/registration-data in your browser. You should see JSON with `countries`, `cities`, `institutions`. If it fails, the backend is not running.
 
 ---
 
@@ -89,10 +94,13 @@ Configuration loads `.env` from `backend-core/`.
 
 | Issue | Solution |
 |------|----------|
+| `ERR_CONNECTION_REFUSED` | Backend not running → `cd backend-core && npm run dev` |
 | `P1000: Authentication failed` | Update `DATABASE_URL` in `.env` with correct postgres password |
 | Port 5432 not listening | Start PostgreSQL: `net start postgresql` (admin) or Docker |
-| CORS errors | Ensure `FRONTEND_URL` in `.env` matches frontend origin (e.g. `http://localhost:5173`) |
+| CORS / "Failed to fetch" | Ensure `VITE_API_URL=http://localhost:4000/api/v1` in frontend `.env` |
+| CORS (backend) | Backend allows 5173, 5174, 5175, 3000. Check `backend-core/.env` FRONTEND_URL |
 | `JWT_SECRET` too short | Must be ≥32 characters |
+| 404 on /api/register | FinEra uses `/api/v1/auth/register` (not `/api/register`) |
 
 ---
 

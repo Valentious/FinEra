@@ -18,6 +18,8 @@ import creditRoutes from "./modules/credit/credit.routes.js";
 import notificationRoutes from "./modules/notifications/notification.routes.js";
 import kycRoutes from "./modules/kyc/kyc.routes.js";
 import referenceRoutes from "./modules/reference/reference.routes.js";
+import learningRoutes from "./modules/learning/learning.routes.js";
+import partnerProgramRoutes from "./modules/partner-program/partner-program.routes.js";
 
 const app = express();
 
@@ -28,12 +30,18 @@ app.use(express.json({ limit: "10mb" }));
 const config = getConfig();
 const allowedOrigins = [
   config.FRONTEND_URL,
+  "http://localhost:3000",
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5175",
+  "http://localhost:5176",
+  "http://localhost:5177",
+  "http://127.0.0.1:3000",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:5174",
   "http://127.0.0.1:5175",
+  "http://127.0.0.1:5176",
+  "http://127.0.0.1:5177",
 ];
 app.use(
   cors({
@@ -68,14 +76,17 @@ app.use("/api/v1/credit", generalLimiter, creditRoutes);
 app.use("/api/v1/notifications", generalLimiter, notificationRoutes);
 app.use("/api/v1/kyc", generalLimiter, kycRoutes);
 app.use("/api/v1/reference", generalLimiter, referenceRoutes);
+app.use("/api/v1/learning", generalLimiter, learningRoutes);
+app.use("/api/v1/partner-program", generalLimiter, partnerProgramRoutes);
 
 app.get("/api/registration-data", generalLimiter, async (_req, res) => {
   try {
     const ref = await import("./modules/reference/reference.data.js");
     const cities = ref.COUNTRIES.flatMap((c) => ref.getCitiesByCountry(c.id));
-    res.json({ countries: ref.COUNTRIES, cities, institutions: ref.INSTITUTIONS });
+    const payload = { countries: ref.COUNTRIES, cities, institutions: ref.INSTITUTIONS };
+    res.json(payload);
   } catch (err) {
-    console.error("Registration data error:", err);
+    console.error("[registration-data] Failed:", err);
     res.status(500).json({ error: "Failed to load registration data" });
   }
 });

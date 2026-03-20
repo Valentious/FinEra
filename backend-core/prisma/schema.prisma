@@ -127,6 +127,40 @@ enum NotificationType {
   SYSTEM_ALERT
   PROMOTIONAL
   SECURITY_ALERT
+  LEARNING_NUDGE
+  LEARNING_RECOMMENDATION
+  DEFAULT_WARNING
+}
+
+enum LearningModuleTier {
+  FREE
+  PREMIUM
+}
+
+enum LearningModuleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum RecommendationType {
+  LESSON
+  MICRO_COURSE
+  WARNING
+  NUDGE
+}
+
+enum LearningProfileRiskLevel {
+  low
+  medium
+  high
+  critical
 }
 
 enum NotificationPriority {
@@ -191,15 +225,20 @@ model User {
   deletedAt               DateTime?
   metadata                Json?
 
-  wallets           Wallet[]
-  transactions      Transaction[]
-  creditProfile     CreditProfile?
-  repayments        Repayment[]
-  loans             Loan[]
-  kycDocuments      KycDocument[]
-  notifications     Notification[]
-  fraudLogs         FraudLog[]
-  auditLogs         AuditLog[]
+  wallets              Wallet[]
+  transactions         Transaction[]
+  creditProfile        CreditProfile?
+  repayments           Repayment[]
+  loans                Loan[]
+  kycDocuments         KycDocument[]
+  notifications        Notification[]
+  fraudLogs            FraudLog[]
+  auditLogs            AuditLog[]
+  learningProfile      UserLearningProfile?
+  termInteractions     TermInteraction[]
+  progressTracking     ProgressTracking[]
+  recommendationsLog   RecommendationLog[]
+  partnerProgram       PartnerProgram?
 
   @@index([email])
   @@index([countryCode, accountType])
@@ -478,6 +517,151 @@ model AuditLog {
   @@index([userId, timestamp(sort: Desc)])
   @@index([entityType, entityId])
   @@index([timestamp])
+}
+
+// ==================== LEARNING HUB MODELS ====================
+
+model FinancialTerm {
+  id               String   @id @default(uuid())
+  term             String   @unique
+  slug             String   @unique
+  simpleDefinition String
+  advancedDefinition String?
+  example          String?
+  relatedTerms     String[] @default([])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([term])
+  @@index([slug])
+}
+
+model LearningModule {
+  id                  String              @id @default(uuid())
+  moduleCode          String              @unique
+  title               String
+  slug                String              @unique
+  description         String?
+  difficultyLevel     Int?                // 1-5
+  category            String?
+  estimatedDurationMinutes Int?
+  durationMinutes     Int?
+  prerequisites       Json?               @default("[]")
+  content             Json?               // { sections: [{ title, text, quiz? }] }
+  tier                LearningModuleTier  @default(FREE)
+  status              LearningModuleStatus @default(PUBLISHED)
+  orderIndex          Int                 @default(0)
+  icon                String?
+  color               String?
+  termsIncluded       String[]            @default([])
+  isActive            Boolean             @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  progress         ProgressTracking[]
+  termInteractions TermInteraction[]
+
+  @@index([tier, status])
+  @@index([slug])
+  @@index([moduleCode])
+}
+
+model UserLearningProfile {
+  id                      String                 @id @default(uuid())
+  userId                  String                 @unique
+  userType                String                 @default("student") // student, staff, alumni
+  disciplineScoreBonus    Int                    @default(0)
+  financialDisciplineScore Decimal                @default(0) @db.Decimal(5, 2)
+  riskLevel               LearningProfileRiskLevel @default(low)
+  learningStreakDays      Int                    @default(0)
+  weakKnowledgeAreas      String[]               @default([])
+  strongKnowledgeAreas    String[]               @default([])
+  lastActiveAt            DateTime?
+  lastActivityAt          DateTime?
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model TermInteraction {
+  id              String   @id @default(uuid())
+  userId          String
+  term            String   // term string (e.g. "credit_score")
+  termId          String?  // optional FK to FinancialTerm
+  interactionType String   // "hover", "click", "ask_ai"
+  contextModuleId String?
+  context         String?
+  metadata        Json?    @default("{}")
+  createdAt       DateTime @default(now())
+
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module LearningModule? @relation(fields: [contextModuleId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([term])
+  @@index([createdAt])
+}
+
+model ProgressTracking {
+  id               String        @id @default(uuid())
+  userId           String
+  moduleId        String
+  status          ProgressStatus @default(NOT_STARTED)
+  progressPercent Int           @default(0)
+  timeSpentSeconds Int          @default(0)
+  quizScores      Json?         @default("[]")
+  lastAccessedAt  DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module LearningModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId])
+  @@index([userId])
+  @@index([moduleId])
+  @@index([userId, status])
+}
+
+model RecommendationLog {
+  id            String            @id @default(uuid())
+  userId        String
+  type          RecommendationType
+  moduleId      String?
+  contentId     String?
+  termId        String?
+  context       String?
+  reason        String?
+  priority      Int               @default(1)
+  shownAt       DateTime          @default(now())
+  isActioned    Boolean           @default(false)
+  actionedAt    DateTime?
+  expiresAt     DateTime?
+  createdAt     DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, shownAt(sort: Desc)])
+  @@index([type])
+  @@index([userId, isActioned])
+}
+
+model PartnerProgram {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  status          String   @default("NOT_APPLIED") // NOT_APPLIED | PENDING | APPROVED | REJECTED
+  applicationData Json?    @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }
 
 model RefreshTokenBlacklist {

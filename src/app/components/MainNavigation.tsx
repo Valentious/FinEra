@@ -8,7 +8,8 @@ import {
   Settings, 
   LogOut, 
   Menu,
-  X
+  X,
+  Handshake
 } from "lucide-react";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 import { FinEraLogoText } from "@/app/components/FinEraLogoText";
@@ -34,6 +35,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
     { id: "savingsWallet", label: "Savings Wallet", icon: PiggyBank },
     { id: "financialEducation", label: "Learning Hub", icon: GraduationCap },
     { id: "profileSettings", label: "Account Settings", icon: Settings },
+    { id: "partnerProgram", label: "Partner Program", icon: Handshake },
   ];
 
   return (
