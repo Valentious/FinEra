@@ -24,11 +24,13 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 
 interface MakePaymentProps {
   onBack: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (payment: { amount: number; description: string; gatewayId?: string }) => void;
   countryCode?: string;
+  savingsBalance?: number;
+  currencySymbol?: string;
 }
 
-export function MakePayment({ onBack, onSuccess, countryCode = "zw" }: MakePaymentProps) {
+export function MakePayment({ onBack, onSuccess, countryCode = "zw", savingsBalance = 0, currencySymbol = "$" }: MakePaymentProps) {
   const options = getPaymentOptionsByCountry(countryCode);
   const [step, setStep] = useState<"category" | "details" | "gateway" | "confirm" | "success">("category");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -59,6 +61,11 @@ export function MakePayment({ onBack, onSuccess, countryCode = "zw" }: MakePayme
       toast.error("Select a payment gateway");
       return;
     }
+    if (selectedGateway === "from_savings" && numAmount > savingsBalance) {
+      toast.error(`Insufficient balance. Savings balance: ${currencySymbol}${savingsBalance.toLocaleString()}`);
+      return;
+    }
+    const description = item ? `${cat?.label || "Payment"}: ${item.label}` : `Payment - ${recipient || "Bill"}`;
     setLoading(true);
     setStep("confirm");
     // Simulate API call
@@ -66,7 +73,7 @@ export function MakePayment({ onBack, onSuccess, countryCode = "zw" }: MakePayme
       setLoading(false);
       setStep("success");
       toast.success("Payment initiated successfully");
-      onSuccess?.();
+      onSuccess?.({ amount: numAmount, description, gatewayId: selectedGateway });
     }, 2000);
   };
 
@@ -180,6 +187,11 @@ export function MakePayment({ onBack, onSuccess, countryCode = "zw" }: MakePayme
 
             <div className="space-y-2">
               <Label>Payment Gateway</Label>
+              {selectedGateway === "from_savings" && (
+                <p className="text-sm text-emerald-600 font-medium">
+                  Paying from Savings Wallet • Balance: {currencySymbol}{savingsBalance.toLocaleString()}
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 {options.gateways.map((g) => (
                   <Button

@@ -1,7 +1,7 @@
 import { Button } from "@/app/components/ui/button";
 import { 
   LayoutDashboard, 
-  CreditCard, 
+  Zap,
   PiggyBank, 
   GraduationCap, 
   User, 
@@ -31,7 +31,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "applyForCredit", label: "Credit & Loans", icon: CreditCard },
+    { id: "quickActions", label: "Quick Actions", icon: Zap },
     { id: "savingsWallet", label: "Savings Wallet", icon: PiggyBank },
     { id: "financialEducation", label: "Learning Hub", icon: GraduationCap },
     { id: "profileSettings", label: "Account Settings", icon: Settings },

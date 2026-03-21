@@ -14,21 +14,11 @@ import {
   Zap,
   Award,
   ChevronRight,
-  Coins,
-  HandCoins,
-  Plus,
-  ArrowDown
+  Coins
 } from "lucide-react";
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip as RechartsTooltip, 
-  ResponsiveContainer
-} from "recharts";
+import { PerformancePortfolioChart } from "@/app/components/PerformancePortfolioChart";
 import { motion } from "motion/react";
+import { toast } from "sonner";
 
 type CurrencyOption = 'USD' | 'ZIG' | 'ZAR';
 
@@ -37,6 +27,31 @@ const CURRENCY_SYMBOLS: Record<CurrencyOption, string> = {
   ZIG: 'Z$',
   ZAR: 'R',
 };
+
+function exportLedgerToCsv(transactions: { id: string; type: string; amount: number; date: string; description: string }[], symbol: string) {
+  if (transactions.length === 0) {
+    toast.info("No ledger activity to export yet.");
+    return;
+  }
+  const headers = "Date,Type,Description,Amount\n";
+  const rows = transactions
+    .slice()
+    .reverse()
+    .map(
+      (t) =>
+        `${new Date(t.date).toLocaleDateString()},"${t.type}","${(t.description || "").replace(/"/g, '""')}",${t.type === "deposit" ? "+" : "-"}${symbol}${t.amount.toLocaleString()}`
+    )
+    .join("\n");
+  const csv = headers + rows;
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `ledger-activity-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success("Ledger exported.");
+}
 
 interface DashboardV2Props {
   userName: string;
@@ -57,15 +72,6 @@ interface DashboardV2Props {
   onMakePayment?: () => void;
   transactions: any[];
 }
-
-const savingsData = [
-  { month: "Jan", balance: 1200 },
-  { month: "Feb", balance: 1900 },
-  { month: "Mar", balance: 1700 },
-  { month: "Apr", balance: 2400 },
-  { month: "May", balance: 3100 },
-  { month: "Jun", balance: 3800 },
-];
 
 // Helper function to get discipline score color
 function getDisciplineScoreColor(score: number): string {
@@ -213,7 +219,7 @@ export function DashboardV2({
                   Ready to Apply
                 </div>
               </div>
-              <p className="text-gray-300 text-xs font-black uppercase tracking-widest">Credit Limit</p>
+              <p className="text-gray-300 text-xs font-black uppercase tracking-widest">Potential Credit Limit</p>
               <h3 className="text-4xl font-black mt-1">{selectedCurrency} {symbol}{availableCreditLimit.toLocaleString()}</h3>
               <p className="text-gray-400 text-xs mt-2 font-medium">Based on Account type and financial discipline.</p>
             </div>
@@ -292,13 +298,13 @@ export function DashboardV2({
         </h2>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* A. Financial Discipline Score™ */}
+          {/* A. TrustScore */}
           <motion.div whileHover={{ y: -4 }}>
             <Card className={`p-6 bg-gradient-to-br ${disciplineColor} text-white border-none shadow-2xl relative overflow-hidden h-full`}>
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl rounded-full -mr-16 -mt-16" />
               
               <div className="relative z-10">
-                <h3 className="text-lg font-black mb-6">Financial Discipline Score™</h3>
+                <h3 className="text-lg font-black mb-6">TrustScore</h3>
                 
                 {/* Circular Progress Ring */}
                 <div className="flex items-center justify-center mb-6">
@@ -419,97 +425,36 @@ export function DashboardV2({
         </div>
       </div>
 
-      {/* 5️⃣ Quick Actions Section */}
-      <div>
-        <h2 className="text-2xl font-black text-slate-900 mb-4">Quick Actions</h2>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Button 
-            onClick={onApplyForCredit}
-            className="h-24 flex flex-col items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-xl font-black"
-          >
-            <CreditCard className="w-6 h-6" />
-            <span>Apply Loan</span>
-          </Button>
-
-          <Button 
-            onClick={onViewRepayment}
-            className="h-24 flex flex-col items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-2xl shadow-xl font-black"
-          >
-            <HandCoins className="w-6 h-6" />
-            <span>Repay Loan</span>
-          </Button>
-
-          <Button 
-            onClick={onAddSavings}
-            className="h-24 flex flex-col items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-xl font-black"
-          >
-            <Plus className="w-6 h-6" />
-            <span>Deposit Savings</span>
-          </Button>
-
-          <Button 
-            onClick={onWithdrawFunds}
-            className="h-24 flex flex-col items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white rounded-2xl shadow-xl font-black"
-          >
-            <ArrowDown className="w-6 h-6" />
-            <span>Withdraw Funds</span>
-          </Button>
-
-          {onMakePayment && (
-            <Button 
-              onClick={onMakePayment}
-              className="h-24 flex flex-col items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl shadow-xl font-black"
-            >
-              <HandCoins className="w-6 h-6" />
-              <span>Make Payment</span>
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* 6️⃣ Analytics & Activity Row */}
+      {/* 5️⃣ Analytics & Activity Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Savings Growth Chart */}
-        <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50">
-          <div className="flex items-center justify-between mb-6">
+        {/* Performance Portfolio Chart - Savings Wallet driven */}
+        <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+          <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-black text-slate-900">Performance Portfolio ({selectedCurrency})</h3>
             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase">
               <ShieldCheck className="w-3 h-3 text-green-500" />
-              Verified Assets
+              Savings Wallet
             </div>
           </div>
-          <div className="h-[240px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={savingsData} key="savings-line-chart">
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" key="grid" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: "bold" }} key="x-axis" />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: "bold" }} tickFormatter={(val) => `${symbol}${val}`} key="y-axis" />
-                <RechartsTooltip 
-                  key="tooltip"
-                  contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)", padding: "12px" }}
-                  labelStyle={{ fontWeight: "black", marginBottom: "4px" }}
-                  itemStyle={{ fontWeight: "bold", color: "#4f46e5" }}
-                />
-                <Line 
-                  key="line"
-                  type="monotone" 
-                  dataKey="balance" 
-                  stroke="#4f46e5" 
-                  strokeWidth={4} 
-                  dot={{ r: 5, fill: "#4f46e5", strokeWidth: 3, stroke: "#fff" }} 
-                  activeDot={{ r: 8, strokeWidth: 0 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <PerformancePortfolioChart
+            transactions={transactions}
+            currentBalance={savingsBalance}
+            currencySymbol={symbol}
+          />
         </Card>
 
         {/* Recent Transactions */}
         <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-black text-slate-900">Ledger Activity</h3>
-            <Button variant="ghost" size="sm" className="text-emerald-600 font-black uppercase text-[10px] tracking-widest">Export Logs</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-emerald-600 font-black uppercase text-[10px] tracking-widest"
+              onClick={() => exportLedgerToCsv(transactions, symbol)}
+            >
+              Export Logs
+            </Button>
           </div>
           <div className="space-y-4 flex-1">
             {transactions.length > 0 ? transactions.slice(-4).reverse().map((txn) => (
@@ -541,8 +486,12 @@ export function DashboardV2({
                 <div className="p-4 bg-slate-50 rounded-full mb-4">
                   <Info className="w-8 h-8 text-slate-300" />
                 </div>
-                <p className="text-slate-500 font-medium">No ledger activity found.</p>
-                <Button variant="link" onClick={onAddSavings} className="text-emerald-600 font-bold">Initiate first deposit</Button>
+                <p className="text-slate-500 font-medium">Ledger activity will appear here after you complete a Make Payment.</p>
+                {onMakePayment ? (
+                  <Button variant="link" onClick={onMakePayment} className="text-emerald-600 font-bold">Make Payment</Button>
+                ) : (
+                  <Button variant="link" onClick={onAddSavings} className="text-emerald-600 font-bold">Initiate first deposit</Button>
+                )}
               </div>
             )}
           </div>

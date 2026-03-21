@@ -53,7 +53,7 @@ export const ZIMBABWE_PAYMENTS = {
     { id: "ecocash", label: "EcoCash" },
     { id: "onemoney", label: "OneMoney" },
     { id: "innbucks", label: "InnBucks" },
-    { id: "telecash", label: "TeleCash" },
+    { id: "from_savings", label: "From Savings" },
   ] as PaymentGateway[],
 };
 

@@ -239,6 +239,7 @@ model User {
   progressTracking     ProgressTracking[]
   recommendationsLog   RecommendationLog[]
   partnerProgram       PartnerProgram?
+  portfolioSnapshots   PortfolioSnapshot[]
 
   @@index([email])
   @@index([countryCode, accountType])
@@ -254,6 +255,7 @@ model Wallet {
   availableBalance      Decimal     @default(0) @db.Decimal(18, 8)
   holdBalance           Decimal     @default(0) @db.Decimal(18, 8)
   savingsBalance        Decimal     @default(0) @db.Decimal(18, 8)
+  approvedCreditBalance  Decimal     @default(0) @db.Decimal(18, 8)
   savingsGoal           Decimal?    @db.Decimal(18, 8)
   activeLoanBalance     Decimal     @default(0) @db.Decimal(18, 8)
   totalLoanAmount       Decimal     @default(0) @db.Decimal(18, 8)
@@ -672,4 +674,24 @@ model RefreshTokenBlacklist {
 
   @@index([tokenHash])
   @@index([expiresAt])
+}
+
+model PortfolioSnapshot {
+  id               String   @id @default(uuid())
+  userId           String
+  snapshotDate     DateTime @db.Date
+  totalSavings     Decimal  @db.Decimal(18, 8)
+  activeCredit     Decimal  @db.Decimal(18, 8)
+  approvedCredit   Decimal  @db.Decimal(18, 8)
+  totalDeposited   Decimal  @default(0) @db.Decimal(18, 8)
+  totalWithdrawn   Decimal  @default(0) @db.Decimal(18, 8)
+  totalRepaid      Decimal  @default(0) @db.Decimal(18, 8)
+  currencyCode     CurrencyCode
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, snapshotDate, currencyCode])
+  @@index([userId])
+  @@index([snapshotDate])
 }

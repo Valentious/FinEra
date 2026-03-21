@@ -22,7 +22,7 @@ import { AgentGateway } from "./AgentGateway";
 interface MakeRepaymentProps {
   outstandingBalance: number;
   savingsBalance: number;
-  onConfirm: (amount: number, method: string) => void;
+  onConfirm: (amount: number, method: string) => void | Promise<void>;
   onBack: () => void;
 }
 
@@ -66,13 +66,13 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
     }
   };
 
-  const confirmProcess = () => {
+  const confirmProcess = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
-      onConfirm(parseFloat(amount), selectedMethod);
+    try {
+      await Promise.resolve(onConfirm(parseFloat(amount), selectedMethod));
+    } finally {
       setIsProcessing(false);
-      toast.success("Repayment processed successfully!");
-    }, 2000);
+    }
   };
 
   return (

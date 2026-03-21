@@ -20,6 +20,22 @@ export const API_BASE_URL =
 
 const BASE_URL = API_BASE_URL;
 
+/** Base URL for health checks (without /api/v1) */
+export const HEALTH_URL =
+  (BASE_URL.replace(/\/api\/v1\/?$/, "") || "http://localhost:4000") + "/health";
+
+/**
+ * Check if backend is available. Uses retry for resilience.
+ */
+export async function checkBackendHealth(): Promise<boolean> {
+  try {
+    const res = await fetch(HEALTH_URL, { method: "GET", credentials: "include" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 // ==================== TYPES ====================
 
 export interface FinEraAccountNumbers {
@@ -138,7 +154,8 @@ export interface ApiResponse<T = unknown> {
 
 async function apiCall<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retries = 3
 ): Promise<T> {
   const token = localStorage.getItem('auth_token') || localStorage.getItem('accessToken');
   
@@ -149,30 +166,38 @@ async function apiCall<T>(
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
+    credentials: 'include',
   };
 
-  try {
-    const response = await fetch(`${BASE_URL}${endpoint}`, config);
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const response = await fetch(`${BASE_URL}${endpoint}`, config);
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: "Request failed" }));
-      throw new Error(error.message || `HTTP ${response.status}`);
-    }
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: "Request failed" }));
+        throw new Error(error.message || `HTTP ${response.status}`);
+      }
 
-    return await response.json();
-  } catch (error) {
-    console.error("API Error:", error);
-    const msg = error instanceof Error ? error.message : String(error);
-    if (
-      msg.includes("Failed to fetch") ||
-      msg.includes("NetworkError") ||
-      msg.includes("Load failed") ||
-      (error instanceof TypeError && msg.toLowerCase().includes("fetch"))
-    ) {
-      throw new Error("Unable to connect. Please check your connection.");
+      return await response.json();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const msg = lastError.message;
+      const isRetryable =
+        msg.includes("Failed to fetch") ||
+        msg.includes("NetworkError") ||
+        msg.includes("Load failed") ||
+        (error instanceof TypeError && msg.toLowerCase().includes("fetch"));
+      if (!isRetryable || attempt === retries - 1) {
+        if (isRetryable) {
+          throw new Error("Unable to connect. Please check your connection.");
+        }
+        throw lastError;
+      }
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
     }
-    throw error;
   }
+  throw lastError ?? new Error("Request failed");
 }
 
 // ==================== AUTHENTICATION APIs ====================
@@ -406,10 +431,11 @@ export async function getUserProfile(): Promise<UserData> {
   ]);
   const p = profileRes.data || {};
   const wallets = walletsRes.data || [];
-  const usdWallet = wallets.find((w) => w.currencyCode === 'USD');
-  const zigWallet = wallets.find((w) => w.currencyCode === 'ZIG');
-  const zarWallet = wallets.find((w) => w.currencyCode === 'ZAR');
+  const usdWallet = wallets.find((w) => w.currencyCode === 'USD') as { savingsBalance?: string; balance?: string; accountNumber?: string; approvedCreditBalance?: string; activeLoanBalance?: string } | undefined;
+  const zigWallet = wallets.find((w) => w.currencyCode === 'ZIG') as { accountNumber?: string } | undefined;
+  const zarWallet = wallets.find((w) => w.currencyCode === 'ZAR') as { accountNumber?: string } | undefined;
   const limit = limitRes.data || { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 };
+  const activeCredit = wallets.reduce((s, w) => s + parseFloat((w as { activeLoanBalance?: string }).activeLoanBalance || '0'), 0);
   return {
     memberId: (p.id as string) || '',
     fullName: (p.fullName as string) || '',
@@ -423,9 +449,9 @@ export async function getUserProfile(): Promise<UserData> {
     email: (p.email as string) || '',
     mobile: '',
     accountType: ((p.accountType as string) || 'student').toLowerCase(),
-    savingsBalance: parseFloat(usdWallet?.balance || '0') || 0,
-    approvedCreditWallet: 0,
-    activeCredit: 0,
+    savingsBalance: parseFloat(usdWallet?.savingsBalance ?? usdWallet?.balance ?? '0') || 0,
+    approvedCreditWallet: parseFloat(usdWallet?.approvedCreditBalance || '0') || 0,
+    activeCredit,
     availableCreditLimit: limit.availableCredit || 200,
     loanPrincipal: 0,
     transactions: [],
@@ -487,11 +513,17 @@ export async function completeProfile(profileData: any): Promise<{ success: bool
  * - Return updated balance and transaction
  */
 export async function depositFunds(data: DepositRequest): Promise<{ transaction: Transaction; newBalance: number }> {
-  // TODO: Replace with actual API call
-  return apiCall('/wallet/deposit', {
+  const res = await apiCall<{ success: boolean; data: { transaction: Transaction; newBalance: number } }>('/wallet/deposit', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      amount: data.amount,
+      method: data.method,
+      purpose: data.purpose,
+      currency: 'USD',
+    }),
   });
+  if (res?.data) return res.data;
+  throw new Error('Deposit failed');
 }
 
 /**
@@ -506,11 +538,17 @@ export async function depositFunds(data: DepositRequest): Promise<{ transaction:
  * - Return updated balance and transaction
  */
 export async function withdrawFunds(data: WithdrawalRequest): Promise<{ transaction: Transaction; newBalance: number }> {
-  // TODO: Replace with actual API call
-  return apiCall('/wallet/withdraw', {
+  const res = await apiCall<{ success: boolean; data: { transaction: Transaction; newBalance: number } }>('/wallet/withdraw', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      amount: data.amount,
+      method: data.method,
+      destination: data.destination,
+      currency: 'USD',
+    }),
   });
+  if (res?.data) return res.data;
+  throw new Error('Withdrawal failed');
 }
 
 /**
@@ -528,11 +566,12 @@ export async function transferCreditToSavings(amount: number): Promise<{
   savingsBalance: number; 
   transaction: Transaction 
 }> {
-  // TODO: Replace with actual API call
-  return apiCall('/wallet/transfer-credit-to-savings', {
+  const res = await apiCall<{ success: boolean; data: { approvedCreditWallet: number; savingsBalance: number; transaction: Transaction } }>('/wallet/transfer-credit-to-savings', {
     method: 'POST',
     body: JSON.stringify({ amount }),
   });
+  if (res?.data) return res.data;
+  throw new Error('Transfer failed');
 }
 
 /**
@@ -546,11 +585,38 @@ export async function transferCreditToSavings(amount: number): Promise<{
 export async function getTransactions(params?: {
   limit?: number;
   offset?: number;
+  page?: number;
   type?: string;
 }): Promise<Transaction[]> {
-  // TODO: Replace with actual API call
-  const queryString = params ? '?' + new URLSearchParams(params as any).toString() : '';
-  return apiCall(`/wallet/transactions${queryString}`);
+  const q = new URLSearchParams();
+  if (params?.page) q.set('page', String(params.page));
+  if (params?.limit) q.set('limit', String(params.limit));
+  if (params?.type) q.set('type', params.type);
+  const queryString = q.toString() ? `?${q.toString()}` : '';
+  const res = await apiCall<{ success: boolean; data: { transactions: Array<{
+    id: string;
+    type: string;
+    amount: number;
+    date: string;
+    description: string;
+    status?: string;
+  }> } }>(`/wallet/transactions${queryString}`);
+  const list = res?.data?.transactions ?? [];
+  const mapType = (s: string): Transaction['type'] => {
+    const t = (s || '').toLowerCase();
+    if (t === 'deposit' || t === 'withdrawal' || t === 'loan' || t === 'repayment') return t as Transaction['type'];
+    if (t === 'loan_disbursement') return 'loan';
+    if (t === 'loan_repayment') return 'repayment';
+    return t === 'withdrawal' ? 'withdrawal' : 'deposit';
+  };
+  return list.map(t => ({
+    id: t.id,
+    type: mapType(t.type ?? ''),
+    amount: t.amount,
+    date: t.date,
+    description: t.description,
+    status: (t.status as Transaction['status']) ?? 'completed',
+  }));
 }
 
 // ==================== CREDIT APPLICATION APIs ====================
@@ -574,30 +640,44 @@ export async function applyLoan(data: CreditApplication): Promise<{
 }
 
 /**
- * POST /credit/apply
- * Submit credit application
- * Backend should:
- * - Validate user eligibility
- * - Check savings requirement (20% for non-emergency)
- * - Check if user has active loan
- * - Calculate interest (18%)
- * - Calculate service fee (1.5%)
- * - Calculate total credit amount
- * - Process application through approval workflow
- * - Return application status
+ * POST /credit/apply-instant
+ * Submit credit application with instant approval (auto-disburse)
  */
 export async function applyCreditApplication(data: CreditApplication): Promise<{
   applicationId: string;
   status: 'pending' | 'approved' | 'rejected';
   approvedAmount?: number;
-  totalCredit?: number; // principal + interest + fees
+  totalCredit?: number;
   message: string;
 }> {
-  // TODO: Replace with actual API call
-  return apiCall('/credit/apply', {
+  const res = await apiCall<{
+    success: boolean;
+    data: {
+      applicationId: string;
+      status: string;
+      approvedAmount?: number;
+      totalCredit?: number;
+      transaction?: Transaction;
+    };
+  }>('/credit/apply-instant', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      amount: data.amount,
+      creditType: data.creditType,
+      withCollateral: data.withCollateral ?? false,
+      currency: 'USD',
+    }),
   });
+  if (res?.data) {
+    return {
+      applicationId: res.data.applicationId,
+      status: (res.data.status ?? 'approved') as 'approved' | 'pending' | 'rejected',
+      approvedAmount: res.data.approvedAmount,
+      totalCredit: res.data.totalCredit,
+      message: 'Loan approved successfully',
+    };
+  }
+  throw new Error('Credit application failed');
 }
 
 /**
@@ -672,17 +752,8 @@ export async function repayLoan(data: RepaymentRequest): Promise<{
 }
 
 /**
- * POST /repayment/make-payment
+ * POST /wallet/repay
  * Make loan repayment
- * Backend should:
- * - Validate payment amount
- * - Process payment through selected method
- * - Update activeCredit balance
- * - Unlock savings if loan fully repaid
- * - Update onTimePayments or missedPayments
- * - Recalculate creditScore and disciplineScore
- * - Create transaction record
- * - Increment loyaltyProgress if loan completed
  */
 export async function makeRepayment(data: RepaymentRequest): Promise<{
   transaction: Transaction;
@@ -693,11 +764,41 @@ export async function makeRepayment(data: RepaymentRequest): Promise<{
     creditScore: number;
   };
 }> {
-  // TODO: Replace with actual API call
-  return apiCall('/repayment/make-payment', {
+  const res = await apiCall<{
+    success: boolean;
+    data: {
+      transactionId: string;
+      remainingBalance: number;
+      loanFullyPaid: boolean;
+    };
+  }>('/wallet/repay', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      amount: data.amount,
+      method: data.method,
+      deductFromSavings: data.method === 'savings',
+      currency: 'USD',
+    }),
   });
+  if (res?.data) {
+    return {
+      transaction: {
+        id: res.data.transactionId,
+        type: 'repayment',
+        amount: data.amount,
+        date: new Date().toISOString(),
+        description: `Repayment via ${data.method}`,
+        status: 'completed',
+      },
+      remainingBalance: res.data.remainingBalance,
+      loanFullyPaid: res.data.loanFullyPaid,
+      updatedScores: {
+        disciplineScore: 0,
+        creditScore: 0,
+      },
+    };
+  }
+  throw new Error('Repayment failed');
 }
 
 /**

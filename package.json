@@ -5,7 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "concurrently -n fe,be \"vite\" \"npm run dev:backend\"",
+    "dev:frontend": "vite",
+    "dev:backend": "cd backend-core && npm run dev",
+    "docker:up": "docker-compose up -d --build",
+    "docker:down": "docker-compose down",
+    "health": "node scripts/check-health.js"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -46,6 +51,7 @@
     "embla-carousel-react": "8.6.0",
     "framer-motion": "^12.29.2",
     "input-otp": "1.4.2",
+    "lightweight-charts": "^5.1.0",
     "lucide-react": "0.487.0",
     "motion": "12.23.24",
     "next-themes": "0.4.6",
@@ -67,6 +73,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
+    "concurrently": "^9.1.0",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5"
   },

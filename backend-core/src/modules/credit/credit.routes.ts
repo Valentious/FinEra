@@ -6,6 +6,7 @@ import { Router } from "express";
 import { prisma } from "../../infrastructure/database/index.js";
 import { authMiddleware } from "../../middlewares/auth.js";
 import * as creditService from "./credit.service.js";
+import { processLoanDisbursement } from "../wallet/transaction.service.js";
 import { z } from "zod";
 import { validationError } from "../../middlewares/errorHandler.js";
 
@@ -15,8 +16,10 @@ router.use(authMiddleware);
 
 const applySchema = z.object({
   amount: z.number().positive(),
-  currency: z.enum(["USD", "ZIG", "ZAR", "EUR"]),
-  term: z.number().int().min(1).max(60),
+  currency: z.enum(["USD", "ZIG", "ZAR", "EUR", "GBP"]).optional().default("USD"),
+  term: z.number().int().min(1).max(60).optional(),
+  creditType: z.enum(["essential", "emergency", "business"]).optional(),
+  withCollateral: z.boolean().optional().default(false),
 });
 
 router.get("/score", async (req, res, next) => {
@@ -49,7 +52,8 @@ router.post("/apply", async (req, res, next) => {
   try {
     const parsed = applySchema.safeParse(req.body);
     if (!parsed.success) throw validationError("Validation failed");
-    const { amount, currency, term } = parsed.data;
+    const { amount, currency } = parsed.data;
+    const term = parsed.data.term ?? 12;
 
     const limitResult = await creditService.calculateCreditLimit(req.user!.id);
     if (amount > limitResult.availableCredit) {
@@ -124,6 +128,79 @@ router.get("/loans", async (req, res, next) => {
       orderBy: { createdAt: "desc" },
     });
     res.json({ success: true, data: loans });
+  } catch (e) {
+    next(e);
+  }
+});
+
+const applyInstantSchema = z.object({
+  amount: z.number().positive(),
+  creditType: z.enum(["essential", "emergency", "business"]),
+  withCollateral: z.boolean().optional().default(false),
+  currency: z.enum(["USD", "ZIG", "ZAR", "EUR", "GBP"]).optional().default("USD"),
+});
+
+/**
+ * POST /credit/apply-instant
+ * Apply for credit with instant approval (auto-disburse).
+ * Validates: no active loan, savings 20% for non-emergency.
+ */
+router.post("/apply-instant", async (req, res, next) => {
+  try {
+    const parsed = applyInstantSchema.safeParse(req.body);
+    if (!parsed.success) throw validationError("Validation failed", { zod: parsed.error.flatten() });
+    const { amount, creditType, currency } = parsed.data;
+
+    const limitResult = await creditService.calculateCreditLimit(req.user!.id);
+    if (amount > limitResult.availableCredit) {
+      throw validationError("Amount exceeds available credit");
+    }
+
+    const wallet = await prisma.wallet.findFirst({
+      where: { userId: req.user!.id, currencyCode: currency, isActive: true },
+    });
+    if (!wallet) throw validationError("Wallet not found");
+
+    const activeLoans = await prisma.loan.count({
+      where: { userId: req.user!.id, status: "ACTIVE" },
+    });
+    if (activeLoans > 0) {
+      throw validationError("You already have an active loan");
+    }
+
+    const savingsBalance = Number(wallet.savingsBalance);
+    if (creditType !== "emergency" && savingsBalance < amount * 0.2) {
+      throw validationError("Savings must be at least 20% of loan amount for this credit type");
+    }
+
+    const serviceFee = amount * 0.015;
+    const interest = amount * 0.18;
+    const totalRepayable = amount + serviceFee + interest;
+    const term = creditType === "essential" ? 12 : creditType === "emergency" ? 6 : 24;
+    const interestRatePct = 18;
+
+    const result = await processLoanDisbursement(req.user!.id, {
+      principal: amount,
+      totalRepayable,
+      interestRate: interestRatePct,
+      currency,
+      term,
+      creditType,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        applicationId: result.loanId,
+        status: "approved",
+        approvedAmount: amount,
+        totalCredit: totalRepayable,
+        approvedCreditBalance: result.approvedCreditBalance,
+        activeLoanBalance: result.activeLoanBalance,
+        transaction: result.transaction,
+        repaymentCycle: `${term} months`,
+      },
+    });
   } catch (e) {
     next(e);
   }

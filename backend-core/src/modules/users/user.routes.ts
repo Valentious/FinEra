@@ -46,6 +46,7 @@ router.get("/wallets", async (req, res, next) => {
         accountNumber: true,
         balance: true,
         savingsBalance: true,
+        approvedCreditBalance: true,
         activeLoanBalance: true,
       },
     });

@@ -15,10 +15,14 @@ import * as mockApi from './mockApi';
 // ==================== CONFIGURATION ====================
 
 /**
- * Set to false when backend is ready
- * Set to true to use mock data for development
+ * Set to false when backend is ready and running (PostgreSQL + backend-core on :4000)
+ * Set to true to use mock data when backend is unavailable
  */
-export const USE_MOCK_DATA = false;
+export const USE_MOCK_DATA = true;
+
+if (USE_MOCK_DATA && typeof window !== 'undefined') {
+  console.warn('[FinEra] Using mock data (USE_MOCK_DATA=true). Set to false for real backend.');
+}
 
 // ==================== API SELECTOR ====================
 
@@ -105,6 +109,7 @@ export const apiService = USE_MOCK_DATA ? {
 
 // Export types
 export type { UserData, Transaction, CreditApplication, FinEraAccountNumbers, BankLinkingData } from './api';
+export { checkBackendHealth } from './api';
 
 // Export default
 export default apiService;

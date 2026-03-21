@@ -26,7 +26,7 @@ import { AgentGateway } from "./AgentGateway";
 
 interface WithdrawFlowProps {
   balance: number;
-  onConfirm: (amount: number, method: string) => void;
+  onConfirm: (amount: number, method: string) => void | Promise<void>;
   onBack: () => void;
   onSuccess: () => void;
 }
@@ -85,10 +85,15 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
       setStep("recipient");
     } else {
       setStep("processing");
-      setTimeout(() => {
-        onConfirm(numAmount, selectedMethod);
-        setStep("success");
-      }, 2000);
+      const run = async () => {
+        try {
+          await Promise.resolve(onConfirm(numAmount, selectedMethod));
+          setStep("success");
+        } catch {
+          setStep("amount");
+        }
+      };
+      setTimeout(run, 1500);
     }
   };
 
@@ -109,10 +114,15 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
       return;
     }
     setStep("processing");
-    setTimeout(() => {
-      onConfirm(parseFloat(amount), selectedMethod);
-      setStep("success");
-    }, 1500);
+    const run = async () => {
+      try {
+        await Promise.resolve(onConfirm(parseFloat(amount), selectedMethod));
+        setStep("success");
+      } catch {
+        setStep("confirmCode");
+      }
+    };
+    setTimeout(run, 1500);
   };
 
   const generateATMCode = () => {
@@ -149,9 +159,13 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
     toast.success("Copied to clipboard");
   };
 
-  const completeATMWithdrawal = () => {
-    onConfirm(parseFloat(amount), "atm");
-    setStep("success");
+  const completeATMWithdrawal = async () => {
+    try {
+      await Promise.resolve(onConfirm(parseFloat(amount), "atm"));
+      setStep("success");
+    } catch {
+      setStep("atm-code");
+    }
   };
 
   return (
@@ -324,9 +338,13 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
             <AgentGateway 
               type="withdrawal" 
               amount={parseFloat(amount)} 
-              onSuccess={(txnId) => {
-                onConfirm(parseFloat(amount), "agent");
-                setStep("success");
+              onSuccess={async (txnId) => {
+                try {
+                  await Promise.resolve(onConfirm(parseFloat(amount), "agent"));
+                  setStep("success");
+                } catch {
+                  setStep("amount");
+                }
               }}
               onCancel={() => setStep("amount")}
             />

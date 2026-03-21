@@ -29,9 +29,11 @@ import { MemberAgreement } from "@/app/components/MemberAgreement";
 import { MakeRepayment } from "@/app/components/MakeRepayment";
 import { MakePayment } from "@/app/components/MakePayment";
 import { AccountCreationSuccess } from "@/app/components/AccountCreationSuccess";
+import { QuickActionsScreen } from "@/app/components/QuickActionsScreen";
 import { Toaster, toast } from "sonner";
-import { apiService, type UserData, type Transaction, type CreditApplication, type FinEraAccountNumbers } from "@/services/index";
+import { apiService, checkBackendHealth, USE_MOCK_DATA, type UserData, type Transaction, type CreditApplication, type FinEraAccountNumbers } from "@/services/index";
 import { BankLinking } from "@/app/components/BankLinking";
+import { BackendUnavailableBanner } from "@/app/components/BackendUnavailableBanner";
 
 type Screen =
   | "splash"
@@ -63,7 +65,8 @@ type Screen =
   | "partnerProgram"
   | "adminOverview"
   | "makeRepayment"
-  | "makePayment";
+  | "makePayment"
+  | "quickActions";
 
 // NOTE: These limits are now defined in the backend
 // Kept here for UI reference only - backend is the source of truth
@@ -95,12 +98,6 @@ function generateFinEraAccountNumbers(): FinEraAccountNumbers {
     zig: `FE-ZIG-${suffix()}`,
     zar: `FE-ZAR-${suffix()}`,
   };
-}
-
-function calculateActiveCredit(principal: number): number {
-  const serviceFee = principal * 0.015; // 1.5%
-  const interest = principal * 0.18; // 18%
-  return principal + serviceFee + interest;
 }
 
 const saveUserData = (data: UserData) => {
@@ -177,6 +174,46 @@ export default function App() {
   }, []);
 
   const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'ZIG' | 'ZAR'>('USD');
+  const [backendAvailable, setBackendAvailable] = useState(true);
+
+  useEffect(() => {
+    if (USE_MOCK_DATA) return;
+    const check = async () => {
+      const ok = await checkBackendHealth();
+      setBackendAvailable(ok);
+    };
+    check();
+    const interval = setInterval(check, 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-sync: refresh financial data periodically when on dashboard (non-mock mode)
+  useEffect(() => {
+    if (USE_MOCK_DATA || !backendAvailable) return;
+    const refresh = async () => {
+      if (currentScreen === "dashboard") {
+        try {
+          const profile = await apiService.getUserProfile();
+          let transactions = [] as Transaction[];
+          try {
+            transactions = (await apiService.getTransactions()) as Transaction[];
+          } catch {
+            /* keep existing from profile */
+          }
+          setUserData((prev) => {
+            const merged = { ...prev, ...profile, transactions: transactions.length ? transactions : prev.transactions };
+            saveUserData(merged);
+            return merged;
+          });
+        } catch {
+          /* silent - keep current state */
+        }
+      }
+    };
+    const interval = setInterval(refresh, 60_000); // every 60s
+    return () => clearInterval(interval);
+  }, [currentScreen, backendAvailable]);
+
   const [creditApplication, setCreditApplication] = useState<CreditApplication>({
     creditType: "essential",
     amount: 0,
@@ -257,7 +294,7 @@ export default function App() {
   };
 
   const isAuthScreen = [
-    "dashboard", "savingsWallet", "walletManagement", "withdrawFlow", "depositFlow", "applyForCredit", 
+    "dashboard", "quickActions", "savingsWallet", "walletManagement", "withdrawFlow", "depositFlow", "applyForCredit", 
     "creditDetails", "creditTypeSelection", "collateralDetails", "confirmApplication", 
     "buyBackAgreement", "creditApproved", "walletCredited", "repaymentDashboard", "financialEducation", 
     "profileSettings", "partnerProgram", "adminOverview", "memberAgreement", "makeRepayment", "makePayment"
@@ -289,9 +326,29 @@ export default function App() {
     saveUserData(newData);
   };
 
+  const refreshUserData = async () => {
+    try {
+      const profile = await apiService.getUserProfile();
+      let transactions = userData.transactions;
+      if (typeof apiService.getTransactions === 'function') {
+        try {
+          transactions = (await apiService.getTransactions()) as Transaction[];
+        } catch {
+          /* keep existing */
+        }
+      }
+      const merged = { ...userData, ...profile, transactions };
+      setUserData(merged);
+      saveUserData(merged);
+    } catch {
+      // Ignore - keep current state
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--background)] font-sans selection:bg-primary/20 selection:text-primary">
       <Toaster position="top-center" richColors />
+      {!USE_MOCK_DATA && !backendAvailable && <BackendUnavailableBanner />}
       
       {isAuthScreen && (
         <MainNavigation 
@@ -355,6 +412,15 @@ export default function App() {
             onContinue={() => setCurrentScreen("dashboard")}
           />
         )}
+        {currentScreen === "quickActions" && (
+          <QuickActionsScreen
+            onAddSavings={() => setCurrentScreen("depositFlow")}
+            onViewRepayment={() => setCurrentScreen("repaymentDashboard")}
+            onWithdrawFunds={() => setCurrentScreen("withdrawFlow")}
+            onMakePayment={() => setCurrentScreen("makePayment")}
+            onBack={() => setCurrentScreen("dashboard")}
+          />
+        )}
         {currentScreen === "dashboard" && (
           <DashboardV2
             userName={userData.fullName || "User"}
@@ -411,20 +477,13 @@ export default function App() {
             approvedCreditWallet={userData.approvedCreditWallet}
             savingsWallet={userData.savingsBalance}
             activeCredit={userData.activeCredit}
-            onTransferToSavings={(amount) => {
-              const txn: Transaction = { 
-                id: `TXN${Date.now()}`, 
-                type: 'deposit', 
-                amount, 
-                date: new Date().toISOString(), 
-                description: `Transfer from Approved Credit to Savings` 
-              };
-              updateAndSave({ 
-                ...userData, 
-                approvedCreditWallet: userData.approvedCreditWallet - amount,
-                savingsBalance: userData.savingsBalance + amount, 
-                transactions: [...userData.transactions, txn] 
-              });
+            onTransferToSavings={async (amount) => {
+              try {
+                await apiService.transferCreditToSavings(amount);
+                await refreshUserData();
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : 'Transfer failed');
+              }
             }}
             onAddSavings={() => setCurrentScreen("depositFlow")}
             onWithdraw={() => {
@@ -438,11 +497,16 @@ export default function App() {
         {currentScreen === "withdrawFlow" && (
           <WithdrawFlow
             balance={userData.savingsBalance}
-            onConfirm={(amount, method) => {
-              const txn: Transaction = { id: `TXN${Date.now()}`, type: 'withdrawal', amount, date: new Date().toISOString(), description: `Withdrawal via ${method}` };
-              updateAndSave({ ...userData, savingsBalance: userData.savingsBalance - amount, transactions: [...userData.transactions, txn] });
+            onConfirm={async (amount, method) => {
+              try {
+                await apiService.withdrawFunds({ amount, method });
+                await refreshUserData();
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : 'Withdrawal failed');
+                throw err;
+              }
             }}
-            onBack={() => setCurrentScreen("savingsWallet")}
+            onBack={() => setCurrentScreen("dashboard")}
             onSuccess={() => setCurrentScreen("dashboard")}
           />
         )}
@@ -450,11 +514,16 @@ export default function App() {
         {currentScreen === "depositFlow" && (
           <DepositFlow
             currentBalance={userData.savingsBalance}
-            onConfirm={(amount, method, purpose) => {
-              const txn: Transaction = { id: `TXN${Date.now()}`, type: 'deposit', amount, date: new Date().toISOString(), description: `Deposit for ${purpose}` };
-              updateAndSave({ ...userData, savingsBalance: userData.savingsBalance + amount, transactions: [...userData.transactions, txn] });
+            onConfirm={async (amount, method, purpose) => {
+              try {
+                await apiService.depositFunds({ amount, method, purpose });
+                await refreshUserData();
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : 'Deposit failed');
+                throw err;
+              }
             }}
-            onBack={() => setCurrentScreen("savingsWallet")}
+            onBack={() => setCurrentScreen("dashboard")}
             onSuccess={() => setCurrentScreen("dashboard")}
           />
         )}
@@ -512,22 +581,16 @@ export default function App() {
             amount={creditApplication.amount}
             repaymentTerms={creditDetails.repaymentCycle}
             withCollateral={creditApplication.withCollateral}
-            onSubmit={() => {
+            onSubmit={async () => {
               setCurrentScreen("applicationStatus");
-              setTimeout(() => {
-                const principal = creditApplication.amount;
-                const active = calculateActiveCredit(principal);
-                const txn: Transaction = { id: `TXN${Date.now()}`, type: 'loan', amount: principal, date: new Date().toISOString(), description: `${creditApplication.creditType} Loan Approved` };
-                // NEW FLOW: Credit goes to Approved Credit Wallet (not directly withdrawable)
-                updateAndSave({ 
-                  ...userData, 
-                  approvedCreditWallet: userData.approvedCreditWallet + principal, // Add to Approved Credit Wallet
-                  activeCredit: active, 
-                  loanPrincipal: principal, 
-                  transactions: [...userData.transactions, txn] 
-                });
+              try {
+                await apiService.applyCreditApplication(creditApplication);
+                await refreshUserData();
                 setCurrentScreen("creditApproved");
-              }, 2000);
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : 'Application failed');
+                setCurrentScreen("confirmApplication");
+              }
             }}
             onBack={() => setCurrentScreen(creditApplication.withCollateral ? "collateralDetails" : "creditTypeSelection")}
           />
@@ -551,31 +614,16 @@ export default function App() {
             outstandingBalance={userData.activeCredit} 
             savingsBalance={userData.savingsBalance}
             onBack={() => setCurrentScreen("repaymentDashboard")}
-            onConfirm={(amount, method) => {
-              const txn: Transaction = { 
-                id: `TXN${Date.now()}`, 
-                type: 'repayment', 
-                amount, 
-                date: new Date().toISOString(), 
-                description: `Repayment via ${method}` 
-              };
-              
-              // Logic for updating balances
-              let newSavings = userData.savingsBalance;
-              if (method === 'savings') {
-                newSavings -= amount;
+            onConfirm={async (amount, method) => {
+              try {
+                await apiService.makeRepayment({ amount, method });
+                await refreshUserData();
+                setCurrentScreen("dashboard");
+                toast.success(`Repayment of $${amount} verified! Email confirmation sent.`);
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : 'Repayment failed');
+                throw err;
               }
-              
-              const newActiveCredit = Math.max(0, userData.activeCredit - amount);
-              updateAndSave({ 
-                ...userData, 
-                savingsBalance: newSavings, 
-                activeCredit: newActiveCredit, 
-                transactions: [...userData.transactions, txn] 
-              });
-              
-              setCurrentScreen("dashboard");
-              toast.success(`Repayment of $${amount} verified! Email confirmation sent.`);
             }}
           />
         )}
@@ -589,8 +637,24 @@ export default function App() {
         {currentScreen === "makePayment" && (
           <MakePayment
             countryCode={userData.countryId || "zw"}
+            savingsBalance={userData.savingsBalance}
+            currencySymbol={{ USD: "$", ZIG: "Z$", ZAR: "R" }[selectedCurrency] ?? "$"}
             onBack={() => setCurrentScreen("dashboard")}
-            onSuccess={() => setCurrentScreen("dashboard")}
+            onSuccess={async (payment) => {
+              try {
+                if (payment.gatewayId === "from_savings") {
+                  await apiService.withdrawFunds({
+                    amount: payment.amount,
+                    method: "savings",
+                    destination: payment.description,
+                  });
+                }
+                await refreshUserData();
+                setCurrentScreen("dashboard");
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : 'Payment failed');
+              }
+            }}
           />
         )}
         {currentScreen === "profileSettings" && <ProfileSettings userData={userData} onLogout={handleLogout} onUpdate={(d) => updateAndSave({ ...userData, ...d })} />}

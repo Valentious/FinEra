@@ -14,6 +14,7 @@ import { requestIdMiddleware, errorHandler } from "./middlewares/index.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import userRoutes from "./modules/users/user.routes.js";
 import transactionRoutes from "./modules/transactions/transaction.routes.js";
+import walletRoutes from "./modules/wallet/wallet.routes.js";
 import creditRoutes from "./modules/credit/credit.routes.js";
 import notificationRoutes from "./modules/notifications/notification.routes.js";
 import kycRoutes from "./modules/kyc/kyc.routes.js";
@@ -72,6 +73,7 @@ const generalLimiter = rateLimit({
 app.use("/api/v1/auth", authLimiter, authRoutes);
 app.use("/api/v1/user", generalLimiter, userRoutes);
 app.use("/api/v1/transactions", generalLimiter, transactionRoutes);
+app.use("/api/v1/wallet", generalLimiter, walletRoutes);
 app.use("/api/v1/credit", generalLimiter, creditRoutes);
 app.use("/api/v1/notifications", generalLimiter, notificationRoutes);
 app.use("/api/v1/kyc", generalLimiter, kycRoutes);

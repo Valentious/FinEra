@@ -21,7 +21,7 @@ import { AgentGateway } from "./AgentGateway";
 
 interface DepositFlowProps {
   currentBalance: number;
-  onConfirm: (amount: number, method: string, purpose: string) => void;
+  onConfirm: (amount: number, method: string, purpose: string) => void | Promise<void>;
   onBack: () => void;
   onSuccess: () => void;
 }
@@ -79,11 +79,17 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
     } else {
       setLoading(true);
       setStep("processing");
-      setTimeout(() => {
-        onConfirm(numAmount, method, purpose);
-        setLoading(false);
-        setStep("success");
-      }, 2000);
+      const run = async () => {
+        try {
+          await Promise.resolve(onConfirm(numAmount, method, purpose));
+          setLoading(false);
+          setStep("success");
+        } catch {
+          setLoading(false);
+          setStep("details");
+        }
+      };
+      setTimeout(run, 1500);
     }
   };
 
@@ -94,11 +100,17 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
     }
     setLoading(true);
     setStep("processing");
-    setTimeout(() => {
-      onConfirm(parseFloat(amount), method, purpose);
-      setLoading(false);
-      setStep("success");
-    }, 2500);
+    const run = async () => {
+      try {
+        await Promise.resolve(onConfirm(parseFloat(amount), method, purpose));
+        setLoading(false);
+        setStep("success");
+      } catch {
+        setLoading(false);
+        setStep("mobileMoney");
+      }
+    };
+    setTimeout(run, 2000);
   };
 
   return (
@@ -232,9 +244,13 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
             <AgentGateway 
               type="deposit" 
               amount={parseFloat(amount)} 
-              onSuccess={(txnId) => {
-                onConfirm(parseFloat(amount), "agent", purpose);
-                setStep("success");
+              onSuccess={async (txnId) => {
+                try {
+                  await Promise.resolve(onConfirm(parseFloat(amount), "agent", purpose));
+                  setStep("success");
+                } catch {
+                  setStep("details");
+                }
               }}
               onCancel={() => setStep("details")}
             />
