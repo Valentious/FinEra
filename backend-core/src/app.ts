@@ -21,6 +21,7 @@ import kycRoutes from "./modules/kyc/kyc.routes.js";
 import referenceRoutes from "./modules/reference/reference.routes.js";
 import learningRoutes from "./modules/learning/learning.routes.js";
 import partnerProgramRoutes from "./modules/partner-program/partner-program.routes.js";
+import currenciesRoutes from "./modules/currencies/currencies.routes.js";
 
 const app = express();
 
@@ -80,6 +81,7 @@ app.use("/api/v1/kyc", generalLimiter, kycRoutes);
 app.use("/api/v1/reference", generalLimiter, referenceRoutes);
 app.use("/api/v1/learning", generalLimiter, learningRoutes);
 app.use("/api/v1/partner-program", generalLimiter, partnerProgramRoutes);
+app.use("/api/v1/currencies", generalLimiter, currenciesRoutes);
 
 app.get("/api/registration-data", generalLimiter, async (_req, res) => {
   try {

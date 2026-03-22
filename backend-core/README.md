@@ -29,6 +29,19 @@ cp .env.example .env
 
 ### 3. Database Setup
 
+**Ensure database is ready** (PostgreSQL running, .env configured, finera_db exists):
+
+```powershell
+.\scripts\ensure-db-ready.ps1
+```
+
+This checks:
+1. **PostgreSQL** is running on port 5432 (start with `docker compose up -d postgres` if needed)
+2. **`.env`** exists with valid `DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/finera_db"`
+3. **finera_db** exists (create with `psql -U postgres -c "CREATE DATABASE finera_db;"` if missing)
+
+Then:
+
 ```bash
 # Generate Prisma client
 npm run db:generate

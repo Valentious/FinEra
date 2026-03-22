@@ -1,14 +1,27 @@
 /**
  * FinEra Backend - Authentication Service
+ *
+ * CORE PRINCIPLES:
+ * - Primary key (user_id/id) is the ONLY identity anchor
+ * - Secondary keys (email, phone) are UNIQUE but NOT identity
+ * - Password belongs to USER (user_id), not email
+ * - Login: STEP 1 fetch by email, STEP 2 validate password (never together)
  */
 
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { prisma } from "../../infrastructure/database/index.js";
 import { getConfig } from "../../config/index.js";
 import type { AccountType } from "@prisma/client";
-import { conflictError, authError } from "../../middlewares/errorHandler.js";
+import {
+  conflictError,
+  authError,
+  userNotFoundError,
+  invalidPasswordError,
+  accountInactiveError,
+} from "../../middlewares/errorHandler.js";
 import type { JwtPayload } from "../../types/index.js";
+import * as authRepo from "./auth.repository.js";
+import { logLoginAttempt } from "./auth.audit.js";
 
 const SALT_ROUNDS = 12;
 
@@ -34,20 +47,31 @@ export interface AuthTokens {
   expiresIn: number;
 }
 
+/** Normalize email: lowercase, trim. Enforced before any DB operation. */
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+/**
+ * Register: validate, normalize email, hash password (bcrypt), create user.
+ * Password hash depends ONLY on user_id (created at insert).
+ */
 export async function register(data: RegisterInput): Promise<{ userId: string; email: string }> {
-  const existing = await prisma.user.findUnique({ where: { email: data.email.toLowerCase() } });
+  const email = normalizeEmail(data.email);
+  const existing = await authRepo.findUserByEmail(email);
   if (existing) throw conflictError("Email already registered");
 
   const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
 
+  const { prisma } = await import("../../infrastructure/database/index.js");
   const user = await prisma.user.create({
     data: {
-      email: data.email.toLowerCase(),
-      fullName: data.fullName,
+      email,
+      fullName: data.fullName.trim(),
       accountType: data.accountType,
       countryCode: data.country,
-      city: data.city,
-      institution: data.institution,
+      city: data.city?.trim(),
+      institution: data.institution?.trim(),
       passwordHash,
       status: "ACTIVE",
     },
@@ -64,20 +88,65 @@ export async function register(data: RegisterInput): Promise<{ userId: string; e
   return { userId: user.id, email: user.email };
 }
 
-export async function login(data: LoginInput): Promise<AuthTokens> {
-  const user = await prisma.user.findUnique({
-    where: { email: data.email.toLowerCase() },
-  });
+/**
+ * Login: STRICT 2-step flow.
+ * STEP 1: Fetch user by email (secondary key)
+ * STEP 2: Validate password with bcrypt.compare (never in SQL)
+ * Distinct errors: USER_NOT_FOUND | INVALID_PASSWORD | ACCOUNT_INACTIVE
+ */
+export async function login(
+  data: LoginInput,
+  meta?: { ip?: string; userAgent?: string }
+): Promise<AuthTokens> {
+  const email = normalizeEmail(data.email);
 
-  if (!user || user.status !== "ACTIVE") throw authError("Invalid credentials");
+  // STEP 1: Fetch user by email only - never query password in same step
+  const user = await authRepo.findUserByEmail(email);
 
+  if (!user) {
+    logLoginAttempt({
+      email,
+      outcome: "USER_NOT_FOUND",
+      ip: meta?.ip,
+      userAgent: meta?.userAgent,
+    });
+    throw userNotFoundError("User not found");
+  }
+
+  if (user.status !== "ACTIVE") {
+    logLoginAttempt({
+      email,
+      outcome: "ACCOUNT_INACTIVE",
+      userId: user.id,
+      ip: meta?.ip,
+      userAgent: meta?.userAgent,
+    });
+    throw accountInactiveError("Account is not active");
+  }
+
+  // STEP 2: Validate password - compare input with stored hash (bcrypt)
   const valid = await bcrypt.compare(data.password, user.passwordHash);
-  if (!valid) throw authError("Invalid credentials");
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { lastLoginAt: new Date() },
+  if (!valid) {
+    logLoginAttempt({
+      email,
+      outcome: "INVALID_PASSWORD",
+      userId: user.id,
+      ip: meta?.ip,
+      userAgent: meta?.userAgent,
+    });
+    throw invalidPasswordError("Incorrect password");
+  }
+
+  logLoginAttempt({
+    email,
+    outcome: "SUCCESS",
+    userId: user.id,
+    ip: meta?.ip,
+    userAgent: meta?.userAgent,
   });
+
+  await authRepo.updateLastLogin(user.id, meta?.ip);
 
   return generateTokens(user.id, user.email);
 }
@@ -88,24 +157,19 @@ export async function refresh(refreshToken: string): Promise<AuthTokens> {
   const decoded = jwt.verify(refreshToken, config.JWT_REFRESH_SECRET) as JwtPayload;
   if (decoded.type !== "refresh") throw authError("Invalid refresh token");
 
-  const user = await prisma.user.findUnique({
-    where: { id: decoded.sub },
-  });
-
+  const user = await authRepo.findUserById(decoded.sub);
   if (!user || user.refreshToken !== refreshToken) throw authError("Invalid refresh token");
 
   return generateTokens(user.id, user.email);
 }
 
 export async function logout(refreshToken: string): Promise<void> {
-  const user = await prisma.user.findFirst({
+  const user = await (await import("../../infrastructure/database/index.js")).prisma.user.findFirst({
     where: { refreshToken },
+    select: { id: true },
   });
   if (user) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { refreshToken: null },
-    });
+    await authRepo.setRefreshToken(user.id, null);
   }
 }
 

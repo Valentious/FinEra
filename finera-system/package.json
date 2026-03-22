@@ -1,0 +1,30 @@
+{
+  "name": "finera-system",
+  "version": "1.0.0",
+  "description": "FinEra Inclusive Credit - Production Monorepo",
+  "private": true,
+  "devDependencies": {
+    "axios": "^1.7.7",
+    "concurrently": "^9.1.0",
+    "tsx": "^4.19.2"
+  },
+  "workspaces": [
+    "backend/*",
+    "frontend/*",
+    "shared"
+  ],
+  "scripts": {
+    "start:all": "powershell -ExecutionPolicy Bypass -File ./infrastructure/scripts/start-all-services.ps1",
+    "start:dev": "concurrently -n user,ledger,credit,admin,notif,auth,gateway -c cyan \"npm run dev:user\" \"npm run dev:ledger\" \"npm run dev:credit\" \"npm run dev:admin\" \"npm run dev:notification\" \"npm run dev:auth\" \"npm run dev:gateway\"",
+    "test:registration": "npx tsx scripts/test-registration-flow.ts",
+    "dev:gateway": "npm run dev -w @finera/api-gateway",
+    "dev:auth": "npm run dev -w @finera/auth-service",
+    "dev:user": "npm run dev -w @finera/user-service",
+    "dev:credit": "npm run dev -w @finera/credit-engine",
+    "dev:ledger": "npm run dev -w @finera/ledger-service",
+    "dev:notification": "npm run dev -w @finera/notification-service",
+    "dev:admin": "npm run dev -w @finera/admin-service",
+    "dev:user-dashboard": "npm run dev -w @finera/user-dashboard",
+    "dev:admin-dashboard": "npm run dev -w @finera/admin-dashboard"
+  }
+}

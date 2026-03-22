@@ -28,7 +28,9 @@ router.post("/login", async (req, res, next) => {
     if (!parsed.success) {
       throw validationError("Validation failed", parsed.error.flatten().fieldErrors as Record<string, unknown>);
     }
-    const tokens = await authService.login(parsed.data);
+    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket?.remoteAddress;
+    const userAgent = req.headers["user-agent"];
+    const tokens = await authService.login(parsed.data, { ip, userAgent });
     res.json({ success: true, data: tokens });
   } catch (e) {
     next(e);

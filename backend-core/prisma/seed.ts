@@ -93,7 +93,7 @@ async function main() {
     },
   });
 
-  const currencies = ["USD", "ZIG", "ZAR"] as const;
+  const currencies = ["USD", "ZIG", "ZAR", "USDT"] as const;
   const existing = await prisma.wallet.findMany({ where: { userId: user.id } });
   const existingCurrencies = new Set(existing.map((w) => w.currencyCode));
   for (const currency of currencies) {
@@ -106,6 +106,26 @@ async function main() {
         accountNumber,
       },
     });
+  }
+
+  const REGISTRY = [
+    { currencyCode: "USD" as const, displayName: "US Dollar", symbol: "$", custodyType: "bank", dashboardConfig: { minAmount: 1, maxAmount: 999999, feePercent: 0.1, dailyLimit: 50000, features: ["international", "strict_compliance"] } },
+    { currencyCode: "ZIG" as const, displayName: "Zimbabwe Gold (ZiG)", symbol: "Z$", custodyType: "momo", dashboardConfig: { minAmount: 10, maxAmount: 999999999, feePercent: 0.5, dailyLimit: 50000000, features: ["local_transfers"] } },
+    { currencyCode: "ZAR" as const, displayName: "South African Rand", symbol: "R", custodyType: "bank", dashboardConfig: { minAmount: 5, maxAmount: 999999, feePercent: 0.2, dailyLimit: 100000, features: ["regional_transfers"] } },
+    { currencyCode: "EUR" as const, displayName: "Euro", symbol: "€", custodyType: "bank", dashboardConfig: { minAmount: 1, maxAmount: 999999, feePercent: 0.2, dailyLimit: 50000, features: ["international"] } },
+    { currencyCode: "GBP" as const, displayName: "British Pound", symbol: "£", custodyType: "bank", dashboardConfig: { minAmount: 1, maxAmount: 999999, feePercent: 0.2, dailyLimit: 50000, features: ["international"] } },
+    { currencyCode: "USDT" as const, displayName: "Tether (USDT)", symbol: "₮", custodyType: "blockchain", dashboardConfig: { minAmount: 1, maxAmount: 999999, feePercent: 0.5, dailyLimit: 100000, features: ["blockchain", "gas_fees"] } },
+  ];
+  for (const r of REGISTRY) {
+    try {
+      await prisma.currencyRegistry.upsert({
+        where: { currencyCode: r.currencyCode },
+        update: { displayName: r.displayName, symbol: r.symbol, custodyType: r.custodyType, dashboardConfig: r.dashboardConfig as object },
+        create: { currencyCode: r.currencyCode, displayName: r.displayName, symbol: r.symbol, custodyType: r.custodyType, dashboardConfig: r.dashboardConfig as object },
+      });
+    } catch {
+      /* table may not exist yet */
+    }
   }
 
   await seedLearningHub();

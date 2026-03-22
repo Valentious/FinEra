@@ -1,5 +1,5 @@
 /**
- * FinEra INCLUSIVE CREDIT - Form Validation Utilities
+ * FinEra GLOBAL INCLUSIVE FINANCIAL SYSTEM - Form Validation Utilities
  * Production-ready validation for KYC, security, and data integrity.
  */
 
@@ -55,3 +55,10 @@ export function validateStudentEmail(email: string): boolean {
 export function validatePhoneE164(phone: string): boolean {
   return VALIDATION.PHONE_E164_REGEX.test(phone);
 }
+
+/** Address Line 1: required, min 5 chars. Address Line 2: optional. */
+export const ADDRESS = {
+  MIN_LINE1_LENGTH: 5,
+  validateAddressLine1: (v: string): string | null =>
+    v && v.trim().length >= ADDRESS.MIN_LINE1_LENGTH ? null : "Address Line 1 is required (min 5 characters)",
+} as const;

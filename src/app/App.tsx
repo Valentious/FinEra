@@ -31,7 +31,10 @@ import { MakePayment } from "@/app/components/MakePayment";
 import { AccountCreationSuccess } from "@/app/components/AccountCreationSuccess";
 import { QuickActionsScreen } from "@/app/components/QuickActionsScreen";
 import { Toaster, toast } from "sonner";
-import { apiService, checkBackendHealth, USE_MOCK_DATA, type UserData, type Transaction, type CreditApplication, type FinEraAccountNumbers } from "@/services/index";
+import { apiService, checkBackendHealth, USE_MOCK_DATA, type UserData, type Transaction, type CreditApplication, type FinEraAccountNumbers, type CurrencyConfig } from "@/services/index";
+import { useAccountStore } from "@/stores/accountStore";
+import { fetchWalletsForStore } from "@/lib/walletFetcher";
+import { AccountSwitchOverlay } from "@/app/components/AccountSwitchOverlay";
 import { BankLinking } from "@/app/components/BankLinking";
 import { BackendUnavailableBanner } from "@/app/components/BackendUnavailableBanner";
 
@@ -173,7 +176,18 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'ZIG' | 'ZAR'>('USD');
+  const activeWallet = useAccountStore((s) => s.activeWallet);
+  const wallets = useAccountStore((s) => s.wallets);
+  const fetchWallets = useAccountStore((s) => s.fetchWallets);
+  const setActiveWalletById = useAccountStore((s) => s.setActiveWalletById);
+  const resetToDefault = useAccountStore((s) => s.resetToDefault);
+  const storeError = useAccountStore((s) => s.error);
+
+  const [fallbackCurrency, setFallbackCurrency] = useState<"USD" | "ZIG" | "ZAR" | "USDT">("USD");
+  const selectedCurrency = (activeWallet?.currency ?? fallbackCurrency) as "USD" | "ZIG" | "ZAR" | "USDT";
+  const [currencyTabs, setCurrencyTabs] = useState<CurrencyConfig[]>([]);
+  const [walletForCurrency, setWalletForCurrency] = useState<{ savingsBalance: number; activeCredit: number; approvedCreditBalance: number; accountNumber: string } | null>(null);
+  const [transactionsForCurrency, setTransactionsForCurrency] = useState<Transaction[]>([]);
   const [backendAvailable, setBackendAvailable] = useState(true);
 
   useEffect(() => {
@@ -187,16 +201,76 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Fetch wallets for Global Account Switcher when user enters main app
+  useEffect(() => {
+    if (!["dashboard", "savingsWallet", "walletManagement", "depositFlow", "withdrawFlow"].includes(currentScreen))
+      return;
+    fetchWallets(fetchWalletsForStore);
+  }, [currentScreen, fetchWallets]);
+
+  // Error recovery: currency mismatch → reset to USD
+  useEffect(() => {
+    if (storeError && storeError.toLowerCase().includes("currency")) {
+      resetToDefault();
+      toast.error("Account error. Switched to default.");
+    }
+  }, [storeError, resetToDefault]);
+
+  // Fetch currencies for dynamic dashboard tabs (when on dashboard)
+  useEffect(() => {
+    if (currentScreen !== "dashboard") return;
+    const load = async () => {
+      try {
+        const tabs = await apiService.getCurrencies?.();
+        if (Array.isArray(tabs) && tabs.length > 0) setCurrencyTabs(tabs);
+      } catch {
+        /* keep default */
+      }
+    };
+    load();
+  }, [currentScreen]);
+
+  // Fetch per-currency wallet + transactions when dashboard or currency changes (strict isolation)
+  useEffect(() => {
+    if (currentScreen !== "dashboard") return;
+    const load = async () => {
+      try {
+        if (typeof apiService.getWalletsByCurrency === "function") {
+          const wallets = await apiService.getWalletsByCurrency(selectedCurrency);
+          const w = wallets.find((x) => x.currencyCode === selectedCurrency) ?? wallets[0];
+          if (w) {
+            setWalletForCurrency({
+              savingsBalance: w.savingsBalance,
+              activeCredit: w.activeLoanBalance,
+              approvedCreditBalance: w.approvedCreditBalance,
+              accountNumber: w.accountNumber,
+            });
+          } else {
+            setWalletForCurrency(null);
+          }
+        }
+        if (typeof apiService.getTransactionsByCurrency === "function") {
+          const txs = await apiService.getTransactionsByCurrency(selectedCurrency);
+          setTransactionsForCurrency(txs);
+        }
+      } catch {
+        setWalletForCurrency(null);
+        setTransactionsForCurrency([]);
+      }
+    };
+    load();
+  }, [currentScreen, selectedCurrency]);
+
   // Auto-sync: refresh financial data periodically when on dashboard (non-mock mode)
   useEffect(() => {
     if (USE_MOCK_DATA || !backendAvailable) return;
     const refresh = async () => {
-      if (currentScreen === "dashboard") {
+        if (currentScreen === "dashboard") {
         try {
-          const profile = await apiService.getUserProfile();
+          const profile = await apiService.getUserProfile(selectedCurrency);
           let transactions = [] as Transaction[];
           try {
-            transactions = (await apiService.getTransactions()) as Transaction[];
+            transactions = (await apiService.getTransactionsByCurrency?.(selectedCurrency)) as Transaction[] ?? [];
           } catch {
             /* keep existing from profile */
           }
@@ -221,13 +295,11 @@ export default function App() {
   });
 
   const displayAccountNumber = (() => {
+    if (walletForCurrency?.accountNumber) return walletForCurrency.accountNumber;
     const fe = userData.finEraAccountNumbers;
     if (fe) {
-      switch (selectedCurrency) {
-        case 'USD': return fe.usd;
-        case 'ZIG': return fe.zig;
-        case 'ZAR': return fe.zar;
-      }
+      const key = selectedCurrency.toLowerCase() as keyof typeof fe;
+      if (key in fe) return (fe as Record<string, string>)[key];
     }
     return userData.accountNumber;
   })();
@@ -294,9 +366,9 @@ export default function App() {
   };
 
   const isAuthScreen = [
-    "dashboard", "quickActions", "savingsWallet", "walletManagement", "withdrawFlow", "depositFlow", "applyForCredit", 
-    "creditDetails", "creditTypeSelection", "collateralDetails", "confirmApplication", 
-    "buyBackAgreement", "creditApproved", "walletCredited", "repaymentDashboard", "financialEducation", 
+    "dashboard", "quickActions", "savingsWallet", "walletManagement", "withdrawFlow", "depositFlow", "applyForCredit",
+    "creditDetails", "creditTypeSelection", "collateralDetails", "confirmApplication",
+    "buyBackAgreement", "creditApproved", "walletCredited", "repaymentDashboard", "financialEducation",
     "profileSettings", "partnerProgram", "adminOverview", "memberAgreement", "makeRepayment", "makePayment"
   ].includes(currentScreen);
 
@@ -328,11 +400,17 @@ export default function App() {
 
   const refreshUserData = async () => {
     try {
-      const profile = await apiService.getUserProfile();
+      const profile = await apiService.getUserProfile(selectedCurrency);
       let transactions = userData.transactions;
-      if (typeof apiService.getTransactions === 'function') {
+      if (typeof apiService.getTransactionsByCurrency === 'function') {
         try {
-          transactions = (await apiService.getTransactions()) as Transaction[];
+          transactions = (await apiService.getTransactionsByCurrency(selectedCurrency)) as Transaction[];
+        } catch {
+          /* keep existing */
+        }
+      } else if (typeof apiService.getTransactions === 'function') {
+        try {
+          transactions = (await apiService.getTransactions({})) as Transaction[];
         } catch {
           /* keep existing */
         }
@@ -340,6 +418,24 @@ export default function App() {
       const merged = { ...userData, ...profile, transactions };
       setUserData(merged);
       saveUserData(merged);
+      if (typeof apiService.getWalletsByCurrency === 'function') {
+        try {
+          const wallets = await apiService.getWalletsByCurrency(selectedCurrency);
+          const w = wallets.find((x) => x.currencyCode === selectedCurrency) ?? wallets[0];
+          if (w) {
+            setWalletForCurrency({
+              savingsBalance: w.savingsBalance,
+              activeCredit: w.activeLoanBalance,
+              approvedCreditBalance: w.approvedCreditBalance,
+              accountNumber: w.accountNumber,
+            });
+          }
+        } catch {
+          /* keep current wallet state */
+        }
+      }
+      // Refresh account store so all currency balances stay in sync (e.g. after deposit)
+      fetchWallets(fetchWalletsForStore).catch(() => {});
     } catch {
       // Ignore - keep current state
     }
@@ -358,8 +454,11 @@ export default function App() {
           userName={userData.fullName || "User"}
           accountNumber={displayAccountNumber}
           isAdmin={userData.accountType === 'staff'}
+          onCreateWallet={() => setCurrentScreen("depositFlow")}
         />
       )}
+
+      <AccountSwitchOverlay />
 
       <main className={`${isAuthScreen ? "pt-20 md:pl-64 p-4 md:p-8" : ""}`}>
         {currentScreen === "splash" && <SplashScreen onComplete={() => setCurrentScreen("accountType")} />}
@@ -370,20 +469,25 @@ export default function App() {
         {currentScreen === "profileDetails" && (
           <ProfileDetails 
             accountType={userData.accountType} 
-            onComplete={(profileData) => { 
-              const updatedUser = { ...userData, ...profileData };
-              setUserData(updatedUser);
-              saveUserData(updatedUser);
-              // Staff & Alumni: redirect to bank linking first
-              if (userData.accountType === "staff" || userData.accountType === "alumni") {
-                setCurrentScreen("bankLinking");
-              } else {
-                // Student: generate FinEra accounts and go to success
-                const finEra = generateFinEraAccountNumbers();
-                const withAccounts = { ...updatedUser, finEraAccountNumbers: finEra };
-                setUserData(withAccounts);
-                saveUserData(withAccounts);
-                setCurrentScreen("accountCreationSuccess");
+            onComplete={async (profileData) => { 
+              try {
+                await apiService.completeProfile(profileData);
+                const updatedUser = { ...userData, ...profileData };
+                setUserData(updatedUser);
+                saveUserData(updatedUser);
+                // Staff & Alumni: redirect to bank linking first
+                if (userData.accountType === "staff" || userData.accountType === "alumni") {
+                  setCurrentScreen("bankLinking");
+                } else {
+                  // Student: generate FinEra accounts and go to success
+                  const finEra = generateFinEraAccountNumbers();
+                  const withAccounts = { ...updatedUser, finEraAccountNumbers: finEra };
+                  setUserData(withAccounts);
+                  saveUserData(withAccounts);
+                  setCurrentScreen("accountCreationSuccess");
+                }
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Failed to save profile. Please try again.");
               }
             }} 
           />
@@ -424,29 +528,32 @@ export default function App() {
         {currentScreen === "dashboard" && (
           <DashboardV2
             userName={userData.fullName || "User"}
-            savingsBalance={userData.savingsBalance}
-            activeCredit={userData.activeCredit}
+            savingsBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            activeCredit={walletForCurrency?.activeCredit ?? userData.activeCredit}
             availableCreditLimit={userData.availableCreditLimit}
             disciplineScore={userData.disciplineScore}
             creditScore={userData.creditScore}
             loyaltyProgress={userData.loyaltyProgress}
             selectedCurrency={selectedCurrency}
-            onCurrencyChange={setSelectedCurrency}
+            onCurrencyChange={(c) => {
+              const w = wallets.find((x) => x.currency === c);
+              if (w) setActiveWalletById(w.id);
+              else setFallbackCurrency(c);
+            }}
             displayAccountNumber={displayAccountNumber}
             onApplyForCredit={() => setCurrentScreen("memberAgreement")}
             onAddSavings={() => setCurrentScreen("depositFlow")}
             onViewSavings={() => {
-              // If user has approved credit, show WalletManagement, otherwise SavingsWallet
-              if (userData.approvedCreditWallet > 0) {
-                setCurrentScreen("walletManagement");
-              } else {
-                setCurrentScreen("savingsWallet");
-              }
+              const approved = (walletForCurrency?.approvedCreditBalance ?? userData.approvedCreditWallet) > 0;
+              if (approved) setCurrentScreen("walletManagement");
+              else setCurrentScreen("savingsWallet");
             }}
             onViewRepayment={() => setCurrentScreen("repaymentDashboard")}
             onWithdrawFunds={() => setCurrentScreen("withdrawFlow")}
             onMakePayment={() => setCurrentScreen("makePayment")}
-            transactions={userData.transactions}
+            transactions={transactionsForCurrency}
+            currencyTabs={currencyTabs}
+            dashboardConfig={currencyTabs.find((c) => c.currencyCode === selectedCurrency)?.dashboardConfig}
           />
         )}
 
@@ -460,12 +567,13 @@ export default function App() {
 
         {currentScreen === "savingsWallet" && (
           <SavingsWallet
-            totalSavings={userData.savingsBalance}
-            lockedSavings={userData.activeCredit > 0 ? userData.savingsBalance * 0.2 : 0}
-            availableSavings={userData.activeCredit > 0 ? userData.savingsBalance * 0.8 : userData.savingsBalance}
+            totalSavings={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            lockedSavings={(walletForCurrency?.activeCredit ?? userData.activeCredit) > 0 ? (walletForCurrency?.savingsBalance ?? userData.savingsBalance) * 0.2 : 0}
+            availableSavings={(walletForCurrency?.activeCredit ?? userData.activeCredit) > 0 ? (walletForCurrency?.savingsBalance ?? userData.savingsBalance) * 0.8 : (walletForCurrency?.savingsBalance ?? userData.savingsBalance)}
             onAddSavings={() => setCurrentScreen("depositFlow")}
             onWithdraw={() => {
-              if (userData.savingsBalance > 0) setCurrentScreen("withdrawFlow");
+              const bal = walletForCurrency?.savingsBalance ?? userData.savingsBalance;
+              if (bal > 0) setCurrentScreen("withdrawFlow");
               else toast.error("Insufficient balance");
             }}
             onBack={() => setCurrentScreen("dashboard")}
@@ -474,12 +582,12 @@ export default function App() {
 
         {currentScreen === "walletManagement" && (
           <WalletManagement
-            approvedCreditWallet={userData.approvedCreditWallet}
-            savingsWallet={userData.savingsBalance}
-            activeCredit={userData.activeCredit}
+            approvedCreditWallet={walletForCurrency?.approvedCreditBalance ?? userData.approvedCreditWallet}
+            savingsWallet={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            activeCredit={walletForCurrency?.activeCredit ?? userData.activeCredit}
             onTransferToSavings={async (amount) => {
               try {
-                await apiService.transferCreditToSavings(amount);
+                await apiService.transferCreditToSavings(amount, selectedCurrency);
                 await refreshUserData();
               } catch (err) {
                 toast.error(err instanceof Error ? err.message : 'Transfer failed');
@@ -487,7 +595,8 @@ export default function App() {
             }}
             onAddSavings={() => setCurrentScreen("depositFlow")}
             onWithdraw={() => {
-              if (userData.savingsBalance > 0) setCurrentScreen("withdrawFlow");
+              const bal = walletForCurrency?.savingsBalance ?? userData.savingsBalance;
+              if (bal > 0) setCurrentScreen("withdrawFlow");
               else toast.error("Insufficient balance in Savings Wallet");
             }}
             onBack={() => setCurrentScreen("dashboard")}
@@ -496,10 +605,10 @@ export default function App() {
 
         {currentScreen === "withdrawFlow" && (
           <WithdrawFlow
-            balance={userData.savingsBalance}
+            balance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
             onConfirm={async (amount, method) => {
               try {
-                await apiService.withdrawFunds({ amount, method });
+                await apiService.withdrawFunds({ amount, method, currency: selectedCurrency });
                 await refreshUserData();
               } catch (err) {
                 toast.error(err instanceof Error ? err.message : 'Withdrawal failed');
@@ -513,10 +622,10 @@ export default function App() {
 
         {currentScreen === "depositFlow" && (
           <DepositFlow
-            currentBalance={userData.savingsBalance}
+            currentBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
             onConfirm={async (amount, method, purpose) => {
               try {
-                await apiService.depositFunds({ amount, method, purpose });
+                await apiService.depositFunds({ amount, method, purpose, currency: selectedCurrency });
                 await refreshUserData();
               } catch (err) {
                 toast.error(err instanceof Error ? err.message : 'Deposit failed');
@@ -530,8 +639,8 @@ export default function App() {
 
         {currentScreen === "applyForCredit" && (
           <ApplyForCredit
-            savingsBalance={userData.savingsBalance}
-            hasActiveLoan={userData.activeCredit > 0}
+            savingsBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            hasActiveLoan={(walletForCurrency?.activeCredit ?? userData.activeCredit) > 0}
             onSelectCreditType={(type) => {
               setCreditApplication({ ...creditApplication, creditType: type });
               setCurrentScreen("creditDetails");
@@ -546,10 +655,11 @@ export default function App() {
             maxAmount={creditDetails.maxAmount}
             repaymentCycle={creditDetails.repaymentCycle}
             savingsRequirement={creditDetails.savingsRequirement * 100} // Convert to %
-            currentSavings={userData.savingsBalance} // Pass current savings for validation
+            currentSavings={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
             onContinue={(amount) => {
               // Discipline Rule Check (20% Savings)
-              if (creditApplication.creditType !== 'emergency' && userData.savingsBalance < (amount * 0.2)) {
+              const savings = walletForCurrency?.savingsBalance ?? userData.savingsBalance;
+              if (creditApplication.creditType !== 'emergency' && savings < (amount * 0.2)) {
                 toast.error("Financial Discipline Notification: Savings must be at least 20% of loan amount.");
                 return;
               }
@@ -584,7 +694,7 @@ export default function App() {
             onSubmit={async () => {
               setCurrentScreen("applicationStatus");
               try {
-                await apiService.applyCreditApplication(creditApplication);
+                await apiService.applyCreditApplication({ ...creditApplication, currency: selectedCurrency });
                 await refreshUserData();
                 setCurrentScreen("creditApproved");
               } catch (err) {
@@ -600,23 +710,23 @@ export default function App() {
         {currentScreen === "walletCredited" && <WalletCredited amount={creditApplication.amount} onWithdrawFunds={() => setCurrentScreen("walletManagement")} onViewRepayment={() => setCurrentScreen("repaymentDashboard")} />}
         
         {currentScreen === "repaymentDashboard" && (
-          <RepaymentDashboard 
-            totalCredit={userData.activeCredit} 
-            amountRepaid={0} 
-            outstandingBalance={userData.activeCredit} 
+          <RepaymentDashboard
+            totalCredit={walletForCurrency?.activeCredit ?? userData.activeCredit}
+            amountRepaid={0}
+            outstandingBalance={walletForCurrency?.activeCredit ?? userData.activeCredit}
             onMakeRepayment={() => setCurrentScreen("makeRepayment")} 
             onBack={() => setCurrentScreen("dashboard")} 
           />
         )}
 
         {currentScreen === "makeRepayment" && (
-          <MakeRepayment 
-            outstandingBalance={userData.activeCredit} 
-            savingsBalance={userData.savingsBalance}
+          <MakeRepayment
+            outstandingBalance={walletForCurrency?.activeCredit ?? userData.activeCredit}
+            savingsBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
             onBack={() => setCurrentScreen("repaymentDashboard")}
             onConfirm={async (amount, method) => {
               try {
-                await apiService.makeRepayment({ amount, method });
+                await apiService.makeRepayment({ amount, method, currency: selectedCurrency });
                 await refreshUserData();
                 setCurrentScreen("dashboard");
                 toast.success(`Repayment of $${amount} verified! Email confirmation sent.`);
@@ -637,8 +747,8 @@ export default function App() {
         {currentScreen === "makePayment" && (
           <MakePayment
             countryCode={userData.countryId || "zw"}
-            savingsBalance={userData.savingsBalance}
-            currencySymbol={{ USD: "$", ZIG: "Z$", ZAR: "R" }[selectedCurrency] ?? "$"}
+            savingsBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            currencySymbol={{ USD: "$", ZIG: "Z$", ZAR: "R", USDT: "₮", EUR: "€", GBP: "£" }[selectedCurrency] ?? "$"}
             onBack={() => setCurrentScreen("dashboard")}
             onSuccess={async (payment) => {
               try {
@@ -647,6 +757,7 @@ export default function App() {
                     amount: payment.amount,
                     method: "savings",
                     destination: payment.description,
+                    currency: selectedCurrency,
                   });
                 }
                 await refreshUserData();

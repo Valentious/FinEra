@@ -1,15 +1,15 @@
 import { Button } from "@/app/components/ui/button";
-import { 
-  LayoutDashboard, 
+import {
+  LayoutDashboard,
   Zap,
-  PiggyBank, 
-  GraduationCap, 
-  User, 
-  Settings, 
-  LogOut, 
+  PiggyBank,
+  GraduationCap,
+  User,
+  Settings,
+  LogOut,
   Menu,
   X,
-  Handshake
+  Handshake,
 } from "lucide-react";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 import { FinEraLogoText } from "@/app/components/FinEraLogoText";
@@ -24,9 +24,10 @@ interface MainNavigationProps {
   userName: string;
   accountNumber?: string;
   isAdmin?: boolean;
+  onCreateWallet?: () => void;
 }
 
-export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, accountNumber, isAdmin }: MainNavigationProps) {
+export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, accountNumber, isAdmin, onCreateWallet }: MainNavigationProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navItems = [
@@ -55,12 +56,12 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
             <FinEraShieldIcon size={32} className="rounded-lg" />
             <div className="hidden sm:flex flex-col leading-tight">
               <FinEraLogoText variant="dark" size="md" as="span" className="font-bold text-lg [&_.fin]:text-white [&_.era]:text-emerald-400" />
-              <span className="font-semibold text-xs text-slate-300 tracking-wider uppercase">INCLUSIVE CREDIT</span>
+              <span className="font-semibold text-xs text-slate-300 tracking-wider uppercase">GLOBAL INCLUSIVE FINANCIAL SYSTEM</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <NotificationsDropdown />
           <div className="h-8 w-[1px] bg-slate-500/50 mx-1" />
           <div className="flex items-center gap-2 pl-2">
@@ -133,7 +134,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
                   <FinEraShieldIcon size={32} className="rounded-lg" />
                   <div className="flex flex-col leading-tight">
                     <FinEraLogoText variant="light" size="md" as="span" className="font-bold text-lg" />
-                    <span className="font-semibold text-xs text-slate-600 tracking-wider uppercase">INCLUSIVE CREDIT</span>
+                    <span className="font-semibold text-xs text-slate-600 tracking-wider uppercase">GLOBAL INCLUSIVE FINANCIAL SYSTEM</span>
                   </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}>

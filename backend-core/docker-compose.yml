@@ -1,7 +1,5 @@
 # FinEra Backend - Local Development Stack
-# Run: docker-compose up -d
-
-version: "3.8"
+# Run: docker compose up -d
 
 services:
   postgres:

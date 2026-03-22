@@ -52,9 +52,35 @@ function saveUserData(user: UserData): void {
   localStorage.setItem(`member_${user.email}`, JSON.stringify(user));
 }
 
-function loadUserData(email: string): UserData | null {
+/** Extended user with per-currency wallet balances (mock-only) */
+type MockUserData = UserData & { walletBalances?: Record<string, number> };
+
+function loadUserData(email: string): MockUserData | null {
   const saved = localStorage.getItem(`member_${email}`);
-  return saved ? JSON.parse(saved) : null;
+  const parsed = saved ? JSON.parse(saved) : null;
+  if (!parsed) return null;
+  // Migrate legacy users: single savingsBalance → per-currency
+  if (!parsed.walletBalances || typeof parsed.walletBalances !== 'object') {
+    parsed.walletBalances = {
+      USD: parsed.savingsBalance ?? 0,
+      ZIG: 0,
+      ZAR: 0,
+      USDT: 0,
+    };
+    saveUserData(parsed);
+  }
+  return parsed;
+}
+
+function getWalletBalance(user: MockUserData, currency: string): number {
+  const c = (currency || 'USD').toUpperCase();
+  return (user.walletBalances?.[c] ?? 0);
+}
+
+function setWalletBalance(user: MockUserData, currency: string, amount: number): void {
+  const c = (currency || 'USD').toUpperCase();
+  if (!user.walletBalances) user.walletBalances = { USD: 0, ZIG: 0, ZAR: 0, USDT: 0 };
+  user.walletBalances[c] = amount;
 }
 
 function delay(ms: number): Promise<void> {
@@ -72,7 +98,7 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     throw new Error('User already exists');
   }
 
-  const user: UserData = {
+  const user: MockUserData = {
     memberId: generateMemberId(),
     fullName: data.fullName,
     title: '',
@@ -97,6 +123,7 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     loyaltyProgress: 0,
     missedPayments: 0,
     onTimePayments: 0,
+    walletBalances: { USD: 0, ZIG: 0, ZAR: 0, USDT: 0 },
   };
 
   saveUserData(user);
@@ -139,9 +166,9 @@ export async function mockVerifyOTP(data: OTPVerificationRequest): Promise<{ suc
   throw new Error('Invalid OTP');
 }
 
-export async function mockGetUserProfile(): Promise<UserData> {
+export async function mockGetUserProfile(currency?: string): Promise<UserData> {
   await delay(300);
-  
+
   const email = localStorage.getItem('active_user_email');
   if (!email) {
     throw new Error('Not authenticated');
@@ -152,7 +179,13 @@ export async function mockGetUserProfile(): Promise<UserData> {
     throw new Error('User not found');
   }
 
-  return user;
+  // Per-currency: return savingsBalance for requested currency
+  if (currency) {
+    const bal = getWalletBalance(user, currency);
+    return { ...user, savingsBalance: bal };
+  }
+  // No currency: legacy fallback - use USD balance
+  return { ...user, savingsBalance: getWalletBalance(user, 'USD') };
 }
 
 export async function mockUpdateUserProfile(data: Partial<UserData>): Promise<UserData> {
@@ -187,7 +220,12 @@ export async function mockDepositFunds(data: DepositRequest): Promise<{ transact
     throw new Error('User not found');
   }
 
-  const transaction: Transaction = {
+  const currency = (data.currency || 'USD').toUpperCase();
+  const prevBal = getWalletBalance(user, currency);
+  const newBal = prevBal + data.amount;
+  setWalletBalance(user, currency, newBal);
+
+  const transaction: Transaction & { currency?: string } = {
     id: 'TXN' + Date.now(),
     type: 'deposit',
     amount: data.amount,
@@ -195,14 +233,13 @@ export async function mockDepositFunds(data: DepositRequest): Promise<{ transact
     description: `Deposit via ${data.method} - ${data.purpose}`,
     status: 'completed',
   };
-
-  user.savingsBalance += data.amount;
-  user.transactions.push(transaction);
+  (transaction as { currency?: string }).currency = currency;
+  user.transactions.push(transaction as Transaction);
   saveUserData(user);
 
   return {
-    transaction,
-    newBalance: user.savingsBalance,
+    transaction: transaction as Transaction,
+    newBalance: newBal,
   };
 }
 
@@ -219,13 +256,17 @@ export async function mockWithdrawFunds(data: WithdrawalRequest): Promise<{ tran
     throw new Error('User not found');
   }
 
-  // Validate sufficient balance
-  const availableBalance = user.activeCredit > 0 ? user.savingsBalance * 0.8 : user.savingsBalance;
+  const currency = (data.currency || 'USD').toUpperCase();
+  const currBal = getWalletBalance(user, currency);
+  const availableBalance = user.activeCredit > 0 ? currBal * 0.8 : currBal;
   if (data.amount > availableBalance) {
     throw new Error('Insufficient available balance');
   }
 
-  const transaction: Transaction = {
+  const newBal = currBal - data.amount;
+  setWalletBalance(user, currency, newBal);
+
+  const transaction: Transaction & { currency?: string } = {
     id: 'TXN' + Date.now(),
     type: 'withdrawal',
     amount: data.amount,
@@ -233,18 +274,17 @@ export async function mockWithdrawFunds(data: WithdrawalRequest): Promise<{ tran
     description: `Withdrawal via ${data.method}`,
     status: 'completed',
   };
-
-  user.savingsBalance -= data.amount;
-  user.transactions.push(transaction);
+  (transaction as { currency?: string }).currency = currency;
+  user.transactions.push(transaction as Transaction);
   saveUserData(user);
 
   return {
-    transaction,
-    newBalance: user.savingsBalance,
+    transaction: transaction as Transaction,
+    newBalance: newBal,
   };
 }
 
-export async function mockTransferCreditToSavings(amount: number): Promise<{ 
+export async function mockTransferCreditToSavings(amount: number, currency: string = 'USD'): Promise<{ 
   approvedCreditWallet: number; 
   savingsBalance: number; 
   transaction: Transaction 
@@ -265,7 +305,13 @@ export async function mockTransferCreditToSavings(amount: number): Promise<{
     throw new Error('Insufficient funds in Approved Credit Wallet');
   }
 
-  const transaction: Transaction = {
+  const c = (currency || 'USD').toUpperCase();
+  const prevBal = getWalletBalance(user, c);
+  const newBal = prevBal + amount;
+  setWalletBalance(user, c, newBal);
+  user.approvedCreditWallet -= amount;
+
+  const transaction: Transaction & { currency?: string } = {
     id: 'TXN' + Date.now(),
     type: 'deposit',
     amount,
@@ -273,17 +319,54 @@ export async function mockTransferCreditToSavings(amount: number): Promise<{
     description: 'Transfer from Approved Credit to Savings',
     status: 'completed',
   };
-
-  user.approvedCreditWallet -= amount;
-  user.savingsBalance += amount;
-  user.transactions.push(transaction);
+  (transaction as { currency?: string }).currency = c;
+  user.transactions.push(transaction as Transaction);
   saveUserData(user);
 
   return {
     approvedCreditWallet: user.approvedCreditWallet,
-    savingsBalance: user.savingsBalance,
-    transaction,
+    savingsBalance: newBal,
+    transaction: transaction as Transaction,
   };
+}
+
+type WalletResponse = { id: string; currencyCode: string; accountNumber: string; savingsBalance: number; balance: number; approvedCreditBalance: number; activeLoanBalance: number };
+
+export async function mockGetWalletsByCurrency(currency?: string): Promise<WalletResponse[]> {
+  await delay(200);
+  const email = localStorage.getItem('active_user_email');
+  if (!email) return [];
+  const user = loadUserData(email);
+  if (!user) return [];
+  const fe = (user as UserData).finEraAccountNumbers;
+  const baseAccount = user.accountNumber || '';
+  const accounts: Record<string, string> = fe ? { usd: fe.usd, zig: fe.zig, zar: fe.zar } : { usd: baseAccount, zig: baseAccount, zar: baseAccount };
+  // Scalable: return all supported currencies when no filter (USD, ZiG, ZAR, USDT, etc.)
+  const currencies = currency ? [currency.toUpperCase()] : ['USD', 'ZIG', 'ZAR', 'USDT'];
+  return currencies.map((c) => {
+    const bal = getWalletBalance(user, c);
+    const key = c === 'ZIG' ? 'zig' : c === 'ZAR' ? 'zar' : c === 'USDT' ? 'usd' : 'usd';
+    return {
+      id: `finera-${c.toLowerCase()}`,
+      currencyCode: c,
+      accountNumber: accounts[key] || `FE-${c}-${baseAccount.slice(-6)}`,
+      savingsBalance: bal,
+      balance: bal,
+      approvedCreditBalance: user.approvedCreditWallet,
+      activeLoanBalance: user.activeCredit,
+    };
+  });
+}
+
+export async function mockGetTransactionsByCurrency(currency: string): Promise<Transaction[]> {
+  await delay(200);
+  const email = localStorage.getItem('active_user_email');
+  if (!email) return [];
+  const user = loadUserData(email);
+  if (!user) return [];
+  const list = user.transactions ?? [];
+  const c = (currency || 'USD').toUpperCase();
+  return list.filter((t) => ((t as Transaction & { currency?: string }).currency ?? 'USD') === c);
 }
 
 export async function mockApplyCreditApplication(data: CreditApplication): Promise<{
@@ -314,8 +397,10 @@ export async function mockApplyCreditApplication(data: CreditApplication): Promi
     };
   }
 
-  // Check savings requirement (20% for non-emergency)
-  if (data.creditType !== 'emergency' && user.savingsBalance < data.amount * 0.2) {
+  // Check savings requirement (20% for non-emergency) - use currency-specific balance
+  const creditCurrency = (data.currency || 'USD').toUpperCase();
+  const savingsForCurrency = getWalletBalance(user, creditCurrency);
+  if (data.creditType !== 'emergency' && savingsForCurrency < data.amount * 0.2) {
     return {
       applicationId: 'APP' + Date.now(),
       status: 'rejected',

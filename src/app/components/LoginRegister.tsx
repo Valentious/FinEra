@@ -195,7 +195,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
             <FinEraShieldIcon size={48} className="rounded-xl" />
             <div className="hero-header flex flex-col items-center justify-center text-center">
               <FinEraLogoText variant="light" size="md" />
-              <p className="inclusive-text text-xs font-semibold text-slate-600 tracking-[0.2em] uppercase mt-1 mb-0">INCLUSIVE CREDIT</p>
+              <p className="inclusive-text text-xs font-semibold text-slate-600 tracking-[0.2em] uppercase mt-1 mb-0">GLOBAL INCLUSIVE FINANCIAL SYSTEM</p>
             </div>
           </div>
         </div>

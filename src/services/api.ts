@@ -98,6 +98,8 @@ export interface CreditApplication {
   amount: number;
   withCollateral: boolean;
   collateralDetails?: any;
+  /** Currency for the credit (wallet isolation) - required for correct wallet targeting */
+  currency?: string;
 }
 
 export interface LoginRequest {
@@ -129,17 +131,20 @@ export interface DepositRequest {
   amount: number;
   method: string;
   purpose: string;
+  currency?: string;
 }
 
 export interface WithdrawalRequest {
   amount: number;
   method: string;
   destination?: string;
+  currency?: string;
 }
 
 export interface RepaymentRequest {
   amount: number;
   method: string;
+  currency?: string;
 }
 
 // ==================== API RESPONSE TYPES ====================
@@ -413,44 +418,126 @@ export async function getInstitutions(countryId?: string, type?: "student" | "st
   return Array.isArray(res) ? res : [];
 }
 
+// ==================== MULTI-CURRENCY DASHBOARD APIs ====================
+
+export interface CurrencyConfig {
+  currencyCode: string;
+  displayName: string;
+  symbol: string;
+  status: string;
+  custodyType: string;
+  dashboardConfig: {
+    minAmount?: number;
+    maxAmount?: number;
+    feePercent?: number;
+    dailyLimit?: number;
+    features?: string[];
+  };
+}
+
+/** GET /currencies - Fetch active currencies for dynamic dashboard loading */
+export async function getCurrencies(): Promise<CurrencyConfig[]> {
+  try {
+    const res = await apiCall<{ success: boolean; data: CurrencyConfig[] }>("/currencies");
+    return res.data ?? [];
+  } catch {
+    return [
+      { currencyCode: "USD", displayName: "US Dollar", symbol: "$", status: "active", custodyType: "bank", dashboardConfig: {} },
+      { currencyCode: "ZIG", displayName: "Zimbabwe Gold (ZiG)", symbol: "Z$", status: "active", custodyType: "momo", dashboardConfig: {} },
+      { currencyCode: "ZAR", displayName: "South African Rand", symbol: "R", status: "active", custodyType: "bank", dashboardConfig: {} },
+      { currencyCode: "USDT", displayName: "Tether (USDT)", symbol: "₮", status: "active", custodyType: "blockchain", dashboardConfig: {} },
+    ];
+  }
+}
+
+/** GET /dashboard-config - Full dashboard config per currency */
+export async function getDashboardConfig(currency?: string): Promise<Record<string, object>> {
+  try {
+    const url = currency ? `/currencies/dashboard-config?currency=${encodeURIComponent(currency)}` : "/currencies/dashboard-config";
+    const res = await apiCall<{ success: boolean; data: Record<string, object> }>(url);
+    return res.data ?? {};
+  } catch {
+    return {};
+  }
+}
+
+/** GET /user/wallets?currency=X - Wallets filtered by currency (per-dashboard) */
+export async function getWalletsByCurrency(currency?: string): Promise<Array<{ id: string; currencyCode: string; accountNumber: string; savingsBalance: number; balance: number; approvedCreditBalance: number; activeLoanBalance: number }>> {
+  const url = currency ? `/user/wallets?currency=${encodeURIComponent(currency)}` : "/user/wallets";
+  const res = await apiCall<{ success: boolean; data: Array<{ id: string; currencyCode: string; accountNumber: string; savingsBalance: string | number; balance: string | number; approvedCreditBalance?: string; activeLoanBalance?: string }> }>(url);
+  const list = res.data ?? [];
+  return list.map((w) => ({
+    id: w.id,
+    currencyCode: w.currencyCode,
+    accountNumber: w.accountNumber,
+    savingsBalance: typeof w.savingsBalance === "number" ? w.savingsBalance : parseFloat(String(w.savingsBalance ?? 0)),
+    balance: typeof w.balance === "number" ? w.balance : parseFloat(String(w.balance ?? 0)),
+    approvedCreditBalance: typeof w.approvedCreditBalance === "number" ? w.approvedCreditBalance : parseFloat(String(w.approvedCreditBalance ?? 0)),
+    activeLoanBalance: typeof w.activeLoanBalance === "number" ? w.activeLoanBalance : parseFloat(String(w.activeLoanBalance ?? 0)),
+  }));
+}
+
+/** GET /wallet/transactions?currency=X - Transactions filtered by currency (per-dashboard) */
+export async function getTransactionsByCurrency(currency: string, params?: { page?: number; limit?: number }): Promise<Transaction[]> {
+  const q = new URLSearchParams();
+  q.set("currency", currency);
+  if (params?.page) q.set("page", String(params.page));
+  if (params?.limit) q.set("limit", String(params.limit));
+  const res = await apiCall<{ success: boolean; data: { transactions: Array<{ id: string; type: string; amount: number; date: string; description: string; status?: string }> } }>(`/wallet/transactions?${q}`);
+  const list = res.data?.transactions ?? [];
+  const mapType = (s: string): Transaction["type"] => {
+    const t = (s || "").toLowerCase();
+    if (t === "deposit" || t === "withdrawal" || t === "loan" || t === "repayment") return t as Transaction["type"];
+    if (t === "loan_disbursement") return "loan";
+    if (t === "loan_repayment") return "repayment";
+    return t === "withdrawal" ? "withdrawal" : "deposit";
+  };
+  return list.map((t) => ({
+    id: t.id,
+    type: mapType(t.type ?? ""),
+    amount: t.amount,
+    date: t.date,
+    description: t.description,
+    status: (t.status as Transaction["status"]) ?? "completed",
+  }));
+}
+
 // ==================== USER MANAGEMENT APIs ====================
 
 /**
  * GET /users/profile
- * Get current user profile
- * Backend should:
- * - Fetch user from database
- * - Calculate real-time financial metrics
- * - Return complete user data
+ * Get current user profile. MUST pass currency for financial data - no cross-currency aggregation.
+ * @param currency - Required for wallet balances (USD, ZIG, ZAR, etc). Prevents mixing currencies.
  */
-export async function getUserProfile(): Promise<UserData> {
+export async function getUserProfile(currency: string = 'USD'): Promise<UserData> {
   const [profileRes, walletsRes, limitRes] = await Promise.all([
     apiCall<{ success: boolean; data: Record<string, unknown> }>('/user/profile'),
-    apiCall<{ success: boolean; data: Array<{ currencyCode: string; balance: string; accountNumber: string }> }>('/user/wallets'),
+    apiCall<{ success: boolean; data: Array<{ currencyCode: string; balance: string; accountNumber: string; savingsBalance?: string; approvedCreditBalance?: string; activeLoanBalance?: string }> }>(`/user/wallets?currency=${encodeURIComponent(currency)}`),
     apiCall<{ success: boolean; data: { creditLimit: number; availableCredit: number; financialDisciplineScore: number } }>('/credit/limit').catch(() => ({ success: false, data: { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 } })),
   ]);
   const p = profileRes.data || {};
   const wallets = walletsRes.data || [];
-  const usdWallet = wallets.find((w) => w.currencyCode === 'USD') as { savingsBalance?: string; balance?: string; accountNumber?: string; approvedCreditBalance?: string; activeLoanBalance?: string } | undefined;
+  const primaryWallet = wallets.find((w) => w.currencyCode === currency) as { savingsBalance?: string; balance?: string; accountNumber?: string; approvedCreditBalance?: string; activeLoanBalance?: string } | undefined;
+  const usdWallet = wallets.find((w) => w.currencyCode === 'USD') as { accountNumber?: string } | undefined;
   const zigWallet = wallets.find((w) => w.currencyCode === 'ZIG') as { accountNumber?: string } | undefined;
   const zarWallet = wallets.find((w) => w.currencyCode === 'ZAR') as { accountNumber?: string } | undefined;
   const limit = limitRes.data || { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 };
-  const activeCredit = wallets.reduce((s, w) => s + parseFloat((w as { activeLoanBalance?: string }).activeLoanBalance || '0'), 0);
+  const activeCredit = parseFloat(primaryWallet?.activeLoanBalance ?? '0');
   return {
     memberId: (p.id as string) || '',
     fullName: (p.fullName as string) || '',
     title: '',
     dateOfBirth: '',
     phoneNumber: '',
-    accountNumber: usdWallet?.accountNumber || '',
+    accountNumber: primaryWallet?.accountNumber || usdWallet?.accountNumber || '',
     nationalIdNumber: '',
     studentStaffId: '',
     salaryRange: null,
     email: (p.email as string) || '',
     mobile: '',
     accountType: ((p.accountType as string) || 'student').toLowerCase(),
-    savingsBalance: parseFloat(usdWallet?.savingsBalance ?? usdWallet?.balance ?? '0') || 0,
-    approvedCreditWallet: parseFloat(usdWallet?.approvedCreditBalance || '0') || 0,
+    savingsBalance: parseFloat(primaryWallet?.savingsBalance ?? primaryWallet?.balance ?? '0') || 0,
+    approvedCreditWallet: parseFloat(primaryWallet?.approvedCreditBalance || '0') || 0,
     activeCredit,
     availableCreditLimit: limit.availableCredit || 200,
     loanPrincipal: 0,
@@ -513,13 +600,14 @@ export async function completeProfile(profileData: any): Promise<{ success: bool
  * - Return updated balance and transaction
  */
 export async function depositFunds(data: DepositRequest): Promise<{ transaction: Transaction; newBalance: number }> {
+  const currency = data.currency ?? (() => { throw new Error("Currency REQUIRED for deposit. Select account first."); })();
   const res = await apiCall<{ success: boolean; data: { transaction: Transaction; newBalance: number } }>('/wallet/deposit', {
     method: 'POST',
     body: JSON.stringify({
       amount: data.amount,
       method: data.method,
       purpose: data.purpose,
-      currency: 'USD',
+      currency,
     }),
   });
   if (res?.data) return res.data;
@@ -538,13 +626,14 @@ export async function depositFunds(data: DepositRequest): Promise<{ transaction:
  * - Return updated balance and transaction
  */
 export async function withdrawFunds(data: WithdrawalRequest): Promise<{ transaction: Transaction; newBalance: number }> {
+  const currency = data.currency ?? (() => { throw new Error("Currency REQUIRED for withdraw. Select account first."); })();
   const res = await apiCall<{ success: boolean; data: { transaction: Transaction; newBalance: number } }>('/wallet/withdraw', {
     method: 'POST',
     body: JSON.stringify({
       amount: data.amount,
       method: data.method,
       destination: data.destination,
-      currency: 'USD',
+      currency,
     }),
   });
   if (res?.data) return res.data;
@@ -553,22 +642,16 @@ export async function withdrawFunds(data: WithdrawalRequest): Promise<{ transact
 
 /**
  * POST /wallet/transfer-credit-to-savings
- * Transfer from approved credit wallet to savings wallet
- * Backend should:
- * - Validate amount <= approvedCreditWallet
- * - Deduct from approvedCreditWallet
- * - Add to savingsBalance
- * - Create transaction record
- * - Return updated balances
+ * Transfer from approved credit wallet to savings wallet. REQUIRES currency for isolation.
  */
-export async function transferCreditToSavings(amount: number): Promise<{ 
+export async function transferCreditToSavings(amount: number, currency: string = 'USD'): Promise<{ 
   approvedCreditWallet: number; 
   savingsBalance: number; 
   transaction: Transaction 
 }> {
   const res = await apiCall<{ success: boolean; data: { approvedCreditWallet: number; savingsBalance: number; transaction: Transaction } }>('/wallet/transfer-credit-to-savings', {
     method: 'POST',
-    body: JSON.stringify({ amount }),
+    body: JSON.stringify({ amount, currency }),
   });
   if (res?.data) return res.data;
   throw new Error('Transfer failed');
@@ -582,41 +665,21 @@ export async function transferCreditToSavings(amount: number): Promise<{
  * - Support pagination
  * - Support filtering by type/date
  */
+/**
+ * Get transactions - currency REQUIRED. Routes to getTransactionsByCurrency.
+ */
 export async function getTransactions(params?: {
   limit?: number;
   offset?: number;
   page?: number;
   type?: string;
+  currency?: string;
 }): Promise<Transaction[]> {
-  const q = new URLSearchParams();
-  if (params?.page) q.set('page', String(params.page));
-  if (params?.limit) q.set('limit', String(params.limit));
-  if (params?.type) q.set('type', params.type);
-  const queryString = q.toString() ? `?${q.toString()}` : '';
-  const res = await apiCall<{ success: boolean; data: { transactions: Array<{
-    id: string;
-    type: string;
-    amount: number;
-    date: string;
-    description: string;
-    status?: string;
-  }> } }>(`/wallet/transactions${queryString}`);
-  const list = res?.data?.transactions ?? [];
-  const mapType = (s: string): Transaction['type'] => {
-    const t = (s || '').toLowerCase();
-    if (t === 'deposit' || t === 'withdrawal' || t === 'loan' || t === 'repayment') return t as Transaction['type'];
-    if (t === 'loan_disbursement') return 'loan';
-    if (t === 'loan_repayment') return 'repayment';
-    return t === 'withdrawal' ? 'withdrawal' : 'deposit';
-  };
-  return list.map(t => ({
-    id: t.id,
-    type: mapType(t.type ?? ''),
-    amount: t.amount,
-    date: t.date,
-    description: t.description,
-    status: (t.status as Transaction['status']) ?? 'completed',
-  }));
+  const currency = params?.currency ?? "USD";
+  return getTransactionsByCurrency(currency, {
+    page: params?.page,
+    limit: params?.limit,
+  });
 }
 
 // ==================== CREDIT APPLICATION APIs ====================
@@ -665,7 +728,7 @@ export async function applyCreditApplication(data: CreditApplication): Promise<{
       amount: data.amount,
       creditType: data.creditType,
       withCollateral: data.withCollateral ?? false,
-      currency: 'USD',
+      currency: data.currency ?? 'USD',
     }),
   });
   if (res?.data) {
@@ -777,7 +840,7 @@ export async function makeRepayment(data: RepaymentRequest): Promise<{
       amount: data.amount,
       method: data.method,
       deductFromSavings: data.method === 'savings',
-      currency: 'USD',
+      currency: data.currency ?? 'USD',
     }),
   });
   if (res?.data) {

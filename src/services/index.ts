@@ -43,10 +43,21 @@ export const apiService = USE_MOCK_DATA ? {
   depositFunds: mockApi.mockDepositFunds,
   withdrawFunds: mockApi.mockWithdrawFunds,
   transferCreditToSavings: mockApi.mockTransferCreditToSavings,
-  getTransactions: async () => {
+  getTransactions: async (params?: { currency?: string }) => {
     const user = await mockApi.mockGetUserProfile();
-    return user.transactions;
+    const list = user.transactions ?? [];
+    if (params?.currency) return list; // mock doesn't filter by currency
+    return list;
   },
+  getCurrencies: async () => [
+    { currencyCode: "USD", displayName: "US Dollar", symbol: "$", status: "active", custodyType: "bank", dashboardConfig: {} },
+    { currencyCode: "ZIG", displayName: "Zimbabwe Gold (ZiG)", symbol: "Z$", status: "active", custodyType: "momo", dashboardConfig: {} },
+    { currencyCode: "ZAR", displayName: "South African Rand", symbol: "R", status: "active", custodyType: "bank", dashboardConfig: {} },
+    { currencyCode: "USDT", displayName: "Tether (USDT)", symbol: "₮", status: "active", custodyType: "blockchain", dashboardConfig: {} },
+  ],
+  getDashboardConfig: async () => ({}),
+  getWalletsByCurrency: mockApi.mockGetWalletsByCurrency,
+  getTransactionsByCurrency: mockApi.mockGetTransactionsByCurrency,
 
   // Credit Applications
   applyCreditApplication: mockApi.mockApplyCreditApplication,
@@ -96,6 +107,10 @@ export const apiService = USE_MOCK_DATA ? {
   withdrawFunds: realApi.withdrawFunds,
   transferCreditToSavings: realApi.transferCreditToSavings,
   getTransactions: realApi.getTransactions,
+  getCurrencies: realApi.getCurrencies,
+  getDashboardConfig: realApi.getDashboardConfig,
+  getWalletsByCurrency: realApi.getWalletsByCurrency,
+  getTransactionsByCurrency: realApi.getTransactionsByCurrency,
   applyCreditApplication: realApi.applyCreditApplication,
   getCreditApplicationStatus: realApi.getCreditApplicationStatus,
   getCreditLimits: realApi.getCreditLimits,
@@ -108,7 +123,7 @@ export const apiService = USE_MOCK_DATA ? {
 };
 
 // Export types
-export type { UserData, Transaction, CreditApplication, FinEraAccountNumbers, BankLinkingData } from './api';
+export type { UserData, Transaction, CreditApplication, FinEraAccountNumbers, BankLinkingData, CurrencyConfig } from './api';
 export { checkBackendHealth } from './api';
 
 // Export default

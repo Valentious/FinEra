@@ -38,6 +38,21 @@ export function conflictError(message: string) {
   return new AppError(409, "CONFLICT", message);
 }
 
+/** User not found by email - distinct from invalid password */
+export function userNotFoundError(message = "User not found") {
+  return new AppError(401, "USER_NOT_FOUND", message);
+}
+
+/** Password mismatch - distinct from user not found */
+export function invalidPasswordError(message = "Incorrect password") {
+  return new AppError(401, "INVALID_PASSWORD", message);
+}
+
+/** Account suspended or inactive */
+export function accountInactiveError(message = "Account is not active") {
+  return new AppError(403, "AUTHORIZATION_ERROR", message);
+}
+
 export function rateLimitError(message = "Too many requests") {
   return new AppError(429, "RATE_LIMIT", message);
 }
@@ -60,6 +75,7 @@ export function errorHandler(
       message: err.message,
       error: {
         code: err.code,
+        message: err.message,
         ...(isProd ? {} : { details: err.details }),
       },
     });

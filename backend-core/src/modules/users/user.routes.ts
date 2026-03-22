@@ -38,8 +38,13 @@ router.get("/profile", async (req, res, next) => {
 
 router.get("/wallets", async (req, res, next) => {
   try {
+    const currency = req.query.currency as string | undefined;
+    const where: { userId: string; isActive: boolean; currencyCode?: import("@prisma/client").CurrencyCode } = { userId: req.user!.id, isActive: true };
+    if (currency && ["USD", "ZIG", "ZAR", "EUR", "GBP", "USDT"].includes(currency)) {
+      where.currencyCode = currency as import("@prisma/client").CurrencyCode;
+    }
     const wallets = await prisma.wallet.findMany({
-      where: { userId: req.user!.id, isActive: true },
+      where,
       select: {
         id: true,
         currencyCode: true,

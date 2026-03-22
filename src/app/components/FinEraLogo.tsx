@@ -3,7 +3,7 @@ import { forwardRef, useId } from "react";
 interface FinEraLogoProps {
   /** Logo size: "sm" | "md" | "lg" | "xl" */
   size?: "sm" | "md" | "lg" | "xl";
-  /** Show tagline "INCLUSIVE CREDIT" */
+  /** Show tagline "GLOBAL INCLUSIVE FINANCIAL SYSTEM" */
   showTagline?: boolean;
   /** "dark" = Fin white (on dark bg), "light" = Fin dark (on light bg) */
   variant?: "dark" | "light";
@@ -54,7 +54,7 @@ export const FinEraLogo = forwardRef<SVGSVGElement, FinEraLogoProps>(
             fontWeight="700"
             letterSpacing="-0.02em"
           >
-            <tspan fill={variant === "light" ? "#0f172a" : "var(--text-white, #FFFFFF)"}>Fin</tspan>
+            <tspan fill={variant === "light" ? "#0f172a" : "#FFFFFF"}>Fin</tspan>
             <tspan fill={`url(#eraGrad-${id})`}>Era</tspan>
           </text>
         </g>
@@ -80,7 +80,7 @@ export const FinEraLogo = forwardRef<SVGSVGElement, FinEraLogoProps>(
               fontWeight="600"
               letterSpacing="0.18em"
             >
-              INCLUSIVE CREDIT
+              GLOBAL INCLUSIVE FINANCIAL SYSTEM
             </text>
             <line
               x1={width * 0.62}

@@ -1,0 +1,520 @@
+// FinEra Inclusive Credit - Production Prisma Schema
+// Complete production-ready schema for fintech operations
+// PostgreSQL 15+ | ACID-compliant | Immutable ledger
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== CORE USER & IDENTITY ====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  nationalId    String?   @unique
+  phoneNumber   String?
+  role          UserRole  @default(STUDENT)
+  status        UserStatus @default(ACTIVE)
+
+  // Relationships
+  wallet           Wallet?
+  creditScore      CreditScore?
+  learningProfile  LearningProfile?
+  transactions     Transaction[]
+  auditLogs        AuditLog[]
+  sessions         Session[]
+  progress         ProgressTracking[]
+  termInteractions TermInteraction[]
+  recommendations  Recommendation[]
+
+  // Metadata
+  emailVerified   DateTime?
+  lastLoginAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@index([email])
+  @@index([status])
+  @@index([role])
+}
+
+enum UserRole {
+  STUDENT
+  STAFF
+  ALUMNI
+  ADMIN
+  SYSTEM
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  LOCKED
+  DELETED
+}
+
+// ==================== FINANCIAL WALLET & LEDGER ====================
+
+model Wallet {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance      Decimal   @default(0) @db.Decimal(15, 2)
+  currency     String    @default("USD")
+  status       WalletStatus @default(ACTIVE)
+
+  // Limits
+  dailyLimit   Decimal?  @db.Decimal(15, 2)
+  monthlyLimit Decimal?  @db.Decimal(15, 2)
+  currentDailySpend Decimal @default(0) @db.Decimal(15, 2)
+  currentMonthlySpend Decimal @default(0) @db.Decimal(15, 2)
+
+  // Security
+  encryptedPin  String?
+  lastPinChange DateTime?
+  failedPinAttempts Int @default(0)
+  lockedUntil   DateTime?
+
+  // Metadata
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  transactions  Transaction[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum WalletStatus {
+  ACTIVE
+  FROZEN
+  CLOSED
+  LOCKED
+}
+
+// ==================== IMMUTABLE LEDGER TRANSACTIONS ====================
+
+model Transaction {
+  id            String    @id @default(cuid())
+  reference     String    @unique
+  walletId      String
+  wallet        Wallet    @relation(fields: [walletId], references: [id])
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+
+  type          TransactionType
+  amount        Decimal   @db.Decimal(15, 2)
+  balanceBefore Decimal   @db.Decimal(15, 2)
+  balanceAfter  Decimal   @db.Decimal(15, 2)
+  currency      String    @default("USD")
+
+  status        TransactionStatus @default(PENDING)
+  description   String
+  metadata      Json?
+
+  // Audit trail
+  ipAddress     String?
+  userAgent     String?
+  deviceId      String?
+  sessionId     String?
+
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  completedAt   DateTime?
+  reversedAt    DateTime?
+
+  // Reversal relations
+  reversalOfId   String?   @unique
+  reversalOf     Transaction?  @relation("Reversal", fields: [reversalOfId], references: [id])
+  reversals     Transaction[] @relation("Reversal")
+
+  // Relations
+  auditLogs     AuditLog[]
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([reference])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+  REVERSAL
+  ADJUSTMENT
+  FEE
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REVERSED
+  CANCELLED
+}
+
+// ==================== CREDIT SCORING SYSTEM ====================
+
+model CreditScore {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Core Scores (0-100 each)
+  overallScore  Int       @default(0)
+  paymentHistory Int      @default(0)
+  creditUtilization Int   @default(0)
+  lengthOfCredit Int      @default(0)
+  newCredit     Int       @default(0)
+  creditMix     Int       @default(0)
+
+  // Financial Discipline Score™
+  disciplineScore Int     @default(0)
+  riskLevel      RiskLevel @default(LOW)
+
+  // History
+  scoreHistory   Json?
+  lastCalculated DateTime  @default(now())
+  nextCalculation DateTime
+
+  // Factors
+  positiveFactors Json?
+  negativeFactors Json?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([overallScore])
+  @@index([riskLevel])
+}
+
+enum RiskLevel {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  EXCELLENT
+}
+
+// ==================== LEARNING & EDUCATION ====================
+
+model LearningProfile {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // User Context
+  userType              UserType  @default(STUDENT)
+  educationLevel        String?
+  major                 String?
+  graduationYear        Int?
+
+  // Learning Metrics
+  financialDisciplineScore Int   @default(0)
+  learningStreakDays    Int       @default(0)
+  totalTimeSpentSeconds Int       @default(0)
+  modulesCompleted      Int       @default(0)
+  averageQuizScore      Float     @default(0)
+
+  // Behavior Analysis
+  riskLevel             RiskLevel @default(LOW)
+  knowledgeGaps         Json?
+  strengths             Json?
+  learningPace          String?
+
+  // Preferences
+  preferredContentType  ContentType @default(MIXED)
+  notificationPreferences Json?    @default("{}")
+
+  // Timestamps
+  lastActiveAt          DateTime  @default(now())
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+enum UserType {
+  STUDENT
+  STAFF
+  ALUMNI
+}
+
+enum ContentType {
+  VIDEO
+  TEXT
+  INTERACTIVE
+  QUIZ
+  MIXED
+}
+
+// ==================== LEARNING MODULES ====================
+
+model LearningModule {
+  id                String    @id @default(cuid())
+  code              String    @unique
+  title             String
+  description       String
+  difficultyLevel   Int       @default(1)
+  category          String
+  estimatedDuration Int
+  prerequisites     Json?
+
+  // Content
+  content           Json
+  tags              String[]
+
+  // Engagement
+  viewCount         Int       @default(0)
+  completionCount   Int       @default(0)
+  averageRating     Float     @default(0)
+
+  // Status
+  isActive          Boolean   @default(true)
+  version           Int       @default(1)
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  progress          ProgressTracking[]
+  recommendations   Recommendation[]
+  termInteractions  TermInteraction[]
+
+  @@index([code])
+  @@index([category])
+  @@index([difficultyLevel])
+}
+
+// ==================== PROGRESS TRACKING ====================
+
+model ProgressTracking {
+  id                  String    @id @default(cuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleId            String
+  module              LearningModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  status              ProgressStatus @default(NOT_STARTED)
+  progressPercentage  Int       @default(0)
+  timeSpentSeconds    Int       @default(0)
+  lastPosition       Json?
+
+  // Assessment
+  quizScores          Json?
+  highestQuizScore    Float?
+  attemptsCount       Int       @default(0)
+
+  // Completion
+  startedAt           DateTime?
+  lastAccessedAt      DateTime  @default(now())
+  completedAt         DateTime?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([userId, moduleId])
+  @@index([userId])
+  @@index([moduleId])
+  @@index([status])
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+// ==================== TERM INTERACTIONS (Learning Intelligence) ====================
+
+model TermInteraction {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  term              String
+  moduleId          String?
+  module            LearningModule? @relation(fields: [moduleId], references: [id])
+
+  interactionType   InteractionType
+  contextModuleId   String?
+  contextData       Json?
+
+  // AI Interaction
+  aiQuery           String?
+  aiResponse        String?
+  aiRating          Int?
+
+  timestamp         DateTime  @default(now())
+
+  @@index([userId])
+  @@index([term])
+  @@index([timestamp(sort: Desc)])
+  @@index([userId, term])
+}
+
+enum InteractionType {
+  HOVER
+  CLICK
+  ASK_AI
+  SEARCH
+}
+
+// ==================== AI-POWERED RECOMMENDATIONS ====================
+
+model Recommendation {
+  id                  String    @id @default(cuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleId            String?
+  module              LearningModule? @relation(fields: [moduleId], references: [id])
+
+  type                RecommendationType
+  title               String
+  description         String
+  reason              String
+  confidence          Float     @default(0)
+  priority            Int       @default(1)
+
+  // Context
+  triggeredBy         String?
+  contextData         Json?
+
+  // Status
+  isActioned          Boolean   @default(false)
+  actionedAt          DateTime?
+  expiresAt           DateTime?
+  dismissedAt         DateTime?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([isActioned])
+  @@index([priority])
+}
+
+enum RecommendationType {
+  LESSON
+  MICRO_COURSE
+  WARNING
+  NUDGE
+  TIP
+  ASSESSMENT
+}
+
+// ==================== AUDIT LOG (Complete Traceability) ====================
+
+model AuditLog {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id])
+  transactionId     String?
+  transaction       Transaction? @relation(fields: [transactionId], references: [id])
+
+  action            String
+  entityType        String
+  entityId          String
+  oldValues         Json?
+  newValues         Json?
+
+  ipAddress         String?
+  userAgent         String?
+  sessionId         String?
+
+  status            String    @default("SUCCESS")
+  errorMessage      String?
+
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt(sort: Desc)])
+  @@index([action])
+}
+
+// ==================== SYSTEM CONFIG (Admin Settings) ====================
+
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+}
+
+// ==================== EVENT STORE (Event-Driven Architecture) ====================
+
+model EventStore {
+  id           String    @id @default(cuid())
+  eventId      String
+  eventType    String
+  eventVersion Int
+  source       String
+  payload      Json
+  metadata     Json?
+  status       String    @default("PENDING")
+  retryCount   Int       @default(0)
+  errorMessage String?
+  createdAt    DateTime  @default(now())
+  processedAt  DateTime?
+
+  @@index([eventType])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+}
+
+model DeadLetterEvent {
+  id              String    @id @default(cuid())
+  originalEventId String?
+  eventType       String?
+  payload         Json?
+  errorReason     String?
+  queueName       String?
+  createdAt       DateTime  @default(now())
+  resolved        Boolean   @default(false)
+  resolvedAt      DateTime?
+  resolutionNotes String?
+}
+
+// ==================== SESSION MANAGEMENT ====================
+
+model Session {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token             String    @unique
+
+  // Device info
+  deviceId          String?
+  deviceType        String?
+  deviceName        String?
+  ipAddress         String?
+  userAgent         String?
+
+  // Security
+  isRevoked         Boolean   @default(false)
+  expiresAt         DateTime
+  lastActivityAt    DateTime  @default(now())
+
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}

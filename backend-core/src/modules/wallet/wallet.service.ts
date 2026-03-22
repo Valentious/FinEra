@@ -10,13 +10,14 @@ import { Decimal } from "@prisma/client/runtime/library";
 import { validationError } from "../../middlewares/errorHandler.js";
 import { z } from "zod";
 
-const SUPPORTED_CURRENCIES = ["USD", "ZIG", "ZAR", "EUR", "GBP"] as const;
+const SUPPORTED_CURRENCIES = ["USD", "ZIG", "ZAR", "EUR", "GBP", "USDT"] as const;
 const MIN_AMOUNT = 0.01;
 const MAX_AMOUNT = 999_999_999.99;
 
 export const depositInputSchema = z.object({
   amount: z.coerce.number().positive().min(MIN_AMOUNT).max(MAX_AMOUNT),
-  currency: z.enum(SUPPORTED_CURRENCIES).optional().default("USD"),
+  currency: z.enum(SUPPORTED_CURRENCIES),
+  referenceId: z.string().max(100).optional(), // Idempotency key - prevents duplicate processing
   paymentMethod: z.string().optional(),
   method: z.string().optional(),
   purpose: z.string().optional(),
@@ -25,7 +26,8 @@ export const depositInputSchema = z.object({
 
 export const withdrawInputSchema = z.object({
   amount: z.coerce.number().positive().min(MIN_AMOUNT).max(MAX_AMOUNT),
-  currency: z.enum(SUPPORTED_CURRENCIES).optional().default("USD"),
+  currency: z.enum(SUPPORTED_CURRENCIES),
+  referenceId: z.string().max(100).optional(), // Idempotency key
   withdrawalMethod: z.string().optional(),
   method: z.string().optional(),
   destination: z.string().optional(),
@@ -56,7 +58,7 @@ export function validateWithdrawInput(data: unknown): WithdrawInput {
  */
 export async function getWalletOrThrow(userId: string, currency: CurrencyCode) {
   const wallet = await prisma.wallet.findFirst({
-    where: { userId, currencyCode: currency, isActive: true },
+    where: { userId, currencyCode: currency, isActive: true, status: "active" },
   });
   if (!wallet) {
     throw validationError(`Wallet not found for currency ${currency}`);
@@ -65,11 +67,39 @@ export async function getWalletOrThrow(userId: string, currency: CurrencyCode) {
 }
 
 /**
+ * Freeze a specific currency wallet. Blocks deposit/withdrawal.
+ */
+export async function freezeWallet(userId: string, currency: CurrencyCode) {
+  const wallet = await prisma.wallet.findFirst({
+    where: { userId, currencyCode: currency },
+  });
+  if (!wallet) throw validationError(`Wallet not found for currency ${currency}`);
+  return prisma.wallet.update({
+    where: { id: wallet.id },
+    data: { status: "suspended", isActive: false },
+  });
+}
+
+/**
+ * Unfreeze (reactivate) a wallet.
+ */
+export async function unfreezeWallet(userId: string, currency: CurrencyCode) {
+  const wallet = await prisma.wallet.findFirst({
+    where: { userId, currencyCode: currency },
+  });
+  if (!wallet) throw validationError(`Wallet not found for currency ${currency}`);
+  return prisma.wallet.update({
+    where: { id: wallet.id },
+    data: { status: "active", isActive: true },
+  });
+}
+
+/**
  * Calculate available balance for withdrawal (savings minus locked portion when loan active).
  */
 export function calculateAvailableForWithdrawal(
-  savingsBalance: Decimal,
-  activeLoanBalance: Decimal,
+  savingsBalance: Decimal | number,
+  activeLoanBalance: Decimal | number,
   lockRatio = 0.2
 ): number {
   const savings = Number(savingsBalance);
@@ -103,6 +133,35 @@ export function generateReference(): string {
 }
 
 type PrismaTransactionClient = Omit<typeof prisma, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
+
+/**
+ * Create wallet for user/currency. Fails if already exists.
+ * Use for explicit wallet creation (e.g. on user registration).
+ */
+export async function createWallet(
+  userId: string,
+  currency: CurrencyCode,
+  txClient?: PrismaTransactionClient
+) {
+  const db = txClient ?? prisma;
+  const existing = await db.wallet.findFirst({
+    where: { userId, currencyCode: currency },
+  });
+  if (existing) {
+    throw validationError(`Wallet already exists for user in ${currency}`);
+  }
+  const accountNumber = `FIN${Date.now().toString().slice(-9)}${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`;
+  return db.wallet.create({
+    data: {
+      userId,
+      currencyCode: currency,
+      accountNumber,
+      balance: 0,
+      availableBalance: 0,
+      savingsBalance: 0,
+    },
+  });
+}
 
 /**
  * Ensure wallet exists for user/currency. Creates if missing.

@@ -17,10 +17,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { COUNTRIES, getCitiesByCountry, getInstitutionsByCountryAndType, searchInstitutions } from "@/data/locations";
+import { ADDRESS } from "@/lib/validation";
 
 interface ProfileDetailsProps {
   accountType: 'student' | 'staff' | 'alumni';
-  onComplete: (data: any) => void;
+  onComplete: (data: any) => void | Promise<void>;
 }
 
 export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps) {
@@ -33,6 +34,8 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
   const [institutionId, setInstitutionId] = useState("");
   const [institutionName, setInstitutionName] = useState("");
   const [institutionSearch, setInstitutionSearch] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [addressLine2, setAddressLine2] = useState("");
 
   const cities = useMemo(() => getCitiesByCountry(countryId), [countryId]);
   const institutions = useMemo(
@@ -78,6 +81,12 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
       return;
     }
 
+    const addressError = ADDRESS.validateAddressLine1(addressLine1);
+    if (addressError) {
+      toast.error(addressError);
+      return;
+    }
+
     onComplete({ 
       title,
       nationalIdNumber: nationalIdNumber.trim(), 
@@ -87,6 +96,8 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
       cityId,
       institutionId,
       institutionName,
+      addressLine1: addressLine1.trim(),
+      addressLine2: addressLine2.trim() || undefined,
     });
   };
 
@@ -364,6 +375,39 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
               </p>
             </div>
           )}
+
+          {/* Residential Address */}
+          <div className="space-y-3">
+            <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-emerald-600" />
+              Residential Address
+            </Label>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-600">Address Line 1 *</Label>
+              <Input
+                type="text"
+                name="addressLine1"
+                value={addressLine1}
+                onChange={(e) => setAddressLine1(e.target.value)}
+                required
+                placeholder="Street address, building, house number"
+                className="h-12 rounded-2xl border-slate-200 focus:ring-emerald-600 font-medium"
+              />
+              <p className="text-[10px] text-slate-400 font-medium">Street and number</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-600">Address Line 2 (optional)</Label>
+              <Input
+                type="text"
+                name="addressLine2"
+                value={addressLine2}
+                onChange={(e) => setAddressLine2(e.target.value)}
+                placeholder="Apartment, suite, unit, etc (optional)"
+                className="h-12 rounded-2xl border-slate-200 focus:ring-emerald-600 font-medium"
+              />
+              <p className="text-[10px] text-slate-400 font-medium">Apartment, suite, unit (optional)</p>
+            </div>
+          </div>
 
           {/* Info Box */}
           <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 mt-6">

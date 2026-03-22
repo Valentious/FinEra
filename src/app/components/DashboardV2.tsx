@@ -20,26 +20,33 @@ import { PerformancePortfolioChart } from "@/app/components/PerformancePortfolio
 import { motion } from "motion/react";
 import { toast } from "sonner";
 
-type CurrencyOption = 'USD' | 'ZIG' | 'ZAR';
+export type CurrencyOption = 'USD' | 'ZIG' | 'ZAR' | 'EUR' | 'GBP' | 'USDT';
 
-const CURRENCY_SYMBOLS: Record<CurrencyOption, string> = {
+const DEFAULT_CURRENCY_SYMBOLS: Record<string, string> = {
   USD: '$',
   ZIG: 'Z$',
   ZAR: 'R',
+  USDT: '₮',
+  EUR: '€',
+  GBP: '£',
 };
 
-function exportLedgerToCsv(transactions: { id: string; type: string; amount: number; date: string; description: string }[], symbol: string) {
+function exportLedgerToCsv(
+  transactions: { id: string; type: string; amount: number; date: string; description: string; currency?: string }[],
+  symbol: string,
+  currencyCode: string
+) {
   if (transactions.length === 0) {
-    toast.info("No ledger activity to export yet.");
+    toast.info(`No ${currencyCode} ledger activity to export yet.`);
     return;
   }
-  const headers = "Date,Type,Description,Amount\n";
+  const headers = "Date,Type,Description,Amount,Currency\n";
   const rows = transactions
     .slice()
     .reverse()
     .map(
       (t) =>
-        `${new Date(t.date).toLocaleDateString()},"${t.type}","${(t.description || "").replace(/"/g, '""')}",${t.type === "deposit" ? "+" : "-"}${symbol}${t.amount.toLocaleString()}`
+        `${new Date(t.date).toLocaleDateString()},"${t.type}","${(t.description || "").replace(/"/g, '""')}",${t.type === "deposit" ? "+" : "-"}${symbol}${t.amount.toLocaleString()},"${currencyCode}"`
     )
     .join("\n");
   const csv = headers + rows;
@@ -47,10 +54,19 @@ function exportLedgerToCsv(transactions: { id: string; type: string; amount: num
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `ledger-activity-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `ledger-${currencyCode}-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  toast.success("Ledger exported.");
+  toast.success(`${currencyCode} ledger exported.`);
+}
+
+export interface CurrencyTab {
+  currencyCode: string;
+  displayName: string;
+  symbol: string;
+  status?: string;
+  custodyType?: string;
+  dashboardConfig?: Record<string, unknown>;
 }
 
 interface DashboardV2Props {
@@ -71,6 +87,10 @@ interface DashboardV2Props {
   onWithdrawFunds: () => void;
   onMakePayment?: () => void;
   transactions: any[];
+  /** Dynamic currency dashboards from API - renders tabs from this list */
+  currencyTabs?: CurrencyTab[];
+  /** Currency-specific rules (from dashboard_config) */
+  dashboardConfig?: Record<string, unknown>;
 }
 
 // Helper function to get discipline score color
@@ -148,11 +168,23 @@ export function DashboardV2({
   onViewRepayment,
   onWithdrawFunds,
   onMakePayment,
-  transactions
+  transactions,
+  currencyTabs,
+  dashboardConfig = {},
 }: DashboardV2Props) {
   const [showDisciplineDetails, setShowDisciplineDetails] = useState(false);
   const [showCreditScoreBreakdown, setShowCreditScoreBreakdown] = useState(false);
-  const symbol = CURRENCY_SYMBOLS[selectedCurrency];
+  const tabs = currencyTabs && currencyTabs.length > 0
+    ? currencyTabs
+    : [{ currencyCode: 'USD', displayName: 'USD', symbol: '$' }, { currencyCode: 'ZIG', displayName: 'ZiG', symbol: 'Z$' }, { currencyCode: 'ZAR', displayName: 'ZAR', symbol: 'R' }];
+  const selectedTab = tabs.find((t) => t.currencyCode === selectedCurrency);
+  const symbol = selectedTab?.symbol ?? DEFAULT_CURRENCY_SYMBOLS[selectedCurrency] ?? '$';
+  // Strict currency isolation: ledger shows ONLY transactions for selected currency (scalable)
+  const targetCurrency = (selectedCurrency ?? 'USD').toUpperCase();
+  const ledgerTxns = (transactions ?? []).filter((t: { currency?: string }) =>
+    (t.currency ?? 'USD').toUpperCase() === targetCurrency
+  );
+  const custodyLabel = selectedTab?.custodyType === 'blockchain' ? 'Blockchain custody' : selectedTab?.custodyType === 'momo' ? 'Mobile money' : selectedTab?.custodyType ? 'Bank custody' : '';
 
   const disciplineColor = getDisciplineScoreColor(disciplineScore);
   const disciplineRingColor = getDisciplineScoreRingColor(disciplineScore);
@@ -165,22 +197,22 @@ export function DashboardV2({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-12">
-      {/* Currency Selector */}
+      {/* Dynamic Currency Dashboard Selector - Each currency = independent dashboard */}
       {onCurrencyChange && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-bold text-slate-600">Dashboard:</span>
-          <div className="flex gap-1 p-1 bg-slate-100 rounded-xl">
-            {(['USD', 'ZIG', 'ZAR'] as const).map((c) => (
+          <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl">
+            {tabs.map((tab) => (
               <button
-                key={c}
-                onClick={() => onCurrencyChange(c)}
+                key={tab.currencyCode}
+                onClick={() => onCurrencyChange(tab.currencyCode as CurrencyOption)}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
-                  selectedCurrency === c
+                  selectedCurrency === tab.currencyCode
                     ? 'bg-emerald-600 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                {c === 'USD' ? 'USD' : c === 'ZIG' ? 'ZiG' : 'ZAR'} Dashboard
+                {tab.displayName} Dashboard
               </button>
             ))}
           </div>
@@ -188,6 +220,9 @@ export function DashboardV2({
             <span className="text-xs text-slate-500 font-medium ml-2">
               Acc: {displayAccountNumber}
             </span>
+          )}
+          {custodyLabel && (
+            <span className="text-xs text-slate-400 ml-2">• {custodyLabel}</span>
           )}
         </div>
       )}
@@ -437,27 +472,27 @@ export function DashboardV2({
             </div>
           </div>
           <PerformancePortfolioChart
-            transactions={transactions}
+            transactions={ledgerTxns}
             currentBalance={savingsBalance}
             currencySymbol={symbol}
           />
         </Card>
 
-        {/* Recent Transactions */}
+        {/* Recent Transactions - currency-scoped ledger */}
         <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-black text-slate-900">Ledger Activity</h3>
+            <h3 className="text-lg font-black text-slate-900">Ledger Activity ({selectedCurrency})</h3>
             <Button
               variant="ghost"
               size="sm"
               className="text-emerald-600 font-black uppercase text-[10px] tracking-widest"
-              onClick={() => exportLedgerToCsv(transactions, symbol)}
+              onClick={() => exportLedgerToCsv(ledgerTxns, symbol, selectedCurrency ?? 'USD')}
             >
               Export Logs
             </Button>
           </div>
           <div className="space-y-4 flex-1">
-            {transactions.length > 0 ? transactions.slice(-4).reverse().map((txn) => (
+            {ledgerTxns.length > 0 ? ledgerTxns.slice(-4).reverse().map((txn) => (
               <div key={txn.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-transparent hover:border-slate-200 transition-all group">
                 <div className="flex items-center gap-4">
                   <div className={`p-2 rounded-xl group-hover:scale-110 transition-transform ${
@@ -486,7 +521,7 @@ export function DashboardV2({
                 <div className="p-4 bg-slate-50 rounded-full mb-4">
                   <Info className="w-8 h-8 text-slate-300" />
                 </div>
-                <p className="text-slate-500 font-medium">Ledger activity will appear here after you complete a Make Payment.</p>
+                <p className="text-slate-500 font-medium">No {selectedCurrency} ledger activity yet. Deposit to this account to see transactions.</p>
                 {onMakePayment ? (
                   <Button variant="link" onClick={onMakePayment} className="text-emerald-600 font-bold">Make Payment</Button>
                 ) : (

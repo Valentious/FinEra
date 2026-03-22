@@ -23,11 +23,13 @@ import { validationError } from "../../middlewares/errorHandler.js";
 const router = Router();
 router.use(authMiddleware);
 
+const CURRENCIES = ["USD", "ZIG", "ZAR", "EUR", "GBP", "USDT"] as const;
 const transactionsQuerySchema = z.object({
   page: z.coerce.number().min(1).optional().default(1),
   limit: z.coerce.number().min(1).max(50).optional().default(20),
   type: z.enum(["DEPOSIT", "WITHDRAWAL", "PAYMENT", "LOAN_DISBURSEMENT", "LOAN_REPAYMENT", "FEE", "INTEREST", "TRANSFER"]).optional(),
   status: z.string().optional(),
+  currency: z.enum(CURRENCIES),
 });
 
 router.post("/deposit", fraudDetectionMiddleware, async (req, res, next) => {
@@ -72,13 +74,14 @@ router.get("/", async (req, res, next) => {
   try {
     const parsed = transactionsQuerySchema.safeParse(req.query);
     if (!parsed.success) throw validationError("Invalid query", { zod: parsed.error.flatten() });
-    const { page, limit, type, status } = parsed.data;
+    const { page, limit, type, status, currency } = parsed.data;
 
     const result = await listTransactions(req.user!.id, {
       page,
       limit,
       type: type as import("@prisma/client").TransactionType | undefined,
       status,
+      currency: currency as import("@prisma/client").CurrencyCode,
     });
 
     res.json({

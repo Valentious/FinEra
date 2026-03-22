@@ -36,7 +36,7 @@ const sizeConfig = {
 };
 
 /**
- * FinEra INCLUSIVE CREDIT Logo
+ * FinEra GLOBAL INCLUSIVE FINANCIAL SYSTEM Logo
  * Clean, corporate, fintech-grade design (Stripe/PayPal style)
  * Horizontal layout: icon (left) + text (right)
  */
@@ -74,7 +74,7 @@ export const FinEraInclusiveCreditLogo = forwardRef<
             ${dark ? "text-slate-300" : "text-slate-600"}
           `}
         >
-          INCLUSIVE CREDIT
+          GLOBAL INCLUSIVE FINANCIAL SYSTEM
         </p>
         <p
           className={`

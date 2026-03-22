@@ -39,6 +39,22 @@ enum CurrencyCode {
   ZAR
   EUR
   GBP
+  USDT
+}
+
+// Dynamic dashboard config - each currency is an independent dashboard system
+model CurrencyRegistry {
+  id             String   @id @default(uuid())
+  currencyCode   CurrencyCode @unique
+  displayName    String
+  symbol         String   // $, Z$, R, USDT, etc.
+  status         String   @default("active")  // active | inactive
+  custodyType    String   // bank | momo | blockchain
+  dashboardConfig Json    @default("{}")  // UI rules: minAmount, maxAmount, feePercent, dailyLimit, features[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
 }
 
 enum TransactionType {
@@ -50,6 +66,7 @@ enum TransactionType {
   FEE
   INTEREST
   TRANSFER
+  FX_CONVERSION
 }
 
 enum TransactionStatus {
@@ -192,6 +209,13 @@ enum FraudAction {
 }
 
 // ==================== MODELS ====================
+//
+// IDENTITY RULES (2NF/3NF):
+// - user_id (id) = PRIMARY KEY, the ONLY identity anchor
+// - email = UNIQUE secondary key (lookup only)
+// - phone = UNIQUE secondary key (lookup only, optional)
+// - password_hash = belongs to USER (user_id), NEVER to email
+// - NEVER query email AND password together; always: 1) lookup by email, 2) validate password
 
 model User {
   id                      String    @id @default(uuid())
@@ -246,6 +270,9 @@ model User {
   @@index([status, createdAt])
 }
 
+// Each user has MULTIPLE wallets. Each wallet = ONE currency ONLY.
+// UNIQUE(user_id, currency_code) - one wallet per currency per user.
+// Operations in one currency NEVER affect another.
 model Wallet {
   id                    String      @id @default(uuid())
   userId                String
@@ -260,6 +287,7 @@ model Wallet {
   activeLoanBalance     Decimal     @default(0) @db.Decimal(18, 8)
   totalLoanAmount       Decimal     @default(0) @db.Decimal(18, 8)
   totalRepaidAmount     Decimal     @default(0) @db.Decimal(18, 8)
+  status                String      @default("active")  // active | suspended | closed
   isActive              Boolean     @default(true)
   lastTransactionAt     DateTime?
   dailyTransactionTotal  Decimal    @default(0) @db.Decimal(18, 8)
@@ -273,20 +301,65 @@ model Wallet {
   loans        Loan[]
 
   @@unique([userId, currencyCode])
-  @@index([userId])
+  @@index([userId, currencyCode])
   @@index([accountNumber])
+  @@index([currencyCode])
 }
 
+// Each currency has its OWN ledger system. No cross-currency entries.
+enum LedgerType {
+  CUSTODY
+  SETTLEMENT
+  CLEARING
+}
+
+model Ledger {
+  id           String     @id @default(uuid())
+  currencyCode CurrencyCode @unique  // One ledger per currency
+  ledgerName   String?    // e.g. "USD_MAIN_LEDGER" - human-readable per spec
+  ledgerType   LedgerType @default(CUSTODY)
+  systemBalance Decimal   @default(0) @db.Decimal(18, 8)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  entries     LedgerEntry[]
+  transactions Transaction[]
+
+  @@index([currencyCode])
+}
+
+// Double-entry ledger entries. Each currency queries ONLY its own entries.
+model LedgerEntry {
+  id            String   @id @default(uuid())
+  ledgerId      String
+  transactionId String
+  currencyCode  CurrencyCode  // MUST match ledger.currencyCode
+  entryType     String   // DEBIT | CREDIT
+  amount        Decimal  @db.Decimal(18, 8)
+  balanceAfter  Decimal  @db.Decimal(18, 8)
+  description   String?
+  createdAt     DateTime @default(now())
+
+  ledger Ledger @relation(fields: [ledgerId], references: [id], onDelete: Cascade)
+
+  @@index([ledgerId, createdAt(sort: Desc)])
+  @@index([transactionId])
+  @@index([currencyCode])
+}
+
+// transaction.currency_code MUST match wallet.currency_code.
+// Each tx affects ONLY one wallet + its corresponding ledger.
 model Transaction {
   id               String            @id @default(uuid())
-  reference        String            @unique // TXN-YYYYMMDD-8chars
+  reference        String            @unique // TXN-YYYYMMDD-8chars (idempotency key)
   userId           String
   walletId         String
+  ledgerId         String?           // FK to ledger - which currency ledger this tx was posted to
   transactionType  TransactionType
   amount           Decimal           @db.Decimal(18, 8)
   fee              Decimal           @default(0) @db.Decimal(18, 8)
   netAmount        Decimal           @db.Decimal(18, 8)
-  currency         CurrencyCode
+  currency         CurrencyCode      // MUST match wallet.currencyCode
   exchangeRate     Decimal?          @db.Decimal(18, 8)
   originalCurrency CurrencyCode?
   originalAmount   Decimal?          @db.Decimal(18, 8)
@@ -305,9 +378,12 @@ model Transaction {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  ledger Ledger? @relation(fields: [ledgerId], references: [id])
   repayments Repayment[]
 
   @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, currency])
+  @@index([walletId, currency])
   @@index([reference])
   @@index([status, createdAt])
   @@index([walletId, transactionType])

@@ -1,0 +1,145 @@
+# FinEra - All services + PostgreSQL + Redis
+# Run: docker compose -f infrastructure/docker/docker-compose.services.yml up -d
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: finera-postgres
+    environment:
+      POSTGRES_USER: finera
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-finera_secure}
+      POSTGRES_DB: finera_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finera -d finera_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - finera-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: finera-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - finera-network
+
+  user-service:
+    build:
+      context: ../..
+      dockerfile: backend/user-service/Dockerfile
+    ports:
+      - "4002:4002"
+    environment:
+      - NODE_ENV=production
+      - PORT=4002
+      - DATABASE_URL=postgresql://finera:finera_secure@postgres:5432/finera_db?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - finera-network
+    restart: unless-stopped
+
+  ledger-service:
+    build:
+      context: ../..
+      dockerfile: backend/ledger-service/Dockerfile
+    ports:
+      - "4004:4004"
+    environment:
+      - NODE_ENV=production
+      - PORT=4004
+      - DATABASE_URL=postgresql://finera:finera_secure@postgres:5432/finera_db?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - finera-network
+    restart: unless-stopped
+
+  credit-engine:
+    build:
+      context: ../..
+      dockerfile: backend/credit-engine/Dockerfile
+    ports:
+      - "4003:4003"
+    environment:
+      - NODE_ENV=production
+      - PORT=4003
+      - DATABASE_URL=postgresql://finera:finera_secure@postgres:5432/finera_db?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - finera-network
+    restart: unless-stopped
+
+  admin-service:
+    build:
+      context: ../..
+      dockerfile: backend/admin-service/Dockerfile
+    ports:
+      - "4006:4006"
+    environment:
+      - NODE_ENV=production
+      - PORT=4006
+      - DATABASE_URL=postgresql://finera:finera_secure@postgres:5432/finera_db?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - finera-network
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: ../..
+      dockerfile: backend/auth-service/Dockerfile
+    ports:
+      - "4001:4001"
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - DATABASE_URL=postgresql://finera:finera_secure@postgres:5432/finera_db?schema=public
+      - USER_SERVICE_URL=http://user-service:4002
+      - LEDGER_SERVICE_URL=http://ledger-service:4004
+      - CREDIT_ENGINE_URL=http://credit-engine:4003
+      - ADMIN_SERVICE_URL=http://admin-service:4006
+      - JWT_SECRET=${JWT_SECRET:-change-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      ledger-service:
+        condition: service_started
+      credit-engine:
+        condition: service_started
+      admin-service:
+        condition: service_started
+    networks:
+      - finera-network
+    restart: unless-stopped
+
+networks:
+  finera-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

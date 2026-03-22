@@ -1,0 +1,8 @@
+# FinEra Auth Service - Dockerfile placeholder
+FROM node:20-alpine
+WORKDIR /app
+COPY backend/auth-service/package*.json ./
+RUN npm ci --only=production
+COPY backend/auth-service/dist ./dist
+EXPOSE 4001
+CMD ["node", "dist/index.js"]

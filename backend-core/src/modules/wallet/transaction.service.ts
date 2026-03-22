@@ -1,24 +1,28 @@
 /**
  * FinEra Backend - Transaction Service
- * All transaction logic with Prisma $transaction for atomic updates.
- * On any failure, ROLLBACK occurs automatically.
+ * Delegates deposit/withdrawal to Transaction Engine (strict currency isolation).
+ * Loan flows remain for credit/repayment.
  */
 
 import { prisma } from "../../infrastructure/database/index.js";
 import type { CurrencyCode, TransactionType } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import {
-  ensureWallet,
   validateSufficientBalance,
   calculateAvailableForWithdrawal,
   generateReference,
   type DepositInput,
   type WithdrawInput,
 } from "./wallet.service.js";
+import {
+  processDeposit as engineDeposit,
+  processWithdrawal as engineWithdraw,
+  processTransfer as engineTransfer,
+} from "./transaction-engine.service.js";
 import { validationError } from "../../middlewares/errorHandler.js";
 
 /**
- * Deposit funds - atomic: create transaction + update wallet.
+ * Deposit: Uses engine. ONLY affects specified currency wallet + ledger.
  */
 export async function processDeposit(
   userId: string,
@@ -31,67 +35,36 @@ export async function processDeposit(
 }> {
   const paymentMethod = input.paymentMethod ?? input.method ?? "manual";
   const { amount, currency, purpose, metadata } = input;
-  const fee = 0;
-  const netAmount = amount - fee;
 
-  return prisma.$transaction(async (tx) => {
-    const wallet = await ensureWallet(userId, currency, tx);
-
-    const reference = generateReference();
-
-    const [txn] = await Promise.all([
-      tx.transaction.create({
-        data: {
-          userId,
-          walletId: wallet.id,
-          reference,
-          transactionType: "DEPOSIT",
-          amount: new Decimal(amount),
-          fee: new Decimal(fee),
-          netAmount: new Decimal(netAmount),
-          currency,
-          status: "COMPLETED",
-          completedAt: new Date(),
-          metadata: {
-            paymentMethod: String(paymentMethod),
-            purpose: purpose ?? null,
-            ...(metadata ?? {}),
-          } as object,
-        },
-      }),
-      tx.wallet.update({
-        where: { id: wallet.id },
-        data: {
-          balance: { increment: netAmount },
-          availableBalance: { increment: netAmount },
-          savingsBalance: { increment: netAmount },
-          lastTransactionAt: new Date(),
-        },
-      }),
-    ]);
-
-    const updated = await tx.wallet.findUnique({
-      where: { id: wallet.id },
-      select: { savingsBalance: true },
-    });
-
-    return {
-      transactionId: txn.id,
-      reference,
-      newBalance: Number(updated?.savingsBalance ?? 0),
-      transaction: {
-        id: txn.id,
-        type: "deposit",
-        amount,
-        date: txn.completedAt?.toISOString() ?? new Date().toISOString(),
-        description: `Deposit via ${paymentMethod}${purpose ? ` - ${purpose}` : ""}`,
-      },
-    };
+  const result = await engineDeposit({
+    userId,
+    currency,
+    amount,
+    fee: 0,
+    reference: input.referenceId,
+    metadata: {
+      paymentMethod: String(paymentMethod),
+      purpose: purpose ?? undefined,
+      ...(metadata ?? {}),
+    },
   });
+
+  return {
+    transactionId: result.transactionId,
+    reference: result.reference,
+    newBalance: result.newBalance,
+    transaction: {
+      id: result.transactionId,
+      type: "deposit",
+      amount,
+      date: new Date().toISOString(),
+      description: `Deposit via ${paymentMethod}${purpose ? ` - ${purpose}` : ""}`,
+    },
+  };
 }
 
 /**
- * Withdraw funds - atomic: validate, create transaction, update wallet.
+ * Withdrawal: Uses engine. ONLY affects specified currency wallet + ledger.
  */
 export async function processWithdrawal(
   userId: string,
@@ -104,72 +77,56 @@ export async function processWithdrawal(
 }> {
   const withdrawalMethod = input.withdrawalMethod ?? input.method ?? "manual";
   const { amount, currency, accountDetails } = input;
-  const fee = 0;
-  const netAmount = amount - fee;
 
-  return prisma.$transaction(async (tx) => {
-    const wallet = await tx.wallet.findFirst({
-      where: { userId, currencyCode: currency, isActive: true },
-    });
-    if (!wallet) {
-      throw validationError(`Wallet not found for currency ${currency}`);
-    }
+  const wallet = await prisma.wallet.findFirst({
+    where: { userId, currencyCode: currency, isActive: true },
+  });
+  if (!wallet) throw validationError(`Wallet not found for currency ${currency}`);
 
-    const available = calculateAvailableForWithdrawal(
-      wallet.savingsBalance,
-      wallet.activeLoanBalance
-    );
-    validateSufficientBalance(available, amount);
+  const available = calculateAvailableForWithdrawal(wallet.savingsBalance, wallet.activeLoanBalance);
+  validateSufficientBalance(available, amount);
 
-    const reference = generateReference();
+  const result = await engineWithdraw({
+    userId,
+    currency,
+    amount,
+    fee: 0,
+    reference: input.referenceId,
+    metadata: {
+      withdrawalMethod: String(withdrawalMethod),
+      accountDetails: accountDetails ?? {},
+    },
+  });
 
-    const [txn] = await Promise.all([
-      tx.transaction.create({
-        data: {
-          userId,
-          walletId: wallet.id,
-          reference,
-          transactionType: "WITHDRAWAL",
-          amount: new Decimal(amount),
-          fee: new Decimal(fee),
-          netAmount: new Decimal(netAmount),
-          currency,
-          status: "COMPLETED",
-          completedAt: new Date(),
-          metadata: {
-            withdrawalMethod: String(withdrawalMethod),
-            accountDetails: accountDetails ?? {},
-          } as object,
-        },
-      }),
-      tx.wallet.update({
-        where: { id: wallet.id },
-        data: {
-          balance: { decrement: netAmount },
-          availableBalance: { decrement: netAmount },
-          savingsBalance: { decrement: netAmount },
-          lastTransactionAt: new Date(),
-        },
-      }),
-    ]);
+  return {
+    transactionId: result.transactionId,
+    reference: result.reference,
+    newBalance: result.newBalance,
+    transaction: {
+      id: result.transactionId,
+      type: "withdrawal",
+      amount,
+      date: new Date().toISOString(),
+      description: `Withdrawal via ${withdrawalMethod}`,
+    },
+  };
+}
 
-    const updated = await tx.wallet.findUnique({
-      where: { id: wallet.id },
-      select: { savingsBalance: true },
-    });
-
-    return {
-      transactionId: txn.id,
-      reference,
-      newBalance: Number(updated?.savingsBalance ?? 0),
-      transaction: {
-        id: txn.id,
-        type: "withdrawal",
-        amount,
-        date: txn.completedAt?.toISOString() ?? new Date().toISOString(),
-        description: `Withdrawal via ${withdrawalMethod}`,
-      },
-    };
+/**
+ * Transfer between users - same currency only. Uses engine.
+ */
+export async function processTransfer(
+  fromUserId: string,
+  toUserId: string,
+  params: { amount: number; currency: CurrencyCode; referenceId?: string }
+): Promise<{ transactionId: string; reference: string; fromNewBalance: number; toNewBalance: number }> {
+  return engineTransfer({
+    fromUserId,
+    toUserId,
+    currency: params.currency,
+    amount: params.amount,
+    fee: 0,
+    reference: params.referenceId,
   });
 }
 
@@ -443,6 +400,7 @@ export async function processLoanRepayment(
 
 /**
  * List transactions for user with pagination.
+ * Currency REQUIRED - per-currency isolation. No cross-currency results.
  */
 export async function listTransactions(
   userId: string,
@@ -451,13 +409,17 @@ export async function listTransactions(
     limit?: number;
     type?: TransactionType;
     status?: string;
+    currency: CurrencyCode;
   }
 ) {
+  if (!params.currency) {
+    throw validationError("Currency context REQUIRED for transaction list. Include ?currency=USD");
+  }
   const page = Math.max(1, params.page ?? 1);
   const limit = Math.min(50, Math.max(1, params.limit ?? 20));
   const skip = (page - 1) * limit;
 
-  const where: Record<string, unknown> = { userId };
+  const where: Record<string, unknown> = { userId, currency: params.currency };
   if (params.type) (where as Record<string, unknown>).transactionType = params.type;
   if (params.status) (where as Record<string, unknown>).status = params.status;
 
