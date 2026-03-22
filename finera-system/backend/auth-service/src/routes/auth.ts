@@ -1,13 +1,13 @@
 /**
  * FinEra Auth Service - Registration & Login
- * Registration orchestrates: user profile, wallet, credit score, admin audit
- * Service independence via HTTP; failure isolation; compensation on critical failure
- * Event-driven: publishes USER_REGISTERED for async consumers (backward compatible)
+ * Identity vs Credential: 2-step login (identify by email, authenticate with bcrypt).
+ * Registration orchestrates: user profile, wallet, credit score, admin audit.
  */
 
 import { Router, type Request, type Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { login, normalizeEmail } from '../services/auth.service.js';
 import { z } from 'zod';
 import { db } from '@finera/database';
 import { serviceClient } from '../lib/http-client.js';
@@ -32,13 +32,18 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
   try {
     const validatedData = registerSchema.parse(req.body);
     const prisma = db.getClient();
+    const email = normalizeEmail(validatedData.email);
 
+    // IDENTIFY: Check if email already exists (secondary key lookup)
     const existingUser = await prisma.user.findUnique({
-      where: { email: validatedData.email },
+      where: { email },
     });
 
     if (existingUser) {
-      return res.status(409).json({ success: false, error: 'User already exists' });
+      return res.status(409).json({
+        success: false,
+        error: { code: 'CONFLICT', message: 'User already exists' },
+      });
     }
 
     const hashedPassword = await bcrypt.hash(validatedData.password, SALT_ROUNDS);
@@ -46,7 +51,7 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
     const user = await db.transaction(async (tx) => {
       return tx.user.create({
         data: {
-          email: validatedData.email,
+          email,
           passwordHash: hashedPassword,
           firstName: validatedData.firstName,
           lastName: validatedData.lastName,
@@ -260,26 +265,37 @@ async function compensateFailedRegistration(userId: string, reason: string) {
 authRoutes.post('/login', async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    const prisma = db.getClient();
-    const user = await prisma.user.findUnique({ where: { email } });
-
-    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Email and password required' },
+      });
     }
 
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: 86400 }
-    );
+    const result = await login(email, password);
+
+    if (!result.success) {
+      const status =
+        result.error.code === 'USER_NOT_FOUND'
+          ? 404
+          : result.error.code === 'ACCOUNT_LOCKED'
+            ? 423
+            : result.error.code === 'ACCOUNT_INACTIVE'
+              ? 403
+              : 401;
+      return res.status(status).json(result);
+    }
 
     res.json({
       success: true,
-      data: { userId: user.id, token, role: user.role },
+      data: { userId: result.userId, token: result.token, role: result.role },
     });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ success: false, error: 'Login failed' });
+    res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'Login failed' },
+    });
   }
 });
 

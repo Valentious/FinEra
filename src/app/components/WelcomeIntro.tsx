@@ -17,7 +17,7 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
     },
     {
       icon: <CreditCard className="w-6 h-6 text-emerald-600" />,
-      title: "Access FinEra GLOBAL INCLUSIVE FINANCIAL SYSTEM",
+      title: "Access FinEra INCLUSIVE FINANCIAL ECOSYSTEM",
       description: "Apply for student-friendly loans with flexible repayment terms."
     },
     {

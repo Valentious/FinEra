@@ -56,7 +56,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
             <FinEraShieldIcon size={32} className="rounded-lg" />
             <div className="hidden sm:flex flex-col leading-tight">
               <FinEraLogoText variant="dark" size="md" as="span" className="font-bold text-lg [&_.fin]:text-white [&_.era]:text-emerald-400" />
-              <span className="font-semibold text-xs text-slate-300 tracking-wider uppercase">GLOBAL INCLUSIVE FINANCIAL SYSTEM</span>
+              <span className="font-semibold text-xs text-slate-300 tracking-wider uppercase">INCLUSIVE FINANCIAL ECOSYSTEM</span>
             </div>
           </div>
         </div>
@@ -134,7 +134,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
                   <FinEraShieldIcon size={32} className="rounded-lg" />
                   <div className="flex flex-col leading-tight">
                     <FinEraLogoText variant="light" size="md" as="span" className="font-bold text-lg" />
-                    <span className="font-semibold text-xs text-slate-600 tracking-wider uppercase">GLOBAL INCLUSIVE FINANCIAL SYSTEM</span>
+                    <span className="font-semibold text-xs text-slate-600 tracking-wider uppercase">INCLUSIVE FINANCIAL ECOSYSTEM</span>
                   </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}>

@@ -3,7 +3,7 @@
  * Loose coupling, reliability, backward compatibility
  */
 
-import amqp, { Channel, Connection, Message } from 'amqplib';
+import amqp, { Channel, ChannelModel, Message } from 'amqplib';
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import {
@@ -15,7 +15,8 @@ import {
 } from './event-bus.config.js';
 
 export class EventBus extends EventEmitter {
-  private connection: Connection | null = null;
+  /** What amqp.connect() returns - ChannelModel, not Connection */
+  private connection: ChannelModel | null = null;
   private channel: Channel | null = null;
   private isConnected = false;
   private reconnectAttempts = 0;
@@ -35,16 +36,17 @@ export class EventBus extends EventEmitter {
 
   async connect(): Promise<void> {
     try {
-      this.connection = await amqp.connect(eventBusConfig.connection.url);
-      this.channel = await this.connection.createChannel();
+      const conn = await amqp.connect(eventBusConfig.connection.url);
+      this.connection = conn;
+      this.channel = await conn.createChannel();
 
-      this.connection.on('error', (err) => {
+      conn.on('error', (err) => {
         console.error('[EventBus] RabbitMQ connection error:', err);
         this.isConnected = false;
         this.reconnect();
       });
 
-      this.connection.on('close', () => {
+      conn.on('close', () => {
         console.warn('[EventBus] RabbitMQ connection closed');
         this.isConnected = false;
         this.reconnect();
@@ -280,8 +282,14 @@ export class EventBus extends EventEmitter {
   }
 
   async close(): Promise<void> {
-    if (this.channel) await this.channel.close();
-    if (this.connection) await this.connection.close();
+    if (this.channel) {
+      await this.channel.close();
+    }
+    if (this.connection) {
+      await this.connection.close();
+    }
+    this.connection = null;
+    this.channel = null;
     this.isConnected = false;
     console.log('[EventBus] Disconnected');
   }

@@ -1,5 +1,5 @@
 /**
- * FinEra GLOBAL INCLUSIVE FINANCIAL SYSTEM - Form Validation Utilities
+ * FinEra INCLUSIVE FINANCIAL ECOSYSTEM - Form Validation Utilities
  * Production-ready validation for KYC, security, and data integrity.
  */
 

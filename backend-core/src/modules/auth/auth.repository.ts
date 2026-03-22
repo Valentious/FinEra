@@ -9,12 +9,13 @@
 import { prisma } from "../../infrastructure/database/index.js";
 import type { UserStatus } from "@prisma/client";
 
-/** Fields needed for password validation - excludes sensitive data from general selects */
+/** Fields needed for auth validation - excludes sensitive data from general selects */
 const USER_AUTH_SELECT = {
   id: true,
   email: true,
   passwordHash: true,
   status: true,
+  lockedUntil: true,
 } as const;
 
 /** Result type - password_hash belongs to USER (user_id), not email */
@@ -23,6 +24,7 @@ export type UserAuthRow = {
   email: string;
   passwordHash: string;
   status: UserStatus;
+  lockedUntil: Date | null;
 };
 
 /**
@@ -47,13 +49,47 @@ export async function findUserById(userId: string): Promise<{ id: string; email:
   });
 }
 
+/** Max failed attempts before lockout */
+const MAX_LOGIN_ATTEMPTS = 5;
+/** Lockout duration in minutes */
+const LOCKOUT_MINUTES = 15;
+
 /**
- * Update last login - non-blocking, fire-and-forget for audit.
+ * Update last login and reset failed attempts on success.
  */
 export async function updateLastLogin(userId: string, ip?: string): Promise<void> {
   await prisma.user.update({
     where: { id: userId },
-    data: { lastLoginAt: new Date(), lastLoginIP: ip ?? null },
+    data: {
+      lastLoginAt: new Date(),
+      lastLoginIP: ip ?? null,
+      loginAttempts: 0,
+      lockedUntil: null,
+    },
+  });
+}
+
+/**
+ * Increment failed login attempts; lock account if threshold exceeded.
+ */
+export async function incrementFailedLogin(userId: string): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { loginAttempts: true },
+  });
+  if (!user) return;
+
+  const newAttempts = (user.loginAttempts ?? 0) + 1;
+  const lockUntil = newAttempts >= MAX_LOGIN_ATTEMPTS
+    ? new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000)
+    : null;
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      loginAttempts: newAttempts,
+      lockedUntil: lockUntil,
+    },
   });
 }
 

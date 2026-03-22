@@ -7,7 +7,12 @@
 import { prisma } from "../../infrastructure/database/index.js";
 import { logger } from "../../core/utils/logger.js";
 
-export type LoginAttemptOutcome = "SUCCESS" | "USER_NOT_FOUND" | "INVALID_PASSWORD" | "ACCOUNT_INACTIVE";
+export type LoginAttemptOutcome =
+  | "SUCCESS"
+  | "USER_NOT_FOUND"
+  | "INVALID_PASSWORD"
+  | "ACCOUNT_INACTIVE"
+  | "ACCOUNT_LOCKED";
 
 export function logLoginAttempt(params: {
   email: string;

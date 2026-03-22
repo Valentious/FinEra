@@ -13,6 +13,7 @@ datasource db {
 
 // ==================== CORE USER & IDENTITY ====================
 
+// Identity vs Credential: id=PK, email/phone=UNIQUE secondary keys, password_hash belongs to user_id
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -20,9 +21,13 @@ model User {
   firstName     String
   lastName      String
   nationalId    String?   @unique
-  phoneNumber   String?
+  phoneNumber   String?   @unique
   role          UserRole  @default(STUDENT)
   status        UserStatus @default(ACTIVE)
+
+  // Auth: lockout after failed attempts
+  loginAttempts Int       @default(0)
+  lockedUntil   DateTime?
 
   // Relationships
   wallet           Wallet?
@@ -56,6 +61,7 @@ enum UserRole {
 }
 
 enum UserStatus {
+  PENDING_VERIFICATION
   ACTIVE
   SUSPENDED
   LOCKED

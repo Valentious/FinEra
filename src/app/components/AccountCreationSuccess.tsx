@@ -53,7 +53,7 @@ export function AccountCreationSuccess({
                 </div>
               </motion.div>
               <CardTitle className="text-3xl font-black mb-2">Account Successfully Created</CardTitle>
-              <p className="text-green-100 text-lg">Welcome to FinEra GLOBAL INCLUSIVE FINANCIAL SYSTEM</p>
+              <p className="text-green-100 text-lg">Welcome to FinEra INCLUSIVE FINANCIAL ECOSYSTEM</p>
             </div>
           </CardHeader>
 
@@ -147,7 +147,7 @@ export function AccountCreationSuccess({
               <h4 className="text-sm font-black text-amber-900 mb-2">📌 Account Purpose</h4>
               <p className="text-sm text-amber-800 leading-relaxed">
                 All currency-specific account numbers displayed enable you to access loans in your preferred currency. 
-                These accounts support deposits, withdrawals, loan repayments, and payments within the FinEra Global Inclusive Financial System Platform.
+                These accounts support deposits, withdrawals, loan repayments, and payments within the FinEra Inclusive Financial Ecosystem Platform.
               </p>
             </div>
 

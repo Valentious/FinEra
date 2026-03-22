@@ -49,14 +49,43 @@ function calculateActiveCredit(principal: number): number {
 }
 
 function saveUserData(user: UserData): void {
-  localStorage.setItem(`member_${user.email}`, JSON.stringify(user));
+  localStorage.setItem(`member_${normalizeEmail(user.email)}`, JSON.stringify(user));
 }
 
-/** Extended user with per-currency wallet balances (mock-only) */
-type MockUserData = UserData & { walletBalances?: Record<string, number> };
+/** Extended user with per-currency wallet balances and auth (mock-only) */
+type MockUserData = UserData & {
+  walletBalances?: Record<string, number>;
+  /** Password hash for mock auth - never returned to caller */
+  _passwordHash?: string;
+};
+
+/** Hash password for mock storage (browser-safe, mirrors backend intent) */
+async function hashPassword(password: string): Promise<string> {
+  const enc = new TextEncoder();
+  const data = await crypto.subtle.digest("SHA-256", enc.encode(password));
+  return Array.from(new Uint8Array(data))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  const inputHash = await hashPassword(password);
+  return inputHash === storedHash;
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+/** Strip internal fields before exposing user (never return _passwordHash) */
+function toPublicUser(u: MockUserData): UserData {
+  const { _passwordHash, ...rest } = u;
+  return rest as UserData;
+}
 
 function loadUserData(email: string): MockUserData | null {
-  const saved = localStorage.getItem(`member_${email}`);
+  const key = `member_${normalizeEmail(email)}`;
+  const saved = localStorage.getItem(key);
   const parsed = saved ? JSON.parse(saved) : null;
   if (!parsed) return null;
   // Migrate legacy users: single savingsBalance → per-currency
@@ -91,12 +120,15 @@ function delay(ms: number): Promise<void> {
 
 export async function mockRegister(data: RegisterRequest): Promise<{ user: UserData; message: string }> {
   await delay(800); // Simulate network delay
-  
+  const email = normalizeEmail(data.email);
+
   // Check if user already exists
-  const existing = loadUserData(data.email);
+  const existing = loadUserData(email);
   if (existing) {
-    throw new Error('User already exists');
+    throw new Error("User already exists");
   }
+
+  const passwordHash = await hashPassword(data.password);
 
   const user: MockUserData = {
     memberId: generateMemberId(),
@@ -108,7 +140,7 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     nationalIdNumber: '',
     studentStaffId: '',
     salaryRange: null,
-    email: data.email,
+    email,
     mobile: data.phoneNumber,
     accountType: data.accountType,
     savingsBalance: 0,
@@ -124,31 +156,48 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     missedPayments: 0,
     onTimePayments: 0,
     walletBalances: { USD: 0, ZIG: 0, ZAR: 0, USDT: 0 },
+    _passwordHash: passwordHash,
   };
 
   saveUserData(user);
-  
+
   return {
-    user,
-    message: 'Registration successful. Please verify your OTP.',
+    user: toPublicUser(user),
+    message: "Registration successful. Please verify your OTP.",
   };
 }
 
+/**
+ * Login: CORRECT 2-step flow (mirrors backend).
+ * Step 1: Find user by email (secondary key)
+ * Step 2: Compare password hash (never query password in same step)
+ */
 export async function mockLogin(data: LoginRequest): Promise<{ user: UserData; token: string }> {
   await delay(600);
-  
-  const user = loadUserData(data.email);
+  const email = normalizeEmail(data.email);
+
+  // STEP 1: Fetch user by email only
+  const user = loadUserData(email);
   if (!user) {
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
 
-  // Update last login
+  // STEP 2: Validate password (bcrypt-style: compare hash, not plaintext)
+  const storedHash = (user as MockUserData)._passwordHash;
+  if (storedHash) {
+    const valid = await verifyPassword(data.password, storedHash);
+    if (!valid) {
+      throw new Error("Incorrect password");
+    }
+  }
+  // Legacy users without _passwordHash: allow login (migration path)
+
   const updatedUser = { ...user, lastLogin: Date.now() };
   saveUserData(updatedUser);
 
   return {
-    user: updatedUser,
-    token: 'mock_jwt_token_' + Date.now(),
+    user: toPublicUser(updatedUser),
+    token: "mock_jwt_token_" + Date.now(),
   };
 }
 

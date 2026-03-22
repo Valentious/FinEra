@@ -18,6 +18,7 @@ import {
   userNotFoundError,
   invalidPasswordError,
   accountInactiveError,
+  accountLockedError,
 } from "../../middlewares/errorHandler.js";
 import type { JwtPayload } from "../../types/index.js";
 import * as authRepo from "./auth.repository.js";
@@ -124,6 +125,18 @@ export async function login(
     throw accountInactiveError("Account is not active");
   }
 
+  // Pre-validation: account lockout (prevents brute-force before CPU-heavy bcrypt)
+  if (user.lockedUntil && user.lockedUntil > new Date()) {
+    logLoginAttempt({
+      email,
+      outcome: "ACCOUNT_LOCKED",
+      userId: user.id,
+      ip: meta?.ip,
+      userAgent: meta?.userAgent,
+    });
+    throw accountLockedError("Account temporarily locked due to too many failed attempts.");
+  }
+
   // STEP 2: Validate password - compare input with stored hash (bcrypt)
   const valid = await bcrypt.compare(data.password, user.passwordHash);
 
@@ -135,6 +148,7 @@ export async function login(
       ip: meta?.ip,
       userAgent: meta?.userAgent,
     });
+    await authRepo.incrementFailedLogin(user.id);
     throw invalidPasswordError("Incorrect password");
   }
 

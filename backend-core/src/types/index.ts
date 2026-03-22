@@ -37,6 +37,7 @@ export type ErrorCode =
   | "AUTHORIZATION_ERROR"
   | "USER_NOT_FOUND"
   | "INVALID_PASSWORD"
+  | "ACCOUNT_LOCKED"
   | "NOT_FOUND"
   | "CONFLICT"
   | "RATE_LIMIT"

@@ -13,7 +13,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
       <Card className="max-w-2xl w-full p-12 text-center space-y-8">
         <div className="hero-header flex flex-col items-center justify-center text-center space-y-2">
           <FinEraLogoText variant="light" size="xl" />
-          <p className="inclusive-text text-lg font-semibold text-slate-600 tracking-[0.25em] uppercase mt-2 mb-0">GLOBAL INCLUSIVE FINANCIAL SYSTEM</p>
+          <p className="inclusive-text text-lg font-semibold text-slate-600 tracking-[0.25em] uppercase mt-2 mb-0">INCLUSIVE FINANCIAL ECOSYSTEM</p>
           <p className="text-base text-slate-600 font-medium mt-1 mb-0">for Formal Institutions/Organisation</p>
         </div>
         <div className="space-y-4">

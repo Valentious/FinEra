@@ -33,7 +33,7 @@ export function AccountTypeSelection({ onSelectType, onBack }: AccountTypeSelect
             <FinEraShieldIcon size={56} />
             <div className="hero-header flex flex-col items-center justify-center text-center">
               <FinEraLogoText variant="light" size="lg" className="font-black" />
-              <p className="inclusive-text text-sm font-semibold text-slate-600 tracking-[0.2em] uppercase mt-2 mb-0">GLOBAL INCLUSIVE FINANCIAL SYSTEM</p>
+              <p className="inclusive-text text-sm font-semibold text-slate-600 tracking-[0.2em] uppercase mt-2 mb-0">INCLUSIVE FINANCIAL ECOSYSTEM</p>
               <p className="text-sm text-slate-600 font-medium mt-1 mb-0">For Formal Institutions/Organisation</p>
             </div>
           </div>
