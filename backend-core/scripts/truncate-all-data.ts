@@ -20,6 +20,7 @@ async function main() {
     "FraudLog",
     "Notification",
     "AuditLog",
+    "UserAuth",
     "User",
     "RefreshTokenBlacklist",
   ];

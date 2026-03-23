@@ -65,17 +65,22 @@ export async function register(data: RegisterInput): Promise<{ userId: string; e
   const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
 
   const { prisma } = await import("../../infrastructure/database/index.js");
-  const user = await prisma.user.create({
-    data: {
-      email,
-      fullName: data.fullName.trim(),
-      accountType: data.accountType,
-      countryCode: data.country,
-      city: data.city?.trim(),
-      institution: data.institution?.trim(),
-      passwordHash,
-      status: "ACTIVE",
-    },
+  const user = await prisma.$transaction(async (tx) => {
+    const u = await tx.user.create({
+      data: {
+        email,
+        fullName: data.fullName.trim(),
+        accountType: data.accountType,
+        countryCode: data.country,
+        city: data.city?.trim(),
+        institution: data.institution?.trim(),
+        status: "ACTIVE",
+      },
+    });
+    await tx.userAuth.create({
+      data: { userId: u.id, passwordHash },
+    });
+    return u;
   });
 
   const currencies = ["USD", "ZIG", "ZAR"] as const;
@@ -178,12 +183,12 @@ export async function refresh(refreshToken: string): Promise<AuthTokens> {
 }
 
 export async function logout(refreshToken: string): Promise<void> {
-  const user = await (await import("../../infrastructure/database/index.js")).prisma.user.findFirst({
+  const auth = await (await import("../../infrastructure/database/index.js")).prisma.userAuth.findFirst({
     where: { refreshToken },
-    select: { id: true },
+    select: { userId: true },
   });
-  if (user) {
-    await authRepo.setRefreshToken(user.id, null);
+  if (auth) {
+    await authRepo.setRefreshToken(auth.userId, null);
   }
 }
 

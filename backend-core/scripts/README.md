@@ -88,7 +88,7 @@ npm run dev
 **Authentication failed:**
 - Ensure PostgreSQL is running
 - Verify password in DATABASE_URL matches postgres user
-- For Docker: use `postgres:postgres`
+- For Docker: use `finera:finera_secure`
 
 **Port 5432 in use:**
 - Another PostgreSQL instance may be running

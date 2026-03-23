@@ -256,7 +256,7 @@ export function DashboardV2({
               </div>
               <p className="text-gray-300 text-xs font-black uppercase tracking-widest">Potential Credit Limit</p>
               <h3 className="text-4xl font-black mt-1">{selectedCurrency} {symbol}{availableCreditLimit.toLocaleString()}</h3>
-              <p className="text-gray-400 text-xs mt-2 font-medium">Based on Account type and financial discipline.</p>
+              <p className="text-gray-400 text-xs mt-2 font-medium">Increase TrustScore, Unlock More Credit</p>
             </div>
             <div className="relative z-10 mt-8">
               <Button 
@@ -393,68 +393,21 @@ export function DashboardV2({
             </Card>
           </motion.div>
 
-          {/* C. Loyalty Progress Card™ (10-Cycle Engine) */}
+          {/* B. Performance Portfolio Chart - Savings Wallet driven */}
           <motion.div whileHover={{ y: -4 }}>
-            <Card className={`p-6 border-slate-200 shadow-xl shadow-slate-200/50 h-full ${loyaltyProgress === 10 ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white border-none' : ''}`}>
-              <h3 className={`text-lg font-black mb-6 ${loyaltyProgress === 10 ? 'text-white' : 'text-slate-900'}`}>
-                Loyalty Reward Progress
-              </h3>
-              
-              {/* Horizontal Tracker */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((cycle) => (
-                    <div key={cycle} className="flex flex-col items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${
-                        cycle <= loyaltyProgress 
-                          ? (loyaltyProgress === 10 ? 'bg-white text-amber-600' : 'bg-green-500 text-white') 
-                          : 'bg-slate-200 text-slate-400'
-                      }`}>
-                        {cycle <= loyaltyProgress ? '✓' : cycle}
-                      </div>
-                      <div className={`text-[8px] mt-1 font-bold ${loyaltyProgress === 10 ? 'text-white' : 'text-slate-400'}`}>
-                        {cycle}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="relative h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full ${loyaltyProgress === 10 ? 'bg-white' : 'bg-green-500'} transition-all duration-500`}
-                    style={{ width: `${(loyaltyProgress / 10) * 100}%` }}
-                  />
+            <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden h-full">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-black text-slate-900">Performance Portfolio ({selectedCurrency})</h3>
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase">
+                  <ShieldCheck className="w-3 h-3 text-green-500" />
+                  Savings Wallet
                 </div>
               </div>
-
-              <p className={`text-sm mb-4 font-medium ${loyaltyProgress === 10 ? 'text-white' : 'text-slate-600'}`}>
-                {loyaltyProgress === 10 
-                  ? "12% Interest Discount Activated On Next Loan." 
-                  : "Complete 10 loans with zero repayment default to unlock one-time complete interest discount"}
-              </p>
-
-              {loyaltyProgress === 9 && (
-                <div className="px-4 py-3 bg-amber-50 border-2 border-amber-400 rounded-xl mb-4">
-                  <p className="text-amber-900 font-black text-sm text-center">
-                    🎉 1 Loan Away From 12% Discount!
-                  </p>
-                </div>
-              )}
-
-              {loyaltyProgress === 10 && (
-                <div className="px-4 py-3 bg-white/20 backdrop-blur-md border-2 border-white/40 rounded-xl">
-                  <p className="text-white font-black text-sm text-center">
-                    🏆 Congratulations! Loyalty Milestone Achieved!
-                  </p>
-                </div>
-              )}
-
-              {loyaltyProgress < 9 && (
-                <div className="text-center">
-                  <p className={`text-xs font-bold ${loyaltyProgress === 10 ? 'text-white/80' : 'text-slate-500'}`}>
-                    {10 - loyaltyProgress} more successful {10 - loyaltyProgress === 1 ? 'cycle' : 'cycles'} to go
-                  </p>
-                </div>
-              )}
+              <PerformancePortfolioChart
+                transactions={ledgerTxns}
+                currentBalance={savingsBalance}
+                currencySymbol={symbol}
+              />
             </Card>
           </motion.div>
         </div>
@@ -462,21 +415,70 @@ export function DashboardV2({
 
       {/* 5️⃣ Analytics & Activity Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Performance Portfolio Chart - Savings Wallet driven */}
-        <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-black text-slate-900">Performance Portfolio ({selectedCurrency})</h3>
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase">
-              <ShieldCheck className="w-3 h-3 text-green-500" />
-              Savings Wallet
+        {/* C. Loyalty Progress Card™ (10-Cycle Engine) */}
+        <motion.div whileHover={{ y: -4 }}>
+          <Card className={`p-6 border-slate-200 shadow-xl shadow-slate-200/50 h-full ${loyaltyProgress === 10 ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white border-none' : ''}`}>
+            <h3 className={`text-lg font-black mb-6 ${loyaltyProgress === 10 ? 'text-white' : 'text-slate-900'}`}>
+              Loyalty Reward Progress
+            </h3>
+            
+            {/* Horizontal Tracker */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((cycle) => (
+                  <div key={cycle} className="flex flex-col items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${
+                      cycle <= loyaltyProgress 
+                        ? (loyaltyProgress === 10 ? 'bg-white text-amber-600' : 'bg-green-500 text-white') 
+                        : 'bg-slate-200 text-slate-400'
+                    }`}>
+                      {cycle <= loyaltyProgress ? '✓' : cycle}
+                    </div>
+                    <div className={`text-[8px] mt-1 font-bold ${loyaltyProgress === 10 ? 'text-white' : 'text-slate-400'}`}>
+                      {cycle}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="relative h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full ${loyaltyProgress === 10 ? 'bg-white' : 'bg-green-500'} transition-all duration-500`}
+                  style={{ width: `${(loyaltyProgress / 10) * 100}%` }}
+                />
+              </div>
             </div>
-          </div>
-          <PerformancePortfolioChart
-            transactions={ledgerTxns}
-            currentBalance={savingsBalance}
-            currencySymbol={symbol}
-          />
-        </Card>
+
+            <p className={`text-sm mb-4 font-medium ${loyaltyProgress === 10 ? 'text-white' : 'text-slate-600'}`}>
+              {loyaltyProgress === 10 
+                ? "12% Interest Discount Activated On Next Loan." 
+                : "Complete 10 loans with zero repayment default to unlock one-time complete interest discount"}
+            </p>
+
+            {loyaltyProgress === 9 && (
+              <div className="px-4 py-3 bg-amber-50 border-2 border-amber-400 rounded-xl mb-4">
+                <p className="text-amber-900 font-black text-sm text-center">
+                  🎉 1 Loan Away From 12% Discount!
+                </p>
+              </div>
+            )}
+
+            {loyaltyProgress === 10 && (
+              <div className="px-4 py-3 bg-white/20 backdrop-blur-md border-2 border-white/40 rounded-xl">
+                <p className="text-white font-black text-sm text-center">
+                  🏆 Congratulations! Loyalty Milestone Achieved!
+                </p>
+              </div>
+            )}
+
+            {loyaltyProgress < 9 && (
+              <div className="text-center">
+                <p className={`text-xs font-bold ${loyaltyProgress === 10 ? 'text-white/80' : 'text-slate-500'}`}>
+                  {10 - loyaltyProgress} more successful {10 - loyaltyProgress === 1 ? 'cycle' : 'cycles'} to go
+                </p>
+              </div>
+            )}
+          </Card>
+        </motion.div>
 
         {/* Recent Transactions - currency-scoped ledger */}
         <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col">

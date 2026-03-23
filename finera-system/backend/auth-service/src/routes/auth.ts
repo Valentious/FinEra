@@ -49,10 +49,9 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(validatedData.password, SALT_ROUNDS);
 
     const user = await db.transaction(async (tx) => {
-      return tx.user.create({
+      const u = await tx.user.create({
         data: {
           email,
-          passwordHash: hashedPassword,
           firstName: validatedData.firstName,
           lastName: validatedData.lastName,
           phoneNumber: validatedData.phoneNumber,
@@ -60,6 +59,10 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
           status: 'ACTIVE',
         },
       });
+      await tx.userAuth.create({
+        data: { userId: u.id, passwordHash: hashedPassword },
+      });
+      return u;
     });
 
     const serviceResults = await orchestrateRegistration(user.id, validatedData, req);

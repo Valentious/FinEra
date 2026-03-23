@@ -63,7 +63,7 @@ if ($UseDocker) {
     try {
         docker compose up -d postgres
         Start-Sleep -Seconds 5
-        Write-Ok "PostgreSQL container started (postgres:postgres@localhost:5432/finera_db)"
+        Write-Ok "PostgreSQL container started (finera:finera_secure@localhost:5432/finera_db)"
     } finally {
         Pop-Location
     }

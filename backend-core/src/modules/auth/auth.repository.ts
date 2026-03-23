@@ -1,104 +1,114 @@
 /**
  * FinEra - Auth Repository
- * Database layer: user lookup and updates.
+ * Database layer: user lookup and credential updates.
  * NEVER compares passwords here - that belongs in the service.
- * Primary key (user_id/id) is the ONLY identity anchor.
- * Email and phone are UNIQUE secondary keys for lookup only.
+ * User = identity. UserAuth = credentials. Proper normalization (3NF).
  */
 
 import { prisma } from "../../infrastructure/database/index.js";
 import type { UserStatus } from "@prisma/client";
 
-/** Fields needed for auth validation - excludes sensitive data from general selects */
-const USER_AUTH_SELECT = {
-  id: true,
-  email: true,
-  passwordHash: true,
-  status: true,
-  lockedUntil: true,
-} as const;
-
-/** Result type - password_hash belongs to USER (user_id), not email */
+/** Result: User + UserAuth for login. Identity + Credentials joined. */
 export type UserAuthRow = {
   id: string;
   email: string;
-  passwordHash: string;
   status: UserStatus;
+  passwordHash: string;
   lockedUntil: Date | null;
 };
 
 /**
- * STEP 1: Fetch user by email (secondary key).
+ * STEP 1: Fetch user by email, include auth credentials (UserAuth).
  * Returns null if not found - NEVER query password in same step.
  */
 export async function findUserByEmail(normalizedEmail: string): Promise<UserAuthRow | null> {
   const user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
-    select: USER_AUTH_SELECT,
+    select: {
+      id: true,
+      email: true,
+      status: true,
+      authCredentials: {
+        select: { passwordHash: true, lockedUntil: true },
+      },
+    },
   });
-  return user;
+  if (!user || !user.authCredentials) return null;
+  return {
+    id: user.id,
+    email: user.email,
+    status: user.status,
+    passwordHash: user.authCredentials.passwordHash,
+    lockedUntil: user.authCredentials.lockedUntil,
+  };
 }
 
 /**
- * Fetch user by primary key (user_id) for token refresh / session validation.
+ * Fetch user + auth by primary key for token refresh.
  */
-export async function findUserById(userId: string): Promise<{ id: string; email: string; refreshToken: string | null } | null> {
-  return prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, email: true, refreshToken: true },
+export async function findUserById(userId: string): Promise<{
+  id: string;
+  email: string;
+  refreshToken: string | null;
+} | null> {
+  const auth = await prisma.userAuth.findUnique({
+    where: { userId },
+    select: { user: { select: { id: true, email: true } }, refreshToken: true },
   });
+  if (!auth) return null;
+  return {
+    id: auth.user.id,
+    email: auth.user.email,
+    refreshToken: auth.refreshToken,
+  };
 }
 
-/** Max failed attempts before lockout */
 const MAX_LOGIN_ATTEMPTS = 5;
-/** Lockout duration in minutes */
 const LOCKOUT_MINUTES = 15;
 
 /**
- * Update last login and reset failed attempts on success.
+ * Update last login and reset failed attempts on success (UserAuth).
  */
 export async function updateLastLogin(userId: string, ip?: string): Promise<void> {
-  await prisma.user.update({
-    where: { id: userId },
+  await prisma.userAuth.update({
+    where: { userId },
     data: {
       lastLoginAt: new Date(),
       lastLoginIP: ip ?? null,
-      loginAttempts: 0,
+      failedLoginAttempts: 0,
       lockedUntil: null,
     },
   });
 }
 
 /**
- * Increment failed login attempts; lock account if threshold exceeded.
+ * Increment failed login attempts; lock account if threshold exceeded (UserAuth).
  */
 export async function incrementFailedLogin(userId: string): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { loginAttempts: true },
+  const auth = await prisma.userAuth.findUnique({
+    where: { userId },
+    select: { failedLoginAttempts: true },
   });
-  if (!user) return;
+  if (!auth) return;
 
-  const newAttempts = (user.loginAttempts ?? 0) + 1;
-  const lockUntil = newAttempts >= MAX_LOGIN_ATTEMPTS
-    ? new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000)
-    : null;
+  const newAttempts = (auth.failedLoginAttempts ?? 0) + 1;
+  const lockUntil =
+    newAttempts >= MAX_LOGIN_ATTEMPTS
+      ? new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000)
+      : null;
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      loginAttempts: newAttempts,
-      lockedUntil: lockUntil,
-    },
+  await prisma.userAuth.update({
+    where: { userId },
+    data: { failedLoginAttempts: newAttempts, lockedUntil: lockUntil },
   });
 }
 
 /**
- * Store refresh token for session management.
+ * Store refresh token in UserAuth.
  */
 export async function setRefreshToken(userId: string, token: string | null, expiresAt?: Date): Promise<void> {
-  await prisma.user.update({
-    where: { id: userId },
+  await prisma.userAuth.update({
+    where: { userId },
     data: { refreshToken: token, refreshTokenExpiry: expiresAt ?? null },
   });
 }

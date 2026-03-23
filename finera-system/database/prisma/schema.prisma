@@ -12,24 +12,24 @@ datasource db {
 }
 
 // ==================== CORE USER & IDENTITY ====================
+//
+// NORMALIZATION: Identity (User) vs Credentials (UserAuth)
+// - User: identity only. UserAuth: password_hash, lockout, sessions.
+// - email = UNIQUE secondary key (lookup); password_hash in UserAuth, depends on user_id
 
-// Identity vs Credential: id=PK, email/phone=UNIQUE secondary keys, password_hash belongs to user_id
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
-  passwordHash  String
   firstName     String
   lastName      String
   nationalId    String?   @unique
   phoneNumber   String?   @unique
   role          UserRole  @default(STUDENT)
   status        UserStatus @default(ACTIVE)
-
-  // Auth: lockout after failed attempts
-  loginAttempts Int       @default(0)
-  lockedUntil   DateTime?
+  emailVerified DateTime?
 
   // Relationships
+  authCredentials  UserAuth?
   wallet           Wallet?
   creditScore      CreditScore?
   learningProfile  LearningProfile?
@@ -40,16 +40,32 @@ model User {
   termInteractions TermInteraction[]
   recommendations  Recommendation[]
 
-  // Metadata
-  emailVerified   DateTime?
-  lastLoginAt     DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  deletedAt       DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([email])
   @@index([status])
   @@index([role])
+}
+
+model UserAuth {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  passwordHash        String
+  passwordLastChanged DateTime  @default(now())
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  lastLoginIP         String?
+  resetToken          String?
+  resetTokenExpires   DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum UserRole {

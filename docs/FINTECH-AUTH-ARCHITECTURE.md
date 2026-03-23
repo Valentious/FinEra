@@ -1,19 +1,19 @@
 # Fintech Identity vs Credential Architecture
 
-**Golden Thread**: Identity (Who you are) and Credentials (How you prove it) must be decoupled at the logic layer.
+**Golden Thread**: Identity (Who you are) and Credentials (How you prove it) must be decoupled at the logic and schema layer.
 
-## Schema Rules
+## Normalization: User vs UserAuth
 
-| Field           | Role                       | Constraint      |
-|----------------|----------------------------|-----------------|
-| `user_id` (id) | PRIMARY KEY – identity anchor | Only one per user |
-| `email`        | Secondary key – lookup     | UNIQUE          |
-| `phone`        | Secondary key – lookup     | UNIQUE (optional) |
-| `password_hash`| Belongs to USER (user_id)  | Required, never to email |
+| Table     | Role              | Fields                                      |
+|----------|-------------------|---------------------------------------------|
+| **User** | Identity only     | user_id, email, fullName, status, profile   |
+| **UserAuth** | Credentials only | user_id (FK), password_hash, failed_login_attempts, locked_until |
 
+- **User**: Single responsibility – identity. No password_hash.
+- **UserAuth**: 1:1 with User. password_hash depends on user_id, not email. Proper 3NF.
+- **email** = UNIQUE secondary key (lookup)
 - **created_at** / **updated_at** – required for auditability
 - **status** enum: `active` | `suspended` | `pending_verification`
-- **lockedUntil** / **loginAttempts** – for brute-force protection
 
 ## 2-Step Authentication Flow
 
@@ -52,3 +52,13 @@ Before running CPU-heavy bcrypt:
 1. **Primary vs secondary keys**: `user_id` stays stable; email/phone can change without breaking identity.
 2. **Audit clarity**: 404 vs 401 differentiates email probing from password attempts.
 3. **Pre-validation**: Check status and lockout before expensive bcrypt.
+4. **3NF**: UserAuth separates credentials; supports MFA, password reset, session tokens.
+
+## Migration (Existing Databases)
+
+If you have existing `User` rows with `password_hash`:
+
+1. Create `UserAuth` table.
+2. Migrate: `INSERT INTO user_auth (user_id, password_hash, ...) SELECT id, password_hash, ... FROM users`.
+3. Drop `password_hash`, `login_attempts`, `locked_until`, etc. from `users`.
+4. Run `npx prisma migrate dev` or apply schema manually.

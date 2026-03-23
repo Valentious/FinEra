@@ -1,8 +1,7 @@
 /**
  * FinEra Auth - User Repository
  * Pure DB layer: lookup and updates only.
- * NEVER compares passwords here - that belongs in AuthService.
- * Primary key (id) = ONLY identity anchor. Email/phone = secondary keys for lookup.
+ * User = identity. UserAuth = credentials. Proper normalization (3NF).
  */
 
 import { db } from '@finera/database';
@@ -16,26 +15,33 @@ export type UserAuthRow = {
   lockedUntil: Date | null;
 };
 
-const USER_AUTH_SELECT = {
-  id: true,
-  email: true,
-  passwordHash: true,
-  status: true,
-  role: true,
-  lockedUntil: true,
-} as const;
-
 /**
- * STEP 1 IDENTIFY: Fetch user by email (secondary key).
+ * STEP 1 IDENTIFY: Fetch user by email, include UserAuth credentials.
  * Returns null if not found - never query password in same step.
  */
 export async function findUserByEmail(normalizedEmail: string): Promise<UserAuthRow | null> {
   const prisma = db.getClient();
   const user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
-    select: USER_AUTH_SELECT,
+    select: {
+      id: true,
+      email: true,
+      status: true,
+      role: true,
+      authCredentials: {
+        select: { passwordHash: true, lockedUntil: true },
+      },
+    },
   });
-  return user as UserAuthRow | null;
+  if (!user || !user.authCredentials) return null;
+  return {
+    id: user.id,
+    email: user.email,
+    status: user.status,
+    role: user.role,
+    passwordHash: user.authCredentials.passwordHash,
+    lockedUntil: user.authCredentials.lockedUntil,
+  };
 }
 
 /**
@@ -55,42 +61,39 @@ const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
 /**
- * Update last login and reset failed attempts on success.
+ * Update last login and reset failed attempts on success (UserAuth).
  */
 export async function updateLastLogin(userId: string): Promise<void> {
   const prisma = db.getClient();
-  await prisma.user.update({
-    where: { id: userId },
+  await prisma.userAuth.update({
+    where: { userId },
     data: {
       lastLoginAt: new Date(),
-      loginAttempts: 0,
+      failedLoginAttempts: 0,
       lockedUntil: null,
     },
   });
 }
 
 /**
- * Increment failed login attempts; lock account if threshold exceeded.
+ * Increment failed login attempts; lock account if threshold exceeded (UserAuth).
  */
 export async function incrementFailedLogin(userId: string): Promise<void> {
   const prisma = db.getClient();
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { loginAttempts: true },
+  const auth = await prisma.userAuth.findUnique({
+    where: { userId },
+    select: { failedLoginAttempts: true },
   });
-  if (!user) return;
+  if (!auth) return;
 
-  const newAttempts = (user.loginAttempts ?? 0) + 1;
+  const newAttempts = (auth.failedLoginAttempts ?? 0) + 1;
   const lockUntil =
     newAttempts >= MAX_LOGIN_ATTEMPTS
       ? new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000)
       : null;
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      loginAttempts: newAttempts,
-      lockedUntil: lockUntil,
-    },
+  await prisma.userAuth.update({
+    where: { userId },
+    data: { failedLoginAttempts: newAttempts, lockedUntil: lockUntil },
   });
 }

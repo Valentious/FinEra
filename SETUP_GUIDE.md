@@ -2,17 +2,32 @@
 
 > **FinEra uses port 4000** (not 5000). All API URLs use `http://localhost:4000`.
 
-## Quick Start Checklist
+## One-Command Dev Stack (Recommended)
+
+```powershell
+npm run dev:docker
+```
+
+Starts Postgres + Redis + Backend (hot reload) + Frontend (hot reload). Uses `finera:finera_secure` (standardized).
+
+- Backend: http://localhost:4000
+- Frontend: http://localhost:5173
+
+Seed data (optional): `cd backend-core && npm run db:seed` (with compose running).
+
+---
+
+## Manual Setup
 
 ### Step 1: Environment Configuration ✅
 
 - **Backend** `.env` created at `backend-core/.env`
 - **Frontend** `.env` created at project root (Vite uses `VITE_API_URL`)
 
-**If you need different database credentials**, edit `backend-core/.env`:
+**Standardized DB credentials** (used everywhere):
 
 ```env
-DATABASE_URL="postgresql://USERNAME:PASSWORD@localhost:5432/finera_db"
+DATABASE_URL="postgresql://finera:finera_secure@localhost:5432/finera_db"
 ```
 
 ### Step 2: PostgreSQL
@@ -24,7 +39,7 @@ cd backend-core
 docker compose up -d postgres
 ```
 
-Uses `postgres:postgres` credentials. Wait ~5 seconds, then continue.
+Uses `finera:finera_secure` credentials. Wait ~5 seconds, then continue.
 
 **Option B - Native PostgreSQL:**
 

@@ -210,12 +210,11 @@ enum FraudAction {
 
 // ==================== MODELS ====================
 //
-// IDENTITY RULES (2NF/3NF):
-// - user_id (id) = PRIMARY KEY, the ONLY identity anchor
-// - email = UNIQUE secondary key (lookup only)
-// - phone = UNIQUE secondary key (lookup only, optional)
-// - password_hash = belongs to USER (user_id), NEVER to email
-// - NEVER query email AND password together; always: 1) lookup by email, 2) validate password
+// NORMALIZATION: Identity vs Credentials
+// - User: identity only (user_id, email, profile). Single responsibility.
+// - UserAuth: credentials (password_hash, lockout, sessions). Separated for 3NF.
+// - email = UNIQUE secondary key (lookup); password_hash depends on user_id via UserAuth
+// - Login: 1) find User by email, 2) get UserAuth by user_id, 3) verify password
 
 model User {
   id                      String    @id @default(uuid())
@@ -229,19 +228,10 @@ model User {
   institutionId           String?
   phoneNumber             String?   @unique
   phoneVerified           Boolean   @default(false)
-  passwordHash            String
   emailVerified           Boolean   @default(false)
   emailVerificationToken  String?
   emailVerificationExpiry DateTime?
-  refreshToken            String?
-  refreshTokenExpiry      DateTime?
-  twoFactorEnabled        Boolean   @default(false)
-  twoFactorSecret         String?
   deviceFingerprints      Json?     // Array of known device hashes
-  lastLoginAt             DateTime?
-  lastLoginIP             String?
-  loginAttempts           Int       @default(0)
-  lockedUntil             DateTime?
   status                  UserStatus @default(PENDING_VERIFICATION)
   statusReason            String?
   createdAt               DateTime  @default(now())
@@ -249,25 +239,49 @@ model User {
   deletedAt               DateTime?
   metadata                Json?
 
-  wallets              Wallet[]
-  transactions         Transaction[]
-  creditProfile        CreditProfile?
-  repayments           Repayment[]
-  loans                Loan[]
-  kycDocuments         KycDocument[]
-  notifications        Notification[]
-  fraudLogs            FraudLog[]
-  auditLogs            AuditLog[]
-  learningProfile      UserLearningProfile?
-  termInteractions     TermInteraction[]
-  progressTracking     ProgressTracking[]
-  recommendationsLog   RecommendationLog[]
-  partnerProgram       PartnerProgram?
-  portfolioSnapshots   PortfolioSnapshot[]
+  authCredentials        UserAuth?
+  wallets                 Wallet[]
+  transactions            Transaction[]
+  creditProfile           CreditProfile?
+  repayments              Repayment[]
+  loans                   Loan[]
+  kycDocuments            KycDocument[]
+  notifications           Notification[]
+  fraudLogs               FraudLog[]
+  auditLogs                AuditLog[]
+  learningProfile         UserLearningProfile?
+  termInteractions        TermInteraction[]
+  progressTracking        ProgressTracking[]
+  recommendationsLog       RecommendationLog[]
+  partnerProgram          PartnerProgram?
+  portfolioSnapshots      PortfolioSnapshot[]
 
   @@index([email])
   @@index([countryCode, accountType])
   @@index([status, createdAt])
+}
+
+model UserAuth {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  passwordHash         String
+  passwordLastChanged  DateTime  @default(now())
+  failedLoginAttempts  Int       @default(0)
+  lockedUntil          DateTime?
+  lastLoginAt          DateTime?
+  lastLoginIP          String?
+  twoFactorEnabled     Boolean   @default(false)
+  twoFactorSecret      String?
+  refreshToken         String?
+  refreshTokenExpiry   DateTime?
+  resetToken           String?
+  resetTokenExpires    DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Each user has MULTIPLE wallets. Each wallet = ONE currency ONLY.

@@ -92,25 +92,32 @@ async function main() {
   const nextCalc = new Date();
   nextCalc.setDate(nextCalc.getDate() + 30);
 
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@finera.com' },
-    update: {},
-    create: {
-      email: 'admin@finera.com',
-      passwordHash: adminPassword,
-      firstName: 'System',
-      lastName: 'Administrator',
-      role: 'ADMIN',
-      status: 'ACTIVE',
-      emailVerified: new Date(),
-      learningProfile: {
-        create: {
-          userType: 'STAFF',
-          financialDisciplineScore: 100,
-          learningStreakDays: 0,
+  const admin = await prisma.$transaction(async (tx) => {
+    const u = await tx.user.upsert({
+      where: { email: 'admin@finera.com' },
+      update: {},
+      create: {
+        email: 'admin@finera.com',
+        firstName: 'System',
+        lastName: 'Administrator',
+        role: 'ADMIN',
+        status: 'ACTIVE',
+        emailVerified: new Date(),
+        learningProfile: {
+          create: {
+            userType: 'STAFF',
+            financialDisciplineScore: 100,
+            learningStreakDays: 0,
+          },
         },
       },
-    },
+    });
+    await tx.userAuth.upsert({
+      where: { userId: u.id },
+      update: {},
+      create: { userId: u.id, passwordHash: adminPassword },
+    });
+    return u;
   });
 
   await prisma.wallet.upsert({

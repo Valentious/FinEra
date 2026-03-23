@@ -19,18 +19,23 @@ async function verifyDatabaseOperations() {
     console.log("👤 Creating test user...");
     const hashedPassword = await bcrypt.hash("TestPass123!@#", 12);
 
-    const user = await prisma.user.create({
-      data: {
-        email: `test-${Date.now()}@university.edu`,
-        fullName: "Test User",
-        accountType: "STUDENT",
-        accountTier: "TIER_1",
-        countryCode: "ZWE",
-        city: "Harare",
-        institution: "University of Zimbabwe",
-        passwordHash: hashedPassword,
-        status: "ACTIVE",
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      const u = await tx.user.create({
+        data: {
+          email: `test-${Date.now()}@university.edu`,
+          fullName: "Test User",
+          accountType: "STUDENT",
+          accountTier: "TIER_1",
+          countryCode: "ZWE",
+          city: "Harare",
+          institution: "University of Zimbabwe",
+          status: "ACTIVE",
+        },
+      });
+      await tx.userAuth.create({
+        data: { userId: u.id, passwordHash: hashedPassword },
+      });
+      return u;
     });
     console.log(`✅ User created with ID: ${user.id}\n`);
 

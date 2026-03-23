@@ -25,10 +25,16 @@ router.get("/profile", async (req, res, next) => {
         city: true,
         institution: true,
         emailVerified: true,
-        lastLoginAt: true,
         createdAt: true,
+        authCredentials: {
+          select: { lastLoginAt: true },
+        },
       },
     });
+    if (user?.authCredentials) {
+      (user as Record<string, unknown>).lastLoginAt = user.authCredentials.lastLoginAt;
+      delete (user as Record<string, unknown>).authCredentials;
+    }
     if (!user) throw notFoundError("User not found");
     res.json({ success: true, data: user });
   } catch (e) {

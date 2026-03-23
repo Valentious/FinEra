@@ -1,0 +1,73 @@
+# FinEra Unified Dev Stack - ONE COMMAND
+# Run: docker compose -f docker-compose.dev.yml up --build
+# Or: npm run dev:docker
+#
+# Starts: Postgres + Backend (hot reload) + Frontend (hot reload)
+# Standardized: finera:finera_secure everywhere
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: finera-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: finera
+      POSTGRES_PASSWORD: finera_secure
+      POSTGRES_DB: finera_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finera -d finera_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend-core
+      dockerfile: Dockerfile.dev
+    container_name: finera-backend
+    volumes:
+      - ./backend-core:/app
+      - /app/node_modules
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://finera:finera_secure@postgres:5432/finera_db
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-jwt-secret-min-32-characters-required
+      JWT_REFRESH_SECRET: dev-refresh-secret-min-32-chars-required
+      FRONTEND_URL: http://localhost:5173
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "npx prisma db push --accept-data-loss 2>/dev/null || true && npm run dev"
+
+  redis:
+    image: redis:7-alpine
+    container_name: finera-redis
+    ports:
+      - "6379:6379"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: finera-frontend
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:4000/api/v1
+    depends_on:
+      - backend
+    command: npm run dev:frontend -- --host 0.0.0.0
+
+volumes:
+  postgres_data:

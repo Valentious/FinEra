@@ -10,6 +10,7 @@
     "dev:backend": "cd backend-core && npm run dev",
     "docker:up": "docker-compose up -d --build",
     "docker:down": "docker-compose down",
+    "dev:docker": "docker compose -f docker-compose.dev.yml up --build",
     "health": "node scripts/check-health.js"
   },
   "dependencies": {

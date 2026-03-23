@@ -9,8 +9,8 @@ services:
     image: postgres:15-alpine
     container_name: finera-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: finera
+      POSTGRES_PASSWORD: finera_secure
       POSTGRES_DB: finera_db
     ports:
       - "5432:5432"
@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile
     container_name: finera-backend
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/finera_db
+      DATABASE_URL: postgresql://finera:finera_secure@postgres:5432/finera_db
       NODE_ENV: production
       PORT: 4000
     ports:
