@@ -97,7 +97,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
               </div>
               <div className="space-y-2">
                 <h1 className="text-3xl font-black text-slate-900">Identity Verification</h1>
-                <p className="text-slate-500 font-medium">Enhanced biometric and OCR validation required for academic credit access.</p>
+                <p className="text-slate-500 font-medium">Enhanced biometric and OCR validation required.</p>
               </div>
 
               <Card className="p-6 border-slate-100 shadow-sm text-left space-y-4">

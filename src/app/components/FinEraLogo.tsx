@@ -60,38 +60,18 @@ export const FinEraLogo = forwardRef<SVGSVGElement, FinEraLogoProps>(
         </g>
 
         {showTagline && (
-          <g>
-            <line
-              x1={width * 0.12}
-              y1={taglineY}
-              x2={width * 0.38}
-              y2={taglineY}
-              stroke="#F97316"
-              strokeWidth="0.6"
-              strokeLinecap="round"
-            />
-            <text
-              x={width / 2}
-              y={taglineY + 4}
-              textAnchor="middle"
-              fill="#F97316"
-              fontFamily="system-ui, -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif"
-              fontSize={taglineSize}
-              fontWeight="600"
-              letterSpacing="0.18em"
-            >
-              INCLUSIVE FINANCIAL ECOSYSTEM
-            </text>
-            <line
-              x1={width * 0.62}
-              y1={taglineY}
-              x2={width * 0.88}
-              y2={taglineY}
-              stroke="#F97316"
-              strokeWidth="0.6"
-              strokeLinecap="round"
-            />
-          </g>
+          <text
+            x={width / 2}
+            y={taglineY + 4}
+            textAnchor="middle"
+            fill="#F97316"
+            fontFamily="system-ui, -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif"
+            fontSize={taglineSize}
+            fontWeight="600"
+            letterSpacing="0.18em"
+          >
+            INCLUSIVE FINANCIAL ECOSYSTEM
+          </text>
         )}
       </svg>
     );

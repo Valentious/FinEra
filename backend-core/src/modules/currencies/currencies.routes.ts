@@ -14,7 +14,6 @@ const FALLBACK_CONFIG: Record<string, { displayName: string; symbol: string; cus
   USD: { displayName: "US Dollar", symbol: "$", custodyType: "bank", dashboardConfig: { minAmount: 1, maxAmount: 999999, feePercent: 0.1, dailyLimit: 50000, features: ["international", "strict_compliance"] } },
   ZIG: { displayName: "Zimbabwe Gold (ZiG)", symbol: "Z$", custodyType: "momo", dashboardConfig: { minAmount: 10, maxAmount: 999999999, feePercent: 0.5, dailyLimit: 50000000, features: ["local_transfers"] } },
   ZAR: { displayName: "South African Rand", symbol: "R", custodyType: "bank", dashboardConfig: { minAmount: 5, maxAmount: 999999, feePercent: 0.2, dailyLimit: 100000, features: ["regional_transfers"] } },
-  USDT: { displayName: "Tether (USDT)", symbol: "₮", custodyType: "blockchain", dashboardConfig: { minAmount: 1, maxAmount: 999999, feePercent: 0.5, dailyLimit: 100000, features: ["blockchain", "gas_fees"] } },
   EUR: { displayName: "Euro", symbol: "€", custodyType: "bank", dashboardConfig: { minAmount: 1, maxAmount: 999999, feePercent: 0.15, dailyLimit: 50000, features: ["international"] } },
   GBP: { displayName: "British Pound", symbol: "£", custodyType: "bank", dashboardConfig: { minAmount: 1, maxAmount: 999999, feePercent: 0.15, dailyLimit: 50000, features: ["international"] } },
 };
@@ -36,7 +35,7 @@ router.get("/", async (_req, res, next) => {
     }
 
     if (registry.length === 0) {
-      const codes = ["USD", "ZIG", "ZAR", "USDT"] as const;
+      const codes = ["USD", "ZIG", "ZAR"] as const;
       registry = codes.map((c) => {
         const fc = FALLBACK_CONFIG[c] ?? { displayName: c, symbol: c, custodyType: "bank", dashboardConfig: {} };
         return {
@@ -75,7 +74,7 @@ router.get("/dashboard-config", async (req, res, next) => {
     const currency = req.query.currency as string | undefined;
     let registry: Array<{ currencyCode: string; displayName: string; symbol: string; custodyType: string; dashboardConfig: unknown }> = [];
     try {
-      const where = currency ? { currencyCode: currency as "USD" | "ZIG" | "ZAR" | "EUR" | "GBP" | "USDT", status: "active" } : { status: "active" };
+      const where = currency ? { currencyCode: currency as "USD" | "ZIG" | "ZAR" | "EUR" | "GBP", status: "active" } : { status: "active" };
       registry = await prisma.currencyRegistry.findMany({
         where,
         select: { currencyCode: true, displayName: true, symbol: true, custodyType: true, dashboardConfig: true },
@@ -85,7 +84,7 @@ router.get("/dashboard-config", async (req, res, next) => {
     }
 
     if (registry.length === 0) {
-      const codes = currency ? [currency] : (["USD", "ZIG", "ZAR", "USDT"] as const);
+      const codes = currency ? [currency] : (["USD", "ZIG", "ZAR"] as const);
       registry = codes.map((c) => {
         const fc = FALLBACK_CONFIG[c] ?? (FALLBACK_CONFIG.USD as { displayName: string; symbol: string; custodyType: string; dashboardConfig: object });
         return {

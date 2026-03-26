@@ -5,14 +5,10 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { 
   ArrowLeft, 
-  CreditCard, 
   Wallet, 
-  Building2, 
   CheckCircle2, 
-  AlertCircle,
   Loader2,
   Smartphone,
-  Zap,
   UserCircle,
   Banknote,
   Clock,
@@ -32,14 +28,9 @@ interface WithdrawFlowProps {
 }
 
 const METHODS = [
-  { id: "banktransfer", label: "Bank Transfer", icon: <Building2 className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
   { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
-  { id: "innbucks", label: "InnBucks", icon: <Smartphone className="w-5 h-5" />, color: "bg-orange-50 text-orange-600" },
-  { id: "onemoney", label: "OneMoney", icon: <Smartphone className="w-5 h-5" />, color: "bg-red-50 text-red-600" },
-  { id: "mobilemoney", label: "Mobile Money", icon: <Smartphone className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
-  { id: "cryptowallet", label: "Crypto Wallet", icon: <Wallet className="w-5 h-5" />, color: "bg-purple-50 text-purple-600" },
-  { id: "agent", label: "Verified Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
-  { id: "atm", label: "ATM Cardless Withdrawal", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600", featured: true },
+  { id: "atm", label: "ATM Cardless Withdrawal", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
+  { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
 ];
 
 export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: WithdrawFlowProps) {
@@ -56,7 +47,7 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
   const [codeCopied, setCodeCopied] = useState(false);
   const [refCopied, setRefCopied] = useState(false);
 
-  const MOBILE_METHODS = ["ecocash", "onemoney", "innbucks", "mobilemoney"];
+  const MOBILE_METHODS = ["ecocash"];
   const needsConfirmCode = MOBILE_METHODS.includes(selectedMethod);
 
   const handleMethodSelect = (methodId: string) => {

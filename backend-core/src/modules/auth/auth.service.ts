@@ -1,39 +1,42 @@
 /**
  * FinEra Backend - Authentication Service
  *
- * CORE PRINCIPLES:
- * - Primary key (user_id/id) is the ONLY identity anchor
- * - Secondary keys (email, phone) are UNIQUE but NOT identity
- * - Password belongs to USER (user_id), not email
- * - Login: STEP 1 fetch by email, STEP 2 validate password (never together)
+ * Registration creates users in PENDING_VERIFICATION; email OTP (bcrypt-hashed in DB) must be
+ * verified before status becomes ACTIVE and login is allowed.
  */
 
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { getConfig } from "../../config/index.js";
-import type { AccountType } from "@prisma/client";
 import {
+  AppError,
   conflictError,
   authError,
   userNotFoundError,
   invalidPasswordError,
   accountInactiveError,
   accountLockedError,
+  validationError,
 } from "../../middlewares/errorHandler.js";
 import type { JwtPayload } from "../../types/index.js";
 import * as authRepo from "./auth.repository.js";
 import { logLoginAttempt } from "./auth.audit.js";
+import { sendOtpEmail, logDevOtpFallback, maskEmailForLog } from "./email-delivery.js";
+import { logger } from "../../core/utils/logger.js";
+import { assertHourlyOtpLimit, recordOtpSend } from "./otp-rate-limit.js";
+import type { RegisterInput } from "./auth.validation.js";
 
 const SALT_ROUNDS = 12;
+const OTP_BCRYPT_ROUNDS = 10;
+const OTP_TTL_MS = 5 * 60 * 1000;
+const RESEND_COOLDOWN_MS = 30 * 1000;
 
-export interface RegisterInput {
-  email: string;
-  password: string;
-  fullName: string;
-  accountType: AccountType;
-  country: string;
-  city?: string;
-  institution?: string;
+/** When true, any 6-digit code verifies (dev / progress only). Off in production unless explicitly enabled. */
+function emailOtpAcceptAny(): boolean {
+  const v = process.env.EMAIL_OTP_ACCEPT_ANY;
+  if (v === "false" || v === "0") return false;
+  if (v === "true" || v === "1") return true;
+  return process.env.NODE_ENV === "development";
 }
 
 export interface LoginInput {
@@ -48,23 +51,97 @@ export interface AuthTokens {
   expiresIn: number;
 }
 
-/** Normalize email: lowercase, trim. Enforced before any DB operation. */
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+function generateOtp(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function hashEmailOtp(code: string): Promise<string> {
+  return bcrypt.hash(code, OTP_BCRYPT_ROUNDS);
+}
+
+function parseDateOfBirth(iso: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (!m) throw validationError("Invalid date of birth");
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) {
+    throw validationError("Invalid date of birth");
+  }
+  return dt;
+}
+
 /**
- * Register: validate, normalize email, hash password (bcrypt), create user.
- * Password hash depends ONLY on user_id (created at insert).
+ * Send OTP email; in development may log OTP if provider missing (same behavior as legacy flow).
  */
+async function deliverRegistrationOtp(to: string, code: string): Promise<void> {
+  try {
+    const result = await sendOtpEmail(to, code);
+    if (result.ok) {
+      logger.info(
+        { event: "registration_otp_sent", to: maskEmailForLog(to), provider: result.provider },
+        "Registration OTP email accepted by provider"
+      );
+      return;
+    }
+    const isDev = process.env.NODE_ENV === "development";
+    if (isDev && process.env.EMAIL_DEV_FALLBACK_LOG !== "false") {
+      logDevOtpFallback(to, code, "no_email_provider_configured");
+      return;
+    }
+    logger.error({ to: maskEmailForLog(to) }, "Registration OTP not sent: no provider in production");
+    throw validationError(
+      "Failed to send verification email. Email service is not configured. Contact support."
+    );
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    logger.error(
+      {
+        event: "registration_otp_failed",
+        to: maskEmailForLog(to),
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "Registration OTP email delivery failed"
+    );
+    const isDev = process.env.NODE_ENV === "development";
+    if (isDev && process.env.EMAIL_DEV_FALLBACK_LOG !== "false") {
+      logDevOtpFallback(to, code, err instanceof Error ? err.message : "send_failed");
+      return;
+    }
+    throw validationError("Failed to send verification email. Try again later.");
+  }
+}
+
 export async function register(data: RegisterInput): Promise<{ userId: string; email: string }> {
   const email = normalizeEmail(data.email);
+  assertHourlyOtpLimit(email);
+
   const existing = await authRepo.findUserByEmail(email);
   if (existing) throw conflictError("Email already registered");
 
-  const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
-
   const { prisma } = await import("../../infrastructure/database/index.js");
+
+  const phone = data.phoneNumber.trim();
+  if (phone.length > 0) {
+    const phoneTaken = await prisma.user.findFirst({
+      where: { phoneNumber: phone },
+      select: { id: true },
+    });
+    if (phoneTaken) throw conflictError("Phone number already registered");
+  }
+
+  const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
+  const dateOfBirth = parseDateOfBirth(data.dateOfBirth);
+  const plainOtp = generateOtp();
+  const otpHash = await hashEmailOtp(plainOtp);
+  const now = new Date();
+  const expiry = new Date(now.getTime() + OTP_TTL_MS);
+
   const user = await prisma.$transaction(async (tx) => {
     const u = await tx.user.create({
       data: {
@@ -74,7 +151,13 @@ export async function register(data: RegisterInput): Promise<{ userId: string; e
         countryCode: data.country,
         city: data.city?.trim(),
         institution: data.institution?.trim(),
-        status: "ACTIVE",
+        dateOfBirth,
+        phoneNumber: phone || null,
+        status: "PENDING_VERIFICATION",
+        emailVerified: false,
+        emailVerificationToken: otpHash,
+        emailVerificationExpiry: expiry,
+        emailOtpLastSentAt: now,
       },
     });
     await tx.userAuth.create({
@@ -82,6 +165,8 @@ export async function register(data: RegisterInput): Promise<{ userId: string; e
     });
     return u;
   });
+
+  recordOtpSend(email);
 
   const currencies = ["USD", "ZIG", "ZAR"] as const;
   for (let i = 0; i < currencies.length; i++) {
@@ -91,22 +176,112 @@ export async function register(data: RegisterInput): Promise<{ userId: string; e
     });
   }
 
+  await deliverRegistrationOtp(email, plainOtp);
+
   return { userId: user.id, email: user.email };
 }
 
-/**
- * Login: STRICT 2-step flow.
- * STEP 1: Fetch user by email (secondary key)
- * STEP 2: Validate password with bcrypt.compare (never in SQL)
- * Distinct errors: USER_NOT_FOUND | INVALID_PASSWORD | ACCOUNT_INACTIVE
- */
+export async function verifyEmail(data: { email: string; code: string }): Promise<AuthTokens> {
+  const email = normalizeEmail(data.email);
+  const code = data.code.trim();
+  const { prisma } = await import("../../infrastructure/database/index.js");
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      emailVerified: true,
+      emailVerificationToken: true,
+      emailVerificationExpiry: true,
+    },
+  });
+
+  if (!user) throw userNotFoundError("User not found");
+  if (user.emailVerified) throw validationError("Email already verified.");
+
+  const acceptAny = emailOtpAcceptAny();
+  if (acceptAny) {
+    if (!/^\d{6}$/.test(code)) {
+      throw validationError("Enter the 6-digit code.");
+    }
+  } else {
+    if (!user.emailVerificationToken || !user.emailVerificationExpiry || user.emailVerificationExpiry < new Date()) {
+      throw validationError("Invalid or expired verification code.");
+    }
+
+    const valid = await bcrypt.compare(code, user.emailVerificationToken);
+    if (!valid) throw validationError("Invalid verification code.");
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerified: true,
+      status: "ACTIVE",
+      emailVerificationToken: null,
+      emailVerificationExpiry: null,
+      emailOtpLastSentAt: null,
+    },
+  });
+
+  return generateTokens(user.id, user.email);
+}
+
+export async function resendEmailOtp(emailRaw: string): Promise<{ message: string }> {
+  const email = normalizeEmail(emailRaw);
+  assertHourlyOtpLimit(email);
+
+  const { prisma } = await import("../../infrastructure/database/index.js");
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      emailVerified: true,
+      status: true,
+      emailOtpLastSentAt: true,
+    },
+  });
+
+  if (!user) throw userNotFoundError("User not found");
+  if (user.emailVerified || user.status !== "PENDING_VERIFICATION") {
+    throw validationError("This account does not need email verification.");
+  }
+
+  const now = Date.now();
+  if (user.emailOtpLastSentAt) {
+    const waitMs = RESEND_COOLDOWN_MS - (now - user.emailOtpLastSentAt.getTime());
+    if (waitMs > 0) {
+      throw validationError(`Please wait ${Math.ceil(waitMs / 1000)}s before requesting another code.`);
+    }
+  }
+
+  const plainOtp = generateOtp();
+  const otpHash = await hashEmailOtp(plainOtp);
+  const sentAt = new Date();
+  const expiry = new Date(sentAt.getTime() + OTP_TTL_MS);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerificationToken: otpHash,
+      emailVerificationExpiry: expiry,
+      emailOtpLastSentAt: sentAt,
+    },
+  });
+
+  recordOtpSend(email);
+  await deliverRegistrationOtp(email, plainOtp);
+
+  return { message: "Verification code sent to your email." };
+}
+
 export async function login(
   data: LoginInput,
   meta?: { ip?: string; userAgent?: string }
 ): Promise<AuthTokens> {
   const email = normalizeEmail(data.email);
 
-  // STEP 1: Fetch user by email only - never query password in same step
   const user = await authRepo.findUserByEmail(email);
 
   if (!user) {
@@ -117,6 +292,17 @@ export async function login(
       userAgent: meta?.userAgent,
     });
     throw userNotFoundError("User not found");
+  }
+
+  if (user.status === "PENDING_VERIFICATION") {
+    logLoginAttempt({
+      email,
+      outcome: "EMAIL_NOT_VERIFIED",
+      userId: user.id,
+      ip: meta?.ip,
+      userAgent: meta?.userAgent,
+    });
+    throw authError("Please verify your email before signing in.");
   }
 
   if (user.status !== "ACTIVE") {
@@ -130,7 +316,6 @@ export async function login(
     throw accountInactiveError("Account is not active");
   }
 
-  // Pre-validation: account lockout (prevents brute-force before CPU-heavy bcrypt)
   if (user.lockedUntil && user.lockedUntil > new Date()) {
     logLoginAttempt({
       email,
@@ -142,7 +327,6 @@ export async function login(
     throw accountLockedError("Account temporarily locked due to too many failed attempts.");
   }
 
-  // STEP 2: Validate password - compare input with stored hash (bcrypt)
   const valid = await bcrypt.compare(data.password, user.passwordHash);
 
   if (!valid) {

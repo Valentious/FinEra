@@ -23,7 +23,6 @@ export const CURRENCY_TO_COUNTRY: Record<string, string> = {
   ZAR: "ZA",
   EUR: "EU",
   GBP: "GB",
-  USDT: "XX",
 };
 
 /** Currency → display label (ZiG = Zimbabwe Gold) */
@@ -33,7 +32,6 @@ export const CURRENCY_LABELS: Record<string, string> = {
   ZAR: "ZAR Account",
   EUR: "EUR Account",
   GBP: "GBP Account",
-  USDT: "USDT Account",
 };
 
 /** Custody type → provider display name */

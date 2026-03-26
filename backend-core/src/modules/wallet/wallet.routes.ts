@@ -31,7 +31,7 @@ import { validationError } from "../../middlewares/errorHandler.js";
 const router = Router();
 router.use(authMiddleware);
 
-const CURRENCIES = ["USD", "ZIG", "ZAR", "EUR", "GBP", "USDT"] as const;
+const CURRENCIES = ["USD", "ZIG", "ZAR", "EUR", "GBP"] as const;
 const currencyQuerySchema = z.object({
   currency: z.enum(CURRENCIES),
 });

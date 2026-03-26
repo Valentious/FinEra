@@ -37,8 +37,8 @@ const sizeConfig = {
 
 /**
  * FinEra INCLUSIVE FINANCIAL ECOSYSTEM Logo
- * Clean, corporate, fintech-grade design (Stripe/PayPal style)
- * Horizontal layout: icon (left) + text (right)
+ * Clean, corporate, fintech-grade design
+ * Vertical layout: logo above FinEra text
  */
 export const FinEraInclusiveCreditLogo = forwardRef<
   HTMLDivElement,
@@ -51,7 +51,7 @@ export const FinEraInclusiveCreditLogo = forwardRef<
     <div
       ref={ref}
       className={`
-        inline-flex items-center ${config.gap} ${config.padding}
+        flex flex-col items-center ${config.gap} ${config.padding}
         rounded-xl
         ${dark ? "bg-slate-800/50" : "bg-slate-100"}
         ${className}
@@ -69,7 +69,7 @@ export const FinEraInclusiveCreditLogo = forwardRef<
         />
         <p
           className={`
-            inclusive-text font-extrabold tracking-wide mt-0.5 mb-0
+            inclusive-text font-extrabold tracking-wide mt-2 mb-0
             ${config.subtitleSize}
             ${dark ? "text-slate-300" : "text-slate-600"}
           `}
@@ -78,12 +78,12 @@ export const FinEraInclusiveCreditLogo = forwardRef<
         </p>
         <p
           className={`
-            mt-0.5 font-medium
+            mt-1 font-medium
             ${config.subtitleSize}
             ${dark ? "text-slate-400" : "text-slate-500"}
           `}
         >
-          For Formal Institutions/Organisation
+          For Formal Institutions
         </p>
       </div>
     </div>

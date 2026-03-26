@@ -12,7 +12,8 @@ export type LoginAttemptOutcome =
   | "USER_NOT_FOUND"
   | "INVALID_PASSWORD"
   | "ACCOUNT_INACTIVE"
-  | "ACCOUNT_LOCKED";
+  | "ACCOUNT_LOCKED"
+  | "EMAIL_NOT_VERIFIED";
 
 export function logLoginAttempt(params: {
   email: string;

@@ -39,7 +39,6 @@ enum CurrencyCode {
   ZAR
   EUR
   GBP
-  USDT
 }
 
 // Dynamic dashboard config - each currency is an independent dashboard system
@@ -47,7 +46,7 @@ model CurrencyRegistry {
   id             String   @id @default(uuid())
   currencyCode   CurrencyCode @unique
   displayName    String
-  symbol         String   // $, Z$, R, USDT, etc.
+  symbol         String   // e.g. $, Z$, R, €, £
   status         String   @default("active")  // active | inactive
   custodyType    String   // bank | momo | blockchain
   dashboardConfig Json    @default("{}")  // UI rules: minAmount, maxAmount, feePercent, dailyLimit, features[]
@@ -220,6 +219,10 @@ model User {
   id                      String    @id @default(uuid())
   email                   String    @unique
   fullName                String
+  /// Sensitive PII (KYC / GDPR). Stored as calendar date; use DB/app encryption at rest in production.
+  dateOfBirth             DateTime? @db.Date
+  /// When true, DOB cannot be changed via self-service (support/admin only).
+  dateOfBirthLocked       Boolean   @default(false)
   accountType             AccountType
   accountTier             AccountTier @default(TIER_0)
   countryCode             String    // ISO 3166-1 alpha-2/3
@@ -229,8 +232,11 @@ model User {
   phoneNumber             String?   @unique
   phoneVerified           Boolean   @default(false)
   emailVerified           Boolean   @default(false)
+  /// Bcrypt hash of the current email OTP (never store plaintext).
   emailVerificationToken  String?
   emailVerificationExpiry DateTime?
+  /// Last time a registration/resend OTP email was sent (cooldown + abuse limits).
+  emailOtpLastSentAt      DateTime?
   deviceFingerprints      Json?     // Array of known device hashes
   status                  UserStatus @default(PENDING_VERIFICATION)
   statusReason            String?

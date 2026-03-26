@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { SplashScreen } from "@/app/components/SplashScreen";
 import { LoginRegister } from "@/app/components/LoginRegister";
 import { OTPVerification } from "@/app/components/OTPVerification";
@@ -114,6 +115,9 @@ const loadUserData = (email: string): UserData | null => {
 // ==================== END MOCK DATA HELPERS ====================
 
 export default function App() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const [currentScreen, setCurrentScreen] = useState<Screen>("splash");
   const [preSelectedAccountType, setPreSelectedAccountType] = useState<'student' | 'staff' | 'alumni' | null>(null);
   const [userData, setUserData] = useState<UserData>({
@@ -183,8 +187,8 @@ export default function App() {
   const resetToDefault = useAccountStore((s) => s.resetToDefault);
   const storeError = useAccountStore((s) => s.error);
 
-  const [fallbackCurrency, setFallbackCurrency] = useState<"USD" | "ZIG" | "ZAR" | "USDT">("USD");
-  const selectedCurrency = (activeWallet?.currency ?? fallbackCurrency) as "USD" | "ZIG" | "ZAR" | "USDT";
+  const [fallbackCurrency, setFallbackCurrency] = useState<"USD" | "ZIG" | "ZAR" | "EUR" | "GBP">("USD");
+  const selectedCurrency = (activeWallet?.currency ?? fallbackCurrency) as "USD" | "ZIG" | "ZAR" | "EUR" | "GBP";
   const [currencyTabs, setCurrencyTabs] = useState<CurrencyConfig[]>([]);
   const [walletForCurrency, setWalletForCurrency] = useState<{ savingsBalance: number; activeCredit: number; approvedCreditBalance: number; accountNumber: string } | null>(null);
   const [transactionsForCurrency, setTransactionsForCurrency] = useState<Transaction[]>([]);
@@ -200,6 +204,30 @@ export default function App() {
     const interval = setInterval(check, 30_000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("continue") === "onboarding") {
+      try {
+        const raw = sessionStorage.getItem("finera_post_verify");
+        if (raw) {
+          const parsed = JSON.parse(raw) as { user: UserData; nextScreen?: Screen };
+          sessionStorage.removeItem("finera_post_verify");
+          setUserData(parsed.user);
+          saveUserData(parsed.user);
+          localStorage.setItem("active_user_email", parsed.user.email);
+          setCurrentScreen(parsed.nextScreen ?? "verify");
+        }
+      } catch {
+        sessionStorage.removeItem("finera_post_verify");
+      }
+      setSearchParams({}, { replace: true });
+      return;
+    }
+    if (searchParams.get("resume") === "register") {
+      setCurrentScreen("loginRegister");
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Fetch wallets for Global Account Switcher when user enters main app
   useEffect(() => {
@@ -330,22 +358,16 @@ export default function App() {
 
   const handleRegister = async (data: any) => {
     const accountType = preSelectedAccountType || "student";
-    const limit = CREDIT_LIMITS[accountType].max;
     try {
-      const { user } = await apiService.register({
+      await apiService.register({
         ...data,
         accountType,
       });
-      const newUser = {
-        ...user,
-        availableCreditLimit: limit,
-        lastLogin: Date.now(),
-      };
-      setUserData(newUser);
-      saveUserData(newUser);
-      localStorage.setItem("active_user_email", data.email);
-      setCurrentScreen("otpVerification");
-      toast.success("Registration successful!");
+      const email = String(data.email || "")
+        .trim()
+        .toLowerCase();
+      navigate(`/verify-email?email=${encodeURIComponent(email)}`);
+      toast.success("Account created. Check your email for a verification code.");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Registration failed.";
       const isConnectionError =
@@ -748,7 +770,7 @@ export default function App() {
           <MakePayment
             countryCode={userData.countryId || "zw"}
             savingsBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
-            currencySymbol={{ USD: "$", ZIG: "Z$", ZAR: "R", USDT: "₮", EUR: "€", GBP: "£" }[selectedCurrency] ?? "$"}
+            currencySymbol={{ USD: "$", ZIG: "Z$", ZAR: "R", EUR: "€", GBP: "£" }[selectedCurrency] ?? "$"}
             onBack={() => setCurrentScreen("dashboard")}
             onSuccess={async (payment) => {
               try {

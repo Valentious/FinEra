@@ -10,7 +10,7 @@ import { Decimal } from "@prisma/client/runtime/library";
 import { validationError } from "../../middlewares/errorHandler.js";
 import { z } from "zod";
 
-const SUPPORTED_CURRENCIES = ["USD", "ZIG", "ZAR", "EUR", "GBP", "USDT"] as const;
+const SUPPORTED_CURRENCIES = ["USD", "ZIG", "ZAR", "EUR", "GBP"] as const;
 const MIN_AMOUNT = 0.01;
 const MAX_AMOUNT = 999_999_999.99;
 

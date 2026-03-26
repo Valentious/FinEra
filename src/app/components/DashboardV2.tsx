@@ -8,7 +8,6 @@ import {
   TrendingUp, 
   ArrowUpRight, 
   ArrowDownLeft, 
-  Calendar,
   Info,
   ShieldCheck,
   Zap,
@@ -20,13 +19,12 @@ import { PerformancePortfolioChart } from "@/app/components/PerformancePortfolio
 import { motion } from "motion/react";
 import { toast } from "sonner";
 
-export type CurrencyOption = 'USD' | 'ZIG' | 'ZAR' | 'EUR' | 'GBP' | 'USDT';
+export type CurrencyOption = 'USD' | 'ZIG' | 'ZAR' | 'EUR' | 'GBP';
 
 const DEFAULT_CURRENCY_SYMBOLS: Record<string, string> = {
   USD: '$',
   ZIG: 'Z$',
   ZAR: 'R',
-  USDT: '₮',
   EUR: '€',
   GBP: '£',
 };
@@ -230,12 +228,8 @@ export function DashboardV2({
       {/* 1️⃣ Greeting Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900">Hello, {userName} 👋</h1>
+          <h1 className="text-3xl font-black text-slate-900">Hello, {userName}</h1>
           <p className="text-slate-500 font-medium text-sm">Empowering your financial literacy journey.</p>
-        </div>
-        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
-          <Calendar className="w-4 h-4 text-emerald-600" />
-          <span className="text-sm font-bold text-slate-700">Wednesday, Mar 4, 2026</span>
         </div>
       </div>
 

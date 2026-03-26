@@ -33,11 +33,11 @@ npm run dev:docker
 
 | Document | Purpose |
 | --- | --- |
+| [docs/PROJECT_STATUS.md](./docs/PROJECT_STATUS.md) | **Current system state:** what was removed, auth/onboarding flow, gaps, dev flags (OTP bypass, mock API) |
 | [SETUP_GUIDE.md](./SETUP_GUIDE.md) | Environment variables, DB, ports, manual vs Docker |
 | [CHECKLIST.md](./CHECKLIST.md) | Backend health, API smoke tests, integration checks |
 | [BACKEND_API_SPECIFICATION.md](./BACKEND_API_SPECIFICATION.md) | API contract |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | System overview |
-| [docs/PROJECT_STATUS.md](./docs/PROJECT_STATUS.md) | Current product status and rollout phases |
 
 ## Project layout
 
@@ -51,7 +51,7 @@ npm run dev:docker
 
 ## Product status (summary)
 
-See **[docs/PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)** for the live feature list, deposit/withdrawal rails exposed in the UI, and verification steps.
+See **[docs/PROJECT_STATUS.md](./docs/PROJECT_STATUS.md)** for removals (e.g. USDT, old email-OTP-before-register), the current **register → verify-email → login** flow, and known gaps vs production.
 
 ## Production build
 

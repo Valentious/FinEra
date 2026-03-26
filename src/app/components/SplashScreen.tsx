@@ -39,7 +39,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="text-slate-300 text-lg font-medium mb-8"
         >
-          Your Financial Operating System
+          Your Financial Lifeline
         </motion.p>
 
         <motion.p

@@ -3,8 +3,11 @@
  * Production-ready validation for KYC, security, and data integrity.
  */
 
+import { validatePasswordStrength } from "./passwordPolicy";
+
 export const VALIDATION = {
-  MIN_AGE: 16,
+  /** KYC / FinEra policy: minimum age for registration and profile */
+  MIN_AGE: 18,
   MAX_AGE: 120,
   MIN_PASSWORD_LENGTH: 8,
   MAX_NAME_LENGTH: 100,
@@ -12,10 +15,10 @@ export const VALIDATION = {
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
 } as const;
 
-/** Validate age from ISO date string (YYYY-MM-DD) */
+/** Validate age from ISO date string (YYYY-MM-DD). Uses noon anchor to avoid timezone date-shift. */
 export function validateAge(dob: string, minAge = VALIDATION.MIN_AGE): boolean {
   if (!dob) return false;
-  const birth = new Date(dob);
+  const birth = new Date(`${dob.trim()}T12:00:00`);
   const today = new Date();
   let age = today.getFullYear() - birth.getFullYear();
   const m = today.getMonth() - birth.getMonth();
@@ -23,12 +26,9 @@ export function validateAge(dob: string, minAge = VALIDATION.MIN_AGE): boolean {
   return age >= minAge;
 }
 
-/** Validate password strength (placeholder for backend rules) */
+/** Validate password strength (aligned with backend + passwordPolicy) */
 export function validatePassword(password: string): { valid: boolean; message?: string } {
-  if (password.length < VALIDATION.MIN_PASSWORD_LENGTH) {
-    return { valid: false, message: `Password must be at least ${VALIDATION.MIN_PASSWORD_LENGTH} characters` };
-  }
-  return { valid: true };
+  return validatePasswordStrength(password);
 }
 
 /** Validate email format */

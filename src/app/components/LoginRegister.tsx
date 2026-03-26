@@ -2,13 +2,15 @@ import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
+import { DatePicker } from "@/app/components/ui/date-picker";
 import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { PhoneInputField } from "@/app/components/PhoneInputField";
 import { motion } from "motion/react";
 import { LogIn, UserPlus, Mail, Lock, User, ArrowLeft, MapPin, Building2 } from "lucide-react";
-import { validateInstitutionalEmail, validateStudentEmail } from "@/lib/validation";
+import { validateInstitutionalEmail, validateStudentEmail, validateAge, validatePassword } from "@/lib/validation";
+import { PASSWORD_POLICY_HINT } from "@/lib/passwordPolicy";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 import { FinEraLogoText } from "@/app/components/FinEraLogoText";
 import { getRegistrationData } from "@/services/api";
@@ -37,6 +39,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
   });
   const [dobError, setDobError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [countries, setCountries] = useState<{ id: string; name: string; code: string }[]>([]);
   const [cities, setCities] = useState<{ id: string; name: string; countryId: string }[]>([]);
   const [institutions, setInstitutions] = useState<{ id: string; name: string; type: string; cityId: string }[]>([]);
@@ -90,36 +93,16 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
   const passwordsMatch = registerData.password === registerData.confirmPassword;
   const showPasswordMismatch = registerData.confirmPassword.length > 0 && !passwordsMatch;
 
-  const getDobMinMax = () => {
-    const today = new Date();
-    const maxD = new Date(today);
-    maxD.setFullYear(maxD.getFullYear() - 16);
-    const minD = new Date(today);
-    minD.setFullYear(minD.getFullYear() - 120);
-    const fmt = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return { min: fmt(minD), max: fmt(maxD) };
-  };
-
-  const validateAge = (dob: string): boolean => {
-    if (!dob) return false;
-    const birth = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    return age >= 16;
-  };
-
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordError("");
     if (registerData.password !== registerData.confirmPassword) return;
     if (!registerData.dateOfBirth) {
       setDobError("Date of birth is required");
       return;
     }
     if (!validateAge(registerData.dateOfBirth)) {
-      setDobError("You must be at least 16 years old to register");
+      setDobError("You must be at least 18 years old to register");
       return;
     }
     if (!registerData.countryId) {
@@ -136,14 +119,21 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
     }
     setDobError("");
     setEmailError("");
-    const isStudent = accountType === 'student';
+    const isStudent = accountType === "student";
     const isValidEmail = isStudent
       ? validateStudentEmail(registerData.email)
       : validateInstitutionalEmail(registerData.email);
     if (!isValidEmail) {
-      setEmailError(isStudent
-        ? "Please use a valid University/College student email (e.g. @university.edu, .ac.zw)"
-        : "Please use a valid Institutional email (e.g. .edu, .ac.*, .gov, organisation domains)");
+      setEmailError(
+        isStudent
+          ? "Please use a valid University/College student email (e.g. @university.edu, .ac.zw)"
+          : "Please use a valid Institutional email (e.g. .edu, .ac.*, .gov, organisation domains)"
+      );
+      return;
+    }
+    const pwCheck = validatePassword(registerData.password);
+    if (!pwCheck.valid) {
+      setPasswordError(pwCheck.message || "");
       return;
     }
     const country = countries.find((c) => c.id === registerData.countryId);
@@ -191,11 +181,11 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
         )}
 
         <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center gap-4">
             <FinEraShieldIcon size={48} className="rounded-xl" />
             <div className="hero-header flex flex-col items-center justify-center text-center">
               <FinEraLogoText variant="light" size="md" />
-              <p className="inclusive-text text-xs font-semibold text-slate-600 tracking-[0.2em] uppercase mt-1 mb-0">INCLUSIVE FINANCIAL ECOSYSTEM</p>
+              <p className="inclusive-text text-xs font-semibold text-slate-600 tracking-[0.2em] uppercase mt-2 mb-0">INCLUSIVE FINANCIAL ECOSYSTEM</p>
             </div>
           </div>
         </div>
@@ -291,24 +281,17 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="reg-dob">Date of Birth</Label>
-                      <Input
+                      <DatePicker
                         id="reg-dob"
-                        name="dateOfBirth"
-                        type="date"
                         value={registerData.dateOfBirth}
-                        onChange={(e) => {
-                          setRegisterData({ ...registerData, dateOfBirth: e.target.value });
+                        onChange={(v) => {
+                          setRegisterData({ ...registerData, dateOfBirth: v });
                           setDobError("");
                         }}
-                        required
-                        {...getDobMinMax()}
-                        className={`h-12 rounded-lg cursor-pointer ${dobError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                        aria-invalid={!!dobError}
+                        minAge={18}
+                        maxAge={100}
+                        error={dobError}
                       />
-                      {dobError && (
-                        <p className="text-sm text-red-600 font-medium">{dobError}</p>
-                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="reg-phone">Phone Number</Label>
@@ -388,38 +371,48 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <Label htmlFor="reg-email">{emailLabel}</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input 
-                          id="reg-email" 
-                          type="email" 
-                          placeholder={emailPlaceholder} 
+                        <Input
+                          id="reg-email"
+                          type="email"
+                          placeholder={emailPlaceholder}
                           className={`pl-10 h-12 rounded-lg ${emailError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                           value={registerData.email}
                           onChange={(e) => {
-                            setRegisterData({ ...registerData, email: e.target.value });
+                            const v = e.target.value;
+                            setRegisterData({ ...registerData, email: v });
                             setEmailError("");
                           }}
-                          required 
+                          required
                         />
                       </div>
                       {emailError && <p className="text-sm text-red-600 font-medium">{emailError}</p>}
+                      <p className="text-xs text-slate-500">
+                        After you create your account, we will send a 6-digit code to this address on the next step.
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="reg-password">Create Password</Label>
+                      <p className="text-xs text-slate-500">{PASSWORD_POLICY_HINT}</p>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input 
-                          id="reg-password" 
-                          type="password" 
-                          className="pl-10 h-12 rounded-lg"
+                        <Input
+                          id="reg-password"
+                          type="password"
+                          className={`pl-10 h-12 rounded-lg ${passwordError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                           value={registerData.password}
-                          onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                          required 
+                          onChange={(e) => {
+                            setRegisterData({ ...registerData, password: e.target.value });
+                            setPasswordError("");
+                          }}
+                          required
+                          autoComplete="new-password"
                         />
                       </div>
+                      {passwordError && <p className="text-sm text-red-600 font-medium">{passwordError}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="reg-confirm-password">Confirm Password</Label>

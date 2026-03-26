@@ -57,6 +57,8 @@ type MockUserData = UserData & {
   walletBalances?: Record<string, number>;
   /** Password hash for mock auth - never returned to caller */
   _passwordHash?: string;
+  /** Until email OTP is verified (mirrors backend PENDING_VERIFICATION) */
+  _pendingVerification?: boolean;
 };
 
 /** Hash password for mock storage (browser-safe, mirrors backend intent) */
@@ -79,7 +81,8 @@ function normalizeEmail(email: string): string {
 
 /** Strip internal fields before exposing user (never return _passwordHash) */
 function toPublicUser(u: MockUserData): UserData {
-  const { _passwordHash, ...rest } = u;
+  const { _passwordHash, _pendingVerification, ...rest } = u;
+  void _pendingVerification;
   return rest as UserData;
 }
 
@@ -94,10 +97,19 @@ function loadUserData(email: string): MockUserData | null {
       USD: parsed.savingsBalance ?? 0,
       ZIG: 0,
       ZAR: 0,
-      USDT: 0,
     };
     saveUserData(parsed);
   }
+  let migrated = false;
+  if (parsed.dateOfBirth === undefined) {
+    parsed.dateOfBirth = '';
+    migrated = true;
+  }
+  if (parsed.dateOfBirthLocked === undefined) {
+    parsed.dateOfBirthLocked = false;
+    migrated = true;
+  }
+  if (migrated) saveUserData(parsed);
   return parsed;
 }
 
@@ -108,7 +120,7 @@ function getWalletBalance(user: MockUserData, currency: string): number {
 
 function setWalletBalance(user: MockUserData, currency: string, amount: number): void {
   const c = (currency || 'USD').toUpperCase();
-  if (!user.walletBalances) user.walletBalances = { USD: 0, ZIG: 0, ZAR: 0, USDT: 0 };
+  if (!user.walletBalances) user.walletBalances = { USD: 0, ZIG: 0, ZAR: 0 };
   user.walletBalances[c] = amount;
 }
 
@@ -116,29 +128,87 @@ function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/** Pending 6-digit codes (mock “email send”) */
+const EMAIL_VERIFY_KEY = (e: string) => `email_verify_${normalizeEmail(e)}`;
+/** Send a 6-digit code (stored locally; in production the backend emails it). */
+export async function mockSendEmailVerificationCode(email: string): Promise<{ success: boolean; message: string }> {
+  await delay(500);
+  const normalized = normalizeEmail(email);
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = Date.now() + 10 * 60 * 1000;
+  localStorage.setItem(EMAIL_VERIFY_KEY(normalized), JSON.stringify({ code, expiresAt }));
+  if (typeof import.meta !== "undefined" && (import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
+    console.info(`[FinEra mock] Email verification code for ${normalized}: ${code}`);
+  }
+  return { success: true, message: "Verification code sent to your email." };
+}
+
+/** POST /auth/verify-email (mock): verify OTP and issue session. Accepts any 6-digit code for local progress. */
+export async function mockVerifyRegistrationEmail(
+  email: string,
+  code: string
+): Promise<{ user: UserData; token: string; message: string }> {
+  await delay(500);
+  const normalized = normalizeEmail(email);
+  const trimmed = code.trim();
+  if (!/^\d{6}$/.test(trimmed)) {
+    throw new Error("Enter a 6-digit code.");
+  }
+
+  const user = loadUserData(normalized) as MockUserData | null;
+  if (!user) {
+    throw new Error("User not found. Register again.");
+  }
+  if (user._pendingVerification === false) {
+    throw new Error("Email already verified.");
+  }
+
+  localStorage.removeItem(EMAIL_VERIFY_KEY(normalized));
+  user._pendingVerification = false;
+  saveUserData(user);
+
+  const token = "mock_jwt_token_" + Date.now();
+  localStorage.setItem("auth_token", token);
+  localStorage.setItem("accessToken", token);
+  localStorage.setItem("refreshToken", "mock_refresh_" + Date.now());
+  localStorage.setItem("active_user_email", normalized);
+
+  return {
+    user: toPublicUser(user),
+    token,
+    message: "Email verified.",
+  };
+}
+
 // ==================== MOCK API IMPLEMENTATIONS ====================
 
 export async function mockRegister(data: RegisterRequest): Promise<{ user: UserData; message: string }> {
-  await delay(800); // Simulate network delay
+  await delay(800);
   const email = normalizeEmail(data.email);
 
-  // Check if user already exists
   const existing = loadUserData(email);
   if (existing) {
     throw new Error("User already exists");
   }
 
   const passwordHash = await hashPassword(data.password);
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = Date.now() + 10 * 60 * 1000;
+  localStorage.setItem(EMAIL_VERIFY_KEY(email), JSON.stringify({ code, expiresAt }));
+  if (typeof import.meta !== "undefined" && (import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
+    console.info(`[FinEra mock] Registration OTP for ${email}: ${code}`);
+  }
 
   const user: MockUserData = {
     memberId: generateMemberId(),
     fullName: data.fullName,
-    title: '',
+    title: "",
     dateOfBirth: data.dateOfBirth,
+    dateOfBirthLocked: false,
     phoneNumber: data.phoneNumber,
     accountNumber: generateAccountNumber(),
-    nationalIdNumber: '',
-    studentStaffId: '',
+    nationalIdNumber: "",
+    studentStaffId: "",
     salaryRange: null,
     email,
     mobile: data.phoneNumber,
@@ -149,21 +219,21 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     availableCreditLimit: calculateCreditLimit(data.accountType),
     loanPrincipal: 0,
     transactions: [],
-    lastLogin: Date.now(),
     disciplineScore: 75,
     creditScore: 82,
     loyaltyProgress: 0,
     missedPayments: 0,
     onTimePayments: 0,
-    walletBalances: { USD: 0, ZIG: 0, ZAR: 0, USDT: 0 },
+    walletBalances: { USD: 0, ZIG: 0, ZAR: 0 },
     _passwordHash: passwordHash,
+    _pendingVerification: true,
   };
 
   saveUserData(user);
 
   return {
     user: toPublicUser(user),
-    message: "Registration successful. Please verify your OTP.",
+    message: "Check your email for a verification code (mock: see browser console).",
   };
 }
 
@@ -190,6 +260,9 @@ export async function mockLogin(data: LoginRequest): Promise<{ user: UserData; t
       throw new Error("Incorrect password");
     }
   }
+  if ((user as MockUserData)._pendingVerification) {
+    throw new Error("Please verify your email before signing in.");
+  }
   // Legacy users without _passwordHash: allow login (migration path)
 
   const updatedUser = { ...user, lastLogin: Date.now() };
@@ -202,17 +275,8 @@ export async function mockLogin(data: LoginRequest): Promise<{ user: UserData; t
 }
 
 export async function mockVerifyOTP(data: OTPVerificationRequest): Promise<{ success: boolean; message: string }> {
-  await delay(400);
-  
-  // Mock: Accept any 6-digit OTP
-  if (data.otp.length === 6) {
-    return {
-      success: true,
-      message: 'OTP verified successfully',
-    };
-  }
-  
-  throw new Error('Invalid OTP');
+  await mockVerifyRegistrationEmail(data.email, data.otp);
+  return { success: true, message: "OTP verified successfully" };
 }
 
 export async function mockGetUserProfile(currency?: string): Promise<UserData> {
@@ -237,7 +301,7 @@ export async function mockGetUserProfile(currency?: string): Promise<UserData> {
   return { ...user, savingsBalance: getWalletBalance(user, 'USD') };
 }
 
-export async function mockUpdateUserProfile(data: Partial<UserData>): Promise<UserData> {
+export async function mockUpdateUserProfile(data: Partial<UserData>): Promise<Partial<UserData>> {
   await delay(500);
   
   const email = localStorage.getItem('active_user_email');
@@ -390,11 +454,11 @@ export async function mockGetWalletsByCurrency(currency?: string): Promise<Walle
   const fe = (user as UserData).finEraAccountNumbers;
   const baseAccount = user.accountNumber || '';
   const accounts: Record<string, string> = fe ? { usd: fe.usd, zig: fe.zig, zar: fe.zar } : { usd: baseAccount, zig: baseAccount, zar: baseAccount };
-  // Scalable: return all supported currencies when no filter (USD, ZiG, ZAR, USDT, etc.)
-  const currencies = currency ? [currency.toUpperCase()] : ['USD', 'ZIG', 'ZAR', 'USDT'];
+  // Scalable: return all supported currencies when no filter (USD, ZiG, ZAR, etc.)
+  const currencies = currency ? [currency.toUpperCase()] : ['USD', 'ZIG', 'ZAR'];
   return currencies.map((c) => {
     const bal = getWalletBalance(user, c);
-    const key = c === 'ZIG' ? 'zig' : c === 'ZAR' ? 'zar' : c === 'USDT' ? 'usd' : 'usd';
+    const key = c === 'ZIG' ? 'zig' : c === 'ZAR' ? 'zar' : 'usd';
     return {
       id: `finera-${c.toLowerCase()}`,
       currencyCode: c,

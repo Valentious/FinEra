@@ -5,15 +5,14 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { 
   ArrowLeft, 
-  CreditCard, 
-  Globe, 
   UserCircle, 
-  Building2, 
   CheckCircle2,
-  Info,
   Smartphone,
-  Zap,
-  Loader2
+  Loader2,
+  Banknote,
+  Copy,
+  Check,
+  Clock
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -28,11 +27,8 @@ interface DepositFlowProps {
 
 const METHODS = [
   { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
-  { id: "innbucks", label: "Innbucks", icon: <Zap className="w-5 h-5" />, color: "bg-orange-50 text-orange-600" },
-  { id: "onemoney", label: "One Money", icon: <Smartphone className="w-5 h-5" />, color: "bg-red-50 text-red-600" },
+  { id: "atm", label: "ATM Cardless Deposit", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
   { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
-  { id: "institution", label: "Official Partner Banks", icon: <Building2 className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
-  { id: "mastercard", label: "Mastercard", icon: <CreditCard className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
 ];
 
 const PURPOSES = [
@@ -42,15 +38,20 @@ const PURPOSES = [
   { id: "other", label: "Other" },
 ];
 
-const MOBILE_MONEY_METHODS = ["ecocash", "innbucks", "onemoney"];
+const MOBILE_MONEY_METHODS = ["ecocash"];
 
 export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: DepositFlowProps) {
-  const [step, setStep] = useState<"details" | "mobileMoney" | "agent" | "processing" | "success">("details");
+  const [step, setStep] = useState<"details" | "mobileMoney" | "agent" | "atm-code" | "processing" | "success">("details");
   const [amount, setAmount] = useState<string>("");
   const [method, setMethod] = useState<string>("");
   const [purpose, setPurpose] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [atmCode, setAtmCode] = useState("");
+  const [atmReference, setAtmReference] = useState("");
+  const [atmExpiry, setAtmExpiry] = useState<Date | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [refCopied, setRefCopied] = useState(false);
 
   const isMobileMoney = MOBILE_MONEY_METHODS.includes(method);
 
@@ -74,6 +75,8 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
 
     if (method === 'agent') {
       setStep("agent");
+    } else if (method === 'atm') {
+      generateATMDepositCode();
     } else if (isMobileMoney) {
       setStep("mobileMoney");
     } else {
@@ -111,6 +114,35 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
       }
     };
     setTimeout(run, 2000);
+  };
+
+  const generateATMDepositCode = () => {
+    toast.success("OTP sent to your registered mobile number");
+    setTimeout(() => {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      setAtmCode(code);
+      setAtmReference(`DEP${Date.now().toString().slice(-8)}`);
+      setAtmExpiry(new Date(Date.now() + 30 * 60 * 1000));
+      setStep("atm-code");
+      toast.success("ATM deposit code generated successfully");
+    }, 1500);
+  };
+
+  const copyToClipboard = (text: string, type: 'code' | 'ref') => {
+    navigator.clipboard.writeText(text);
+    if (type === 'code') setCodeCopied(true);
+    else setRefCopied(true);
+    setTimeout(() => (type === 'code' ? setCodeCopied(false) : setRefCopied(false)), 2000);
+    toast.success("Copied to clipboard");
+  };
+
+  const completeATMDeposit = async () => {
+    try {
+      await Promise.resolve(onConfirm(parseFloat(amount), "atm", purpose));
+      setStep("success");
+    } catch {
+      setStep("atm-code");
+    }
   };
 
   return (
@@ -254,6 +286,58 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
               }}
               onCancel={() => setStep("details")}
             />
+          </motion.div>
+        )}
+
+        {step === "atm-code" && (
+          <motion.div
+            key="atm-code"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => setStep("details")} className="rounded-full">
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <h2 className="text-2xl font-black text-slate-900">ATM Deposit Code</h2>
+            </div>
+            <p className="text-slate-600 text-sm">
+              Use this code at any supported ATM to complete your deposit of ${parseFloat(amount).toLocaleString()}.
+            </p>
+            <div className="p-6 bg-white rounded-3xl shadow-sm border border-slate-100 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Banknote className="w-5 h-5 text-amber-600" />
+                  <p className="text-sm font-bold text-slate-500">ATM Deposit Code</p>
+                </div>
+                <button onClick={() => copyToClipboard(atmCode, 'code')} className="flex items-center gap-2">
+                  <Copy className="w-5 h-5 text-slate-500 cursor-pointer" />
+                  {codeCopied && <Check className="w-5 h-5 text-green-600" />}
+                </button>
+              </div>
+              <p className="text-2xl font-black text-slate-900">{atmCode}</p>
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-slate-500" />
+                <p className="text-sm font-bold text-slate-500">Expires in: {atmExpiry ? `${Math.ceil((atmExpiry.getTime() - Date.now()) / 60000)} mins` : 'N/A'}</p>
+              </div>
+              <div className="pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-bold text-slate-500">Reference</p>
+                  <button onClick={() => copyToClipboard(atmReference, 'ref')} className="flex items-center gap-1">
+                    {refCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
+                  </button>
+                </div>
+                <p className="text-lg font-black text-slate-900">{atmReference}</p>
+              </div>
+            </div>
+            <Button
+              onClick={completeATMDeposit}
+              className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-bold"
+            >
+              I've Completed My Deposit
+            </Button>
           </motion.div>
         )}
 

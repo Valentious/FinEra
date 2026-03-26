@@ -46,7 +46,7 @@ export async function fetchWalletsForStore(): Promise<Wallet[]> {
     })
   );
   if (fromApi.length > 0) return fromApi;
-  // Scalable fallback: use getCurrencies so USD, ZiG, ZAR, USDT, etc. all appear
+  // Scalable fallback: use getCurrencies so USD, ZiG, ZAR, etc. all appear
   const currencies = await apiService.getCurrencies?.().catch(() => []) ?? [];
   return buildDefaultWallets(currencies);
 }

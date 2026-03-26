@@ -1,9 +1,15 @@
-import { useState } from "react";
+"use client";
+
+import { useMemo, useState } from "react";
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { PhoneInputField } from "@/app/components/PhoneInputField";
+import { DateOfBirthField } from "@/app/components/ui/date-of-birth-field";
+import { DOB, dobErrorMessage, validateDobIso } from "@/lib/dob";
+import { validatePassword } from "@/lib/validation";
+import { PASSWORD_POLICY_HINT } from "@/lib/passwordPolicy";
 
 interface CreateAccountProps {
   onContinue: (data: {
@@ -24,47 +30,44 @@ export function CreateAccount({ onContinue }: CreateAccountProps) {
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [dobError, setDobError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
-  const getDobMinMax = () => {
-    const today = new Date();
-    const maxD = new Date(today);
-    maxD.setFullYear(maxD.getFullYear() - 16);
-    const minD = new Date(today);
-    minD.setFullYear(minD.getFullYear() - 120);
-    const fmt = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return { min: fmt(minD), max: fmt(maxD) };
-  };
-
-  const validateAge = (dob: string): boolean => {
-    if (!dob) return false;
-    const birth = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    return age >= 16;
-  };
+  const localeMode = useMemo((): "en-GB" | "en-US" => {
+    if (typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("en-us")) {
+      return "en-US";
+    }
+    return "en-GB";
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!dateOfBirth) {
-      setDobError("Date of birth is required");
-      return;
-    }
-    if (!validateAge(dateOfBirth)) {
-      setDobError("You must be at least 16 years old to register");
+    const dobCheck = validateDobIso(dateOfBirth, DOB.MIN_AGE_YEARS, DOB.MAX_AGE_YEARS);
+    if (!dobCheck.ok) {
+      setDobError(dobErrorMessage(dobCheck.error));
       return;
     }
     setDobError("");
-    onContinue({ fullName, dateOfBirth, idNumber, email, mobile, password });
+    const pw = validatePassword(password);
+    if (!pw.valid) {
+      setPasswordError(pw.message || "");
+      return;
+    }
+    setPasswordError("");
+    onContinue({
+      fullName,
+      dateOfBirth: dobCheck.iso,
+      idNumber,
+      email,
+      mobile,
+      password,
+    });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <Card className="max-w-md w-full p-8">
         <h1 className="text-3xl text-center mb-8">Create Your Account</h1>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name</Label>
@@ -77,26 +80,18 @@ export function CreateAccount({ onContinue }: CreateAccountProps) {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="dateOfBirth">Date of Birth</Label>
-            <Input
-              id="dateOfBirth"
-              name="dateOfBirth"
-              type="date"
-              value={dateOfBirth}
-              onChange={(e) => {
-                setDateOfBirth(e.target.value);
-                setDobError("");
-              }}
-              required
-              {...getDobMinMax()}
-              className={`h-12 rounded-lg cursor-pointer ${dobError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-              aria-invalid={!!dobError}
-            />
-            {dobError && (
-              <p className="text-sm text-red-600 font-medium">{dobError}</p>
-            )}
-          </div>
+          <DateOfBirthField
+            id="create-account-dob"
+            value={dateOfBirth}
+            onChange={(iso) => {
+              setDateOfBirth(iso);
+              setDobError("");
+            }}
+            error={dobError}
+            localeMode={localeMode}
+            minAge={DOB.MIN_AGE_YEARS}
+            maxAge={DOB.MAX_AGE_YEARS}
+          />
 
           <div className="space-y-2">
             <Label htmlFor="idNumber">ID Number</Label>
@@ -133,13 +128,20 @@ export function CreateAccount({ onContinue }: CreateAccountProps) {
 
           <div className="space-y-2">
             <Label htmlFor="password">Create Password</Label>
+            <p className="text-xs text-slate-500">{PASSWORD_POLICY_HINT}</p>
             <Input
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordError("");
+              }}
+              className={passwordError ? "border-red-500" : ""}
               required
+              autoComplete="new-password"
             />
+            {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
           </div>
 
           <Button type="submit" className="w-full" size="lg">

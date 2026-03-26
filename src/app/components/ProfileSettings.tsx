@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -42,6 +42,9 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
+import { DateOfBirthField } from "@/app/components/ui/date-of-birth-field";
+import { validateDobIso, dobErrorMessage } from "@/lib/dob";
+import { apiService } from "@/services/index";
 
 interface ProfileSettingsProps {
   userData: any;
@@ -62,8 +65,46 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [language, setLanguage] = useState('en');
 
-  const handleSaveProfile = () => {
-    toast.success("Profile updated successfully");
+  const [profileTitle, setProfileTitle] = useState(userData.title || "Mr");
+  const [profileFullName, setProfileFullName] = useState(userData.fullName || "");
+  const [profileEmail, setProfileEmail] = useState(userData.email || "");
+  const [profilePhone, setProfilePhone] = useState(userData.phoneNumber || userData.mobile || "");
+  const [profileDob, setProfileDob] = useState(userData.dateOfBirth || "");
+  const [dobError, setDobError] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  useEffect(() => {
+    setProfileTitle(userData.title || "Mr");
+    setProfileFullName(userData.fullName || "");
+    setProfileEmail(userData.email || "");
+    setProfilePhone(userData.phoneNumber || userData.mobile || "");
+    setProfileDob(userData.dateOfBirth || "");
+    setDobError("");
+  }, [userData.memberId, userData.email, userData.dateOfBirth, userData.phoneNumber, userData.fullName]);
+
+  const handleSaveProfile = async () => {
+    setDobError("");
+    const dobCheck = validateDobIso(profileDob);
+    if (!dobCheck.ok) {
+      setDobError(dobErrorMessage(dobCheck.error));
+      toast.error(dobErrorMessage(dobCheck.error));
+      return;
+    }
+    setSavingProfile(true);
+    try {
+      const patch = await apiService.updateUserProfile({
+        fullName: profileFullName.trim(),
+        phoneNumber: profilePhone.trim(),
+        dateOfBirth: dobCheck.iso,
+      });
+      onUpdate({ ...userData, ...patch, title: profileTitle });
+      toast.success("Profile updated successfully");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Update failed";
+      toast.error(msg);
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const handleCloseAccount = () => {
@@ -216,7 +257,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                       </button>
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900">{userData.fullName}</p>
+                      <p className="font-bold text-slate-900">{profileFullName || userData.fullName}</p>
                       <p className="text-xs text-slate-500 uppercase tracking-wider">{userData.accountType} Member</p>
                       <p className="text-xs text-slate-400 mt-1">Acc: {userData.finEraAccountNumbers?.usd ?? userData.accountNumber}</p>
                     </div>
@@ -226,19 +267,47 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs font-bold text-slate-600">Title</Label>
-                      <Input defaultValue={userData.title || "Mr"} className="h-11 rounded-xl" />
+                      <Input
+                        value={profileTitle}
+                        onChange={(e) => setProfileTitle(e.target.value)}
+                        className="h-11 rounded-xl"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-bold text-slate-600">Full Name</Label>
-                      <Input defaultValue={userData.fullName} className="h-11 rounded-xl" />
+                      <Input
+                        value={profileFullName}
+                        onChange={(e) => setProfileFullName(e.target.value)}
+                        className="h-11 rounded-xl"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-bold text-slate-600">Email Address</Label>
-                      <Input defaultValue={userData.email} type="email" className="h-11 rounded-xl" />
+                      <Input value={profileEmail} readOnly disabled className="h-11 rounded-xl bg-slate-50 text-slate-600" />
+                      <p className="text-[10px] text-slate-500">Email changes require support for security.</p>
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-bold text-slate-600">Phone Number</Label>
-                      <Input defaultValue={userData.phoneNumber} className="h-11 rounded-xl" />
+                      <Input
+                        value={profilePhone}
+                        onChange={(e) => setProfilePhone(e.target.value)}
+                        className="h-11 rounded-xl"
+                        inputMode="tel"
+                        autoComplete="tel"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <DateOfBirthField
+                        id="profile-dob"
+                        value={profileDob}
+                        onChange={(iso) => {
+                          setProfileDob(iso);
+                          setDobError("");
+                        }}
+                        locked={userData.dateOfBirthLocked === true}
+                        error={dobError}
+                        localeMode={language.startsWith("en-US") ? "en-US" : "en-GB"}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-bold text-slate-600">National ID</Label>
@@ -259,8 +328,12 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   </div>
 
                   <div className="pt-4 border-t border-slate-50 flex justify-end">
-                    <Button onClick={handleSaveProfile} className="bg-emerald-600 hover:bg-emerald-700 rounded-xl px-8 font-bold">
-                      Save Changes
+                    <Button
+                      onClick={handleSaveProfile}
+                      disabled={savingProfile}
+                      className="bg-emerald-600 hover:bg-emerald-700 rounded-xl px-8 font-bold"
+                    >
+                      {savingProfile ? "Saving…" : "Save Changes"}
                     </Button>
                   </div>
                 </CardContent>

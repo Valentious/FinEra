@@ -10,7 +10,7 @@
   width: 100% !important;
 }
 
-/* FinEra hero header - mathematically centered alignment */
+/* FinEra hero header - logo above FinEra, vertically stacked, centered */
 .hero-header {
   display: flex;
   flex-direction: column;

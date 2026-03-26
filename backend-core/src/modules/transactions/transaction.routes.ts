@@ -23,7 +23,7 @@ import { validationError } from "../../middlewares/errorHandler.js";
 const router = Router();
 router.use(authMiddleware);
 
-const CURRENCIES = ["USD", "ZIG", "ZAR", "EUR", "GBP", "USDT"] as const;
+const CURRENCIES = ["USD", "ZIG", "ZAR", "EUR", "GBP"] as const;
 const transactionsQuerySchema = z.object({
   page: z.coerce.number().min(1).optional().default(1),
   limit: z.coerce.number().min(1).max(50).optional().default(20),

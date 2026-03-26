@@ -55,7 +55,10 @@ export interface UserData {
   memberId: string;
   fullName: string;
   title?: string;
-  dateOfBirth?: string; // ISO format YYYY-MM-DD (KYC-ready)
+  /** ISO 8601 calendar date YYYY-MM-DD — sensitive PII */
+  dateOfBirth?: string;
+  /** When true, DOB cannot be changed in profile (support/admin only). */
+  dateOfBirthLocked?: boolean;
   phoneNumber: string;
   accountNumber: string;
   nationalIdNumber: string;
@@ -109,7 +112,7 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   fullName: string;
-  dateOfBirth: string; // ISO format YYYY-MM-DD, validated age >= 16
+  dateOfBirth: string; // ISO YYYY-MM-DD, min age 18
   phoneNumber: string;
   email: string;
   password: string;
@@ -230,6 +233,8 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
       country: data.country || 'ZW',
       city: data.city || '',
       institution: data.institution || '',
+      dateOfBirth: data.dateOfBirth,
+      phoneNumber: data.phoneNumber,
     }),
   });
   return {
@@ -257,7 +262,36 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
       missedPayments: 0,
       onTimePayments: 0,
     },
-    message: res.message || 'Registration successful. Please verify your OTP.',
+    message: res.message || 'Account created. Check your email for a verification code.',
+  };
+}
+
+/**
+ * POST /auth/verify-email — verifies registration OTP and returns JWTs (auto sign-in).
+ */
+export async function verifyRegistrationEmail(
+  email: string,
+  code: string
+): Promise<{ user: UserData; token: string; message: string }> {
+  const res = await apiCall<{
+    success: boolean;
+    message?: string;
+    data?: { accessToken: string; refreshToken: string; expiresIn: number };
+  }>("/auth/verify-email", {
+    method: "POST",
+    body: JSON.stringify({ email: email.trim().toLowerCase(), code: code.trim() }),
+  });
+  if (res.data?.accessToken) {
+    localStorage.setItem("auth_token", res.data.accessToken);
+    localStorage.setItem("accessToken", res.data.accessToken);
+    localStorage.setItem("refreshToken", res.data.refreshToken || "");
+  }
+  localStorage.setItem("active_user_email", email.trim().toLowerCase());
+  const user = await getUserProfile();
+  return {
+    user,
+    token: res.data?.accessToken || "",
+    message: res.message || "Email verified.",
   };
 }
 
@@ -285,31 +319,22 @@ export async function login(data: LoginRequest): Promise<{ user: UserData; token
 }
 
 /**
- * POST /auth/verify-otp
- * Verify OTP code
- * Backend should:
- * - Validate OTP
- * - Mark account as verified
- * - Return success status
+ * POST /auth/verify-otp (legacy name — prefer verifyRegistrationEmail)
  */
 export async function verifyOTP(data: OTPVerificationRequest): Promise<{ success: boolean; message: string }> {
-  // TODO: Replace with actual API call
-  return apiCall('/auth/verify-otp', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  await verifyRegistrationEmail(data.email, data.otp);
+  return { success: true, message: "Verified" };
 }
 
 /**
- * POST /auth/resend-otp
- * Resend OTP to user
+ * POST /auth/resend-otp — resend registration verification code
  */
 export async function resendOTP(email: string): Promise<{ success: boolean; message: string }> {
-  // TODO: Replace with actual API call
-  return apiCall('/auth/resend-otp', {
-    method: 'POST',
-    body: JSON.stringify({ email }),
+  const res = await apiCall<{ success: boolean; message?: string }>("/auth/resend-otp", {
+    method: "POST",
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
   });
+  return { success: !!res.success, message: res.message || "Verification code sent." };
 }
 
 /**
@@ -445,7 +470,6 @@ export async function getCurrencies(): Promise<CurrencyConfig[]> {
       { currencyCode: "USD", displayName: "US Dollar", symbol: "$", status: "active", custodyType: "bank", dashboardConfig: {} },
       { currencyCode: "ZIG", displayName: "Zimbabwe Gold (ZiG)", symbol: "Z$", status: "active", custodyType: "momo", dashboardConfig: {} },
       { currencyCode: "ZAR", displayName: "South African Rand", symbol: "R", status: "active", custodyType: "bank", dashboardConfig: {} },
-      { currencyCode: "USDT", displayName: "Tether (USDT)", symbol: "₮", status: "active", custodyType: "blockchain", dashboardConfig: {} },
     ];
   }
 }
@@ -523,18 +547,26 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
   const zarWallet = wallets.find((w) => w.currencyCode === 'ZAR') as { accountNumber?: string } | undefined;
   const limit = limitRes.data || { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 };
   const activeCredit = parseFloat(primaryWallet?.activeLoanBalance ?? '0');
+  const dobRaw = p.dateOfBirth as string | Date | undefined | null;
+  const dobStr =
+    dobRaw == null
+      ? ''
+      : typeof dobRaw === 'string'
+        ? dobRaw.slice(0, 10)
+        : new Date(dobRaw as Date).toISOString().slice(0, 10);
   return {
     memberId: (p.id as string) || '',
     fullName: (p.fullName as string) || '',
     title: '',
-    dateOfBirth: '',
-    phoneNumber: '',
+    dateOfBirth: dobStr,
+    dateOfBirthLocked: Boolean(p.dateOfBirthLocked),
+    phoneNumber: (p.phoneNumber as string) || '',
     accountNumber: primaryWallet?.accountNumber || usdWallet?.accountNumber || '',
     nationalIdNumber: '',
     studentStaffId: '',
     salaryRange: null,
     email: (p.email as string) || '',
-    mobile: '',
+    mobile: (p.phoneNumber as string) || '',
     accountType: ((p.accountType as string) || 'student').toLowerCase(),
     savingsBalance: parseFloat(primaryWallet?.savingsBalance ?? primaryWallet?.balance ?? '0') || 0,
     approvedCreditWallet: parseFloat(primaryWallet?.approvedCreditBalance || '0') || 0,
@@ -556,19 +588,36 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
 }
 
 /**
- * PUT /users/profile
- * Update user profile
- * Backend should:
- * - Validate changes
- * - Update database
- * - Return updated user data
+ * PUT /user/profile — partial update (fullName, phoneNumber, dateOfBirth as ISO YYYY-MM-DD).
  */
-export async function updateUserProfile(data: Partial<UserData>): Promise<UserData> {
-  // TODO: Replace with actual API call
-  return apiCall('/users/profile', {
-    method: 'PUT',
-    body: JSON.stringify(data),
+export async function updateUserProfile(data: Partial<UserData>): Promise<Partial<UserData>> {
+  const body: Record<string, string> = {};
+  if (data.fullName != null && data.fullName !== "") body.fullName = data.fullName;
+  if (data.phoneNumber != null && data.phoneNumber !== "") body.phoneNumber = data.phoneNumber;
+  if (data.dateOfBirth != null && data.dateOfBirth !== "") body.dateOfBirth = data.dateOfBirth;
+
+  const res = await apiCall<{ success: boolean; data: Record<string, unknown> }>("/user/profile", {
+    method: "PUT",
+    body: JSON.stringify(body),
   });
+  const p = res.data || {};
+  const dobRaw = p.dateOfBirth as string | Date | undefined | null;
+  const dobStr =
+    dobRaw == null
+      ? undefined
+      : typeof dobRaw === "string"
+        ? dobRaw.slice(0, 10)
+        : new Date(dobRaw as Date).toISOString().slice(0, 10);
+  const phone = (p.phoneNumber as string) || undefined;
+  return {
+    memberId: (p.id as string) || undefined,
+    fullName: (p.fullName as string) || undefined,
+    dateOfBirth: dobStr,
+    dateOfBirthLocked: p.dateOfBirthLocked !== undefined ? Boolean(p.dateOfBirthLocked) : undefined,
+    phoneNumber: phone,
+    mobile: phone,
+    email: (p.email as string) || undefined,
+  };
 }
 
 /**
@@ -1300,6 +1349,8 @@ export const mockResponses = {
     user: {
       memberId: 'MEM' + Date.now().toString().slice(-8),
       fullName: data.fullName,
+      dateOfBirth: data.dateOfBirth,
+      dateOfBirthLocked: false,
       phoneNumber: data.phoneNumber,
       accountNumber: Date.now().toString().slice(-9) + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
       nationalIdNumber: '',
@@ -1329,6 +1380,7 @@ export default {
   register,
   login,
   verifyOTP,
+  verifyRegistrationEmail,
   resendOTP,
   logout,
   getUserProfile,

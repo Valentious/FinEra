@@ -28,13 +28,15 @@ Run-Test "Backend health" "(Invoke-WebRequest -Uri 'http://localhost:4000/health
 # 2. Ready endpoint
 Run-Test "Database ready" "(Invoke-WebRequest -Uri 'http://localhost:4000/ready' -UseBasicParsing -TimeoutSec 3).StatusCode -eq 200"
 
-# 3. User registration
+# 3. Send email verification code (registration requires verify-email-code token first)
 $email = "test-$(Get-Date -Format 'yyyyMMddHHmmss')@university.edu"
-$body = @{ email = $email; password = "TestPass123!@#"; fullName = "Test User"; accountType = "STUDENT"; country = "ZW"; city = "Harare"; institution = "UZ" } | ConvertTo-Json
+$sendBody = @{ email = $email } | ConvertTo-Json
 try {
-    $r = Invoke-WebRequest -Uri "http://localhost:4000/api/v1/auth/register" -Method POST -Body $body -ContentType "application/json" -UseBasicParsing -TimeoutSec 5
-    if ($r.Content -match "success") { Write-Host "Testing: User registration... [OK] PASSED" -ForegroundColor Green; $script:TESTS_PASSED++ } else { throw "fail" }
-} catch { Write-Host "Testing: User registration... [X] FAILED" -ForegroundColor Red; $script:TESTS_FAILED++ }
+    $r = Invoke-WebRequest -Uri "http://localhost:4000/api/v1/auth/send-email-code" -Method POST -Body $sendBody -ContentType "application/json" -UseBasicParsing -TimeoutSec 5
+    if ($r.StatusCode -eq 200 -and $r.Content -match "success") { Write-Host "Testing: send-email-code... [OK] PASSED" -ForegroundColor Green; $script:TESTS_PASSED++ } else { throw "fail" }
+} catch { Write-Host "Testing: send-email-code... [X] FAILED" -ForegroundColor Red; $script:TESTS_FAILED++ }
+
+# Full registration: POST /auth/verify-email-code with the 6-digit code from email, then POST /auth/register with emailVerificationToken.
 
 # 4. Login (seed user)
 $loginBody = '{"email":"test@university.edu","password":"TestPassword123!"}'

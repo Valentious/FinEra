@@ -31,7 +31,8 @@ export const apiService = USE_MOCK_DATA ? {
   register: mockApi.mockRegister,
   login: mockApi.mockLogin,
   verifyOTP: mockApi.mockVerifyOTP,
-  resendOTP: async (email: string) => ({ success: true, message: 'OTP resent' }),
+  verifyRegistrationEmail: mockApi.mockVerifyRegistrationEmail,
+  resendOTP: async (email: string) => mockApi.mockSendEmailVerificationCode(email),
   logout: async () => ({ success: true }),
 
   // User Management
@@ -53,7 +54,6 @@ export const apiService = USE_MOCK_DATA ? {
     { currencyCode: "USD", displayName: "US Dollar", symbol: "$", status: "active", custodyType: "bank", dashboardConfig: {} },
     { currencyCode: "ZIG", displayName: "Zimbabwe Gold (ZiG)", symbol: "Z$", status: "active", custodyType: "momo", dashboardConfig: {} },
     { currencyCode: "ZAR", displayName: "South African Rand", symbol: "R", status: "active", custodyType: "bank", dashboardConfig: {} },
-    { currencyCode: "USDT", displayName: "Tether (USDT)", symbol: "₮", status: "active", custodyType: "blockchain", dashboardConfig: {} },
   ],
   getDashboardConfig: async () => ({}),
   getWalletsByCurrency: mockApi.mockGetWalletsByCurrency,
@@ -98,6 +98,7 @@ export const apiService = USE_MOCK_DATA ? {
   register: realApi.register,
   login: realApi.login,
   verifyOTP: realApi.verifyOTP,
+  verifyRegistrationEmail: realApi.verifyRegistrationEmail,
   resendOTP: realApi.resendOTP,
   logout: realApi.logout,
   getUserProfile: realApi.getUserProfile,

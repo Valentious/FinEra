@@ -72,10 +72,14 @@ Server runs on `http://localhost:4000` by default.
 ## API Endpoints
 
 ### Auth
-- `POST /api/v1/auth/register` - Register
-- `POST /api/v1/auth/login` - Login
+- `POST /api/v1/auth/register` - Register (creates `PENDING_VERIFICATION` user, emails OTP)
+- `POST /api/v1/auth/verify-email` - Verify email OTP (`{ email, code }`), returns JWTs
+- `POST /api/v1/auth/resend-otp` - Resend registration OTP
+- `POST /api/v1/auth/login` - Login (blocked until email verified)
 - `POST /api/v1/auth/refresh` - Refresh token
 - `POST /api/v1/auth/logout` - Logout
+
+**Removed:** `POST /auth/send-email-code` and `POST /auth/verify-email-code` (pre-register OTP). See repo [docs/PROJECT_STATUS.md](../docs/PROJECT_STATUS.md).
 
 ### User (authenticated)
 - `GET /api/v1/user/profile` - Profile
