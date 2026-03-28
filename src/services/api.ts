@@ -957,6 +957,10 @@ export async function makeRepayment(data: RepaymentRequest): Promise<{
     creditScore: number;
   };
 }> {
+  if (!data.currency?.trim()) {
+    throw new Error('Currency is required for repayment');
+  }
+  const currency = data.currency.trim().toUpperCase();
   const res = await apiCall<{
     success: boolean;
     data: {
@@ -970,7 +974,7 @@ export async function makeRepayment(data: RepaymentRequest): Promise<{
       amount: data.amount,
       method: data.method,
       deductFromSavings: data.method === 'savings',
-      currency: data.currency ?? 'USD',
+      currency,
     }),
   });
   if (res?.data) {

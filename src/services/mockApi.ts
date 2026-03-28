@@ -650,7 +650,10 @@ export async function mockMakeRepayment(data: RepaymentRequest): Promise<{
     throw new Error('User not found');
   }
 
-  const c = (data.currency || "USD").toUpperCase();
+  if (!data.currency?.trim()) {
+    throw new Error('Currency is required for repayment');
+  }
+  const c = data.currency.trim().toUpperCase();
   const outstanding = getActiveLoanForCurrency(user, c);
   if (data.amount > outstanding) {
     throw new Error('Repayment amount exceeds outstanding balance');

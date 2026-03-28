@@ -3,23 +3,29 @@ import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { 
-  CreditCard, 
-  Wallet, 
-  Smartphone, 
-  Building2, 
-  CheckCircle2, 
-  AlertCircle,
+import {
+  Wallet,
+  Smartphone,
+  Building2,
   ShieldCheck,
   Zap,
-  DollarSign,
-  UserCircle
+  UserCircle,
+  ArrowLeft,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { AgentGateway } from "./AgentGateway";
+import {
+  CURRENCY_AMOUNT_SYMBOLS,
+  currencyAmountPlaceholder,
+  formatAmountWithCurrency,
+} from "@/types/wallet";
 
 interface MakeRepaymentProps {
+  currencyCode: string;
+  isWalletLoading?: boolean;
+  walletError?: string | null;
   outstandingBalance: number;
   savingsBalance: number;
   onConfirm: (amount: number, method: string) => void | Promise<void>;
@@ -35,12 +41,24 @@ const LOCAL_METHODS = [
   { id: "bank", label: "Partner Banks", icon: <Building2 className="w-5 h-5" />, color: "bg-slate-50 text-slate-600" },
 ];
 
-export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, onBack }: MakeRepaymentProps) {
+export function MakeRepayment({
+  currencyCode,
+  isWalletLoading,
+  walletError,
+  outstandingBalance,
+  savingsBalance,
+  onConfirm,
+  onBack,
+}: MakeRepaymentProps) {
   const [step, setStep] = useState<"form" | "agent" | "processing">("form");
-  const [amount, setAmount] = useState<string>(outstandingBalance.toString());
+  const [amount, setAmount] = useState<string>(outstandingBalance > 0 ? outstandingBalance.toString() : "");
   const [selectedMethod, setSelectedMethod] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const cc = currencyCode.toUpperCase();
+  const sym = CURRENCY_AMOUNT_SYMBOLS[cc] ?? cc;
+  const inputPadClass = sym.length > 2 ? "pl-24" : "pl-12";
 
   const handleRepay = () => {
     const numAmount = parseFloat(amount);
@@ -50,7 +68,7 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
     }
 
     if (selectedMethod === "savings" && savingsBalance < numAmount) {
-      toast.error("Insufficient savings balance for this repayment.");
+      toast.error(`Insufficient ${cc} savings for this repayment.`);
       return;
     }
 
@@ -59,7 +77,7 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
       return;
     }
 
-    if (selectedMethod === 'agent') {
+    if (selectedMethod === "agent") {
       setStep("agent");
     } else {
       setShowConfirmation(true);
@@ -74,6 +92,46 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
       setIsProcessing(false);
     }
   };
+
+  if (isWalletLoading) {
+    return (
+      <div className="max-w-xl mx-auto flex flex-col items-center justify-center py-24 gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-emerald-600" />
+        <p className="text-slate-600 font-medium">Loading {cc} balances…</p>
+      </div>
+    );
+  }
+
+  if (walletError) {
+    return (
+      <div className="max-w-xl mx-auto space-y-6 p-4">
+        <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <Card className="p-8 border-red-200 bg-red-50">
+          <p className="font-black text-red-900 mb-2">Cannot repay in {cc}</p>
+          <p className="text-red-800">{walletError}</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (outstandingBalance <= 0) {
+    return (
+      <div className="max-w-xl mx-auto space-y-6 p-4">
+        <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <Card className="p-8">
+          <p className="font-black text-slate-900">Nothing outstanding in {cc}</p>
+          <p className="text-slate-600 mt-2">There is no active loan balance for this currency.</p>
+          <Button className="mt-6" onClick={onBack}>
+            Back
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-xl mx-auto space-y-6 animate-in fade-in duration-500">
@@ -90,40 +148,48 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
               <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">Make Repayment</h2>
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">Make Repayment</h2>
+                <p className="text-sm font-bold text-slate-500">{cc} only — no cross-currency settlement</p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="p-4 border-slate-100 bg-white shadow-sm">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Outstanding</p>
-                <p className="text-2xl font-black text-red-500">${outstandingBalance.toLocaleString()}</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Outstanding ({cc})</p>
+                <p className="text-2xl font-black text-red-500">{formatAmountWithCurrency(outstandingBalance, cc)}</p>
               </Card>
               <Card className="p-4 border-slate-100 bg-white shadow-sm">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Savings Balance</p>
-                <p className="text-2xl font-black text-green-600">${savingsBalance.toLocaleString()}</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Savings ({cc})</p>
+                <p className="text-2xl font-black text-green-600">{formatAmountWithCurrency(savingsBalance, cc)}</p>
               </Card>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="font-bold ml-1">Repayment Amount</Label>
+                <Label className="font-bold ml-1">Repayment amount ({cc})</Label>
                 <div className="relative">
-                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <Input 
-                    type="number" 
-                    value={amount} 
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm max-w-[5rem] leading-tight">
+                    {sym}
+                  </span>
+                  <Input
+                    type="number"
+                    value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="h-14 pl-12 text-xl font-black rounded-2xl border-slate-200"
+                    placeholder={currencyAmountPlaceholder(cc)}
+                    className={`h-14 ${inputPadClass} text-xl font-black rounded-2xl border-slate-200`}
                   />
                 </div>
                 <div className="flex gap-2 mt-2">
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => setAmount((outstandingBalance * 0.5).toString())}
                     className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black hover:bg-slate-200 transition-colors"
                   >
                     50% PARTIAL
                   </button>
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => setAmount(outstandingBalance.toString())}
                     className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black hover:bg-emerald-100 transition-colors"
                   >
@@ -133,34 +199,40 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
               </div>
 
               <div className="space-y-3">
-                <Label className="font-bold ml-1">Select Payment Method</Label>
+                <Label className="font-bold ml-1">Select payment method</Label>
                 <div className="grid grid-cols-2 gap-3">
                   {LOCAL_METHODS.map((method) => {
                     const isSavings = method.id === "savings";
-                    const isSavingsDisabled = isSavings && (savingsBalance <= 0);
-                    
+                    const isSavingsDisabled = isSavings && savingsBalance <= 0;
+
                     return (
                       <button
                         key={method.id}
+                        type="button"
                         onClick={() => setSelectedMethod(method.id)}
                         disabled={isSavingsDisabled}
                         className={`flex flex-col items-center p-4 rounded-2xl border-2 transition-all ${
-                          isSavingsDisabled ? 'opacity-40 grayscale cursor-not-allowed border-slate-50' :
-                          selectedMethod === method.id ? 'border-emerald-600 bg-emerald-50/50' : 'border-slate-100 bg-white hover:border-slate-200'
+                          isSavingsDisabled
+                            ? "opacity-40 grayscale cursor-not-allowed border-slate-50"
+                            : selectedMethod === method.id
+                              ? "border-emerald-600 bg-emerald-50/50"
+                              : "border-slate-100 bg-white hover:border-slate-200"
                         }`}
                       >
-                        <div className={`p-3 rounded-xl mb-3 ${method.color}`}>
-                          {method.icon}
-                        </div>
+                        <div className={`p-3 rounded-xl mb-3 ${method.color}`}>{method.icon}</div>
                         <span className="font-bold text-xs text-slate-700">{method.label}</span>
-                        {isSavings && <span className="text-[8px] font-black text-slate-400 mt-1">${savingsBalance.toFixed(2)} AVAILABLE</span>}
+                        {isSavings && (
+                          <span className="text-[8px] font-black text-slate-400 mt-1">
+                            {formatAmountWithCurrency(savingsBalance, cc)} AVAILABLE
+                          </span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              <Button 
+              <Button
                 onClick={handleRepay}
                 disabled={!selectedMethod || isProcessing}
                 className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-lg font-bold shadow-xl transition-all active:scale-[0.98]"
@@ -172,16 +244,11 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
         )}
 
         {step === "agent" && (
-          <motion.div
-            key="agent"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <AgentGateway 
-              type="repayment" 
-              amount={parseFloat(amount)} 
-              onSuccess={(txnId) => {
+          <motion.div key="agent" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <AgentGateway
+              type="repayment"
+              amount={parseFloat(amount)}
+              onSuccess={() => {
                 onConfirm(parseFloat(amount), "agent");
               }}
               onCancel={() => setStep("form")}
@@ -193,7 +260,7 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
       <AnimatePresence>
         {showConfirmation && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -202,21 +269,24 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
               <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <ShieldCheck className="w-10 h-10" />
               </div>
-              <h3 className="text-xl font-black text-slate-900">Confirm Payment</h3>
+              <h3 className="text-xl font-black text-slate-900">Confirm payment</h3>
               <p className="text-slate-500 text-sm mt-2 mb-8">
-                You are about to repay <span className="font-black text-slate-900">${amount}</span> using <span className="font-bold text-emerald-600">{LOCAL_METHODS.find(m => m.id === selectedMethod)?.label}</span>.
+                You are about to repay{" "}
+                <span className="font-black text-slate-900">{formatAmountWithCurrency(parseFloat(amount) || 0, cc)}</span>{" "}
+                ({cc}) using{" "}
+                <span className="font-bold text-emerald-600">{LOCAL_METHODS.find((m) => m.id === selectedMethod)?.label}</span>.
               </p>
-              
+
               <div className="space-y-3">
-                <Button 
+                <Button
                   onClick={confirmProcess}
                   disabled={isProcessing}
                   className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold"
                 >
                   {isProcessing ? "Verifying..." : "Confirm & Pay"}
                 </Button>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   onClick={() => setShowConfirmation(false)}
                   className="w-full h-12 rounded-xl text-slate-500 font-bold"
                 >
@@ -228,25 +298,5 @@ export function MakeRepayment({ outstandingBalance, savingsBalance, onConfirm, o
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-function ArrowLeft(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m12 19-7-7 7-7" />
-      <path d="M19 12H5" />
-    </svg>
   );
 }

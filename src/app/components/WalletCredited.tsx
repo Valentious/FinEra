@@ -1,14 +1,18 @@
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { Wallet, CheckCircle } from "lucide-react";
+import { formatAmountWithCurrency } from "@/types/wallet";
 
 interface WalletCreditedProps {
+  currencyCode: string;
   amount: number;
   onWithdrawFunds: () => void;
   onViewRepayment: () => void;
 }
 
-export function WalletCredited({ amount, onWithdrawFunds, onViewRepayment }: WalletCreditedProps) {
+export function WalletCredited({ currencyCode, amount, onWithdrawFunds, onViewRepayment }: WalletCreditedProps) {
+  const cc = currencyCode.toUpperCase();
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <Card className="max-w-lg w-full p-8">
@@ -18,16 +22,16 @@ export function WalletCredited({ amount, onWithdrawFunds, onViewRepayment }: Wal
             <CheckCircle className="w-8 h-8 text-green-500 absolute -bottom-1 -right-1 bg-white rounded-full" />
           </div>
         </div>
-        
-        <h1 className="text-3xl text-center mb-4">Funds Available</h1>
-        
+
+        <h1 className="text-3xl text-center mb-4 font-black">Funds Available</h1>
+
         <p className="text-center text-slate-600 mb-8">
-          Your approved credit has been added to your wallet.
+          Your approved credit has been added to your {cc} Approved Credit Wallet.
         </p>
 
         <div className="p-6 bg-emerald-50 rounded-lg border border-emerald-200 mb-8 text-center">
-          <p className="text-sm text-slate-600 mb-2">Available Balance</p>
-          <p className="text-4xl text-emerald-700">${amount.toLocaleString()}</p>
+          <p className="text-sm text-slate-600 mb-2">Available balance ({cc})</p>
+          <p className="text-4xl text-emerald-700 font-black">{formatAmountWithCurrency(amount, cc)}</p>
         </div>
 
         <div className="space-y-3">
@@ -35,7 +39,7 @@ export function WalletCredited({ amount, onWithdrawFunds, onViewRepayment }: Wal
             Withdraw Funds
           </Button>
           <Button onClick={onViewRepayment} variant="outline" className="w-full" size="lg">
-            View Repayment Plan
+            View Repayment Plan ({cc})
           </Button>
         </div>
       </Card>

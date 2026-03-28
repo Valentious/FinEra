@@ -35,7 +35,11 @@ import { Toaster, toast } from "sonner";
 import { apiService, checkBackendHealth, USE_MOCK_DATA, type UserData, type Transaction, type CreditApplication, type FinEraAccountNumbers, type CurrencyConfig } from "@/services/index";
 import { useAccountStore } from "@/stores/accountStore";
 import { fetchWalletsForStore } from "@/lib/walletFetcher";
-import { CURRENCY_AMOUNT_SYMBOLS, currencyAmountPlaceholder, formatAmountWithSymbol } from "@/types/wallet";
+import {
+  CURRENCY_AMOUNT_SYMBOLS,
+  currencyAmountPlaceholder,
+  formatAmountWithCurrency,
+} from "@/types/wallet";
 import { AccountSwitchOverlay } from "@/app/components/AccountSwitchOverlay";
 import { BankLinking } from "@/app/components/BankLinking";
 import { BackendUnavailableBanner } from "@/app/components/BackendUnavailableBanner";
@@ -287,6 +291,9 @@ export default function App() {
         "creditTypeSelection",
         "collateralDetails",
         "confirmApplication",
+        "repaymentDashboard",
+        "makeRepayment",
+        "walletCredited",
       ].includes(currentScreen)
     )
       return;
@@ -347,12 +354,19 @@ export default function App() {
     load();
   }, [currentScreen]);
 
+  const walletSyncScreens = [
+    "dashboard",
+    "repaymentDashboard",
+    "makeRepayment",
+    "walletCredited",
+  ] as const;
+
   // Fetch per-currency wallet + transactions when dashboard or currency changes (strict isolation)
   useEffect(() => {
-    if (currentScreen !== "dashboard") return;
+    if (!walletSyncScreens.includes(currentScreen as (typeof walletSyncScreens)[number])) return;
     const load = async () => {
       try {
-        if (typeof apiService.getUserProfile === "function") {
+        if (currentScreen === "dashboard" && typeof apiService.getUserProfile === "function") {
           const profile = await apiService.getUserProfile(selectedCurrency);
           setUserData((prev) => {
             const merged = { ...prev, ...profile, transactions: prev.transactions };
@@ -374,13 +388,16 @@ export default function App() {
             setWalletForCurrency(null);
           }
         }
-        if (typeof apiService.getTransactionsByCurrency === "function") {
+        if (
+          currentScreen === "dashboard" &&
+          typeof apiService.getTransactionsByCurrency === "function"
+        ) {
           const txs = await apiService.getTransactionsByCurrency(selectedCurrency);
           setTransactionsForCurrency(txs);
         }
       } catch {
         setWalletForCurrency(null);
-        setTransactionsForCurrency([]);
+        if (currentScreen === "dashboard") setTransactionsForCurrency([]);
       }
     };
     load();
@@ -868,22 +885,37 @@ export default function App() {
             onViewWallet={() => setCurrentScreen("walletManagement")}
           />
         )}
-        {currentScreen === "walletCredited" && <WalletCredited amount={creditApplication.amount} onWithdrawFunds={() => setCurrentScreen("walletManagement")} onViewRepayment={() => setCurrentScreen("repaymentDashboard")} />}
-        
+        {currentScreen === "walletCredited" && (
+          <WalletCredited
+            currencyCode={selectedCurrency}
+            amount={creditApplication.amount}
+            onWithdrawFunds={() => setCurrentScreen("walletManagement")}
+            onViewRepayment={() => setCurrentScreen("repaymentDashboard")}
+          />
+        )}
+
         {currentScreen === "repaymentDashboard" && (
           <RepaymentDashboard
-            totalCredit={activeCreditForTab}
+            currencyCode={selectedCurrency}
+            isWalletLoading={creditWalletState.kind === "loading"}
+            walletError={creditWalletState.kind === "missing" ? creditWalletState.message : null}
+            totalObligation={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance : activeCreditForTab}
             amountRepaid={0}
-            outstandingBalance={activeCreditForTab}
-            onMakeRepayment={() => setCurrentScreen("makeRepayment")} 
-            onBack={() => setCurrentScreen("dashboard")} 
+            outstandingBalance={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance : activeCreditForTab}
+            onMakeRepayment={() => setCurrentScreen("makeRepayment")}
+            onBack={() => setCurrentScreen("dashboard")}
           />
         )}
 
         {currentScreen === "makeRepayment" && (
           <MakeRepayment
-            outstandingBalance={activeCreditForTab}
-            savingsBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            currencyCode={selectedCurrency}
+            isWalletLoading={creditWalletState.kind === "loading"}
+            walletError={creditWalletState.kind === "missing" ? creditWalletState.message : null}
+            outstandingBalance={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance : activeCreditForTab}
+            savingsBalance={
+              creditWalletState.kind === "ok" ? creditWalletState.savingsBalance : walletForCurrency?.savingsBalance ?? 0
+            }
             onBack={() => setCurrentScreen("repaymentDashboard")}
             onConfirm={async (amount, method) => {
               try {
@@ -891,10 +923,10 @@ export default function App() {
                 await refreshUserData();
                 setCurrentScreen("dashboard");
                 toast.success(
-                  `Repayment of ${formatAmountWithSymbol(CURRENCY_AMOUNT_SYMBOLS[selectedCurrency] ?? "$", amount)} verified! Email confirmation sent.`
+                  `Repayment of ${formatAmountWithCurrency(amount, selectedCurrency)} verified! Email confirmation sent.`
                 );
               } catch (err) {
-                toast.error(err instanceof Error ? err.message : 'Repayment failed');
+                toast.error(err instanceof Error ? err.message : "Repayment failed");
                 throw err;
               }
             }}
