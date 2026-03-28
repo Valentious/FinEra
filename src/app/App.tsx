@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { SplashScreen } from "@/app/components/SplashScreen";
 import { LoginRegister } from "@/app/components/LoginRegister";
@@ -35,6 +35,7 @@ import { Toaster, toast } from "sonner";
 import { apiService, checkBackendHealth, USE_MOCK_DATA, type UserData, type Transaction, type CreditApplication, type FinEraAccountNumbers, type CurrencyConfig } from "@/services/index";
 import { useAccountStore } from "@/stores/accountStore";
 import { fetchWalletsForStore } from "@/lib/walletFetcher";
+import { CURRENCY_AMOUNT_SYMBOLS, currencyAmountPlaceholder, formatAmountWithSymbol } from "@/types/wallet";
 import { AccountSwitchOverlay } from "@/app/components/AccountSwitchOverlay";
 import { BankLinking } from "@/app/components/BankLinking";
 import { BackendUnavailableBanner } from "@/app/components/BackendUnavailableBanner";
@@ -182,15 +183,57 @@ export default function App() {
 
   const activeWallet = useAccountStore((s) => s.activeWallet);
   const wallets = useAccountStore((s) => s.wallets);
+  const walletLoading = useAccountStore((s) => s.isLoading);
   const fetchWallets = useAccountStore((s) => s.fetchWallets);
   const setActiveWalletById = useAccountStore((s) => s.setActiveWalletById);
   const resetToDefault = useAccountStore((s) => s.resetToDefault);
   const storeError = useAccountStore((s) => s.error);
 
-  const [fallbackCurrency, setFallbackCurrency] = useState<"USD" | "ZIG" | "ZAR" | "EUR" | "GBP">("USD");
-  const selectedCurrency = (activeWallet?.currency ?? fallbackCurrency) as "USD" | "ZIG" | "ZAR" | "EUR" | "GBP";
+  /** Selected dashboard tab — drives ALL wallet API calls (isolated from stale activeWallet when tab has no wallet row yet). */
+  const [dashboardCurrency, setDashboardCurrency] = useState<"USD" | "ZIG" | "ZAR" | "EUR" | "GBP">("USD");
+
+  useEffect(() => {
+    if (activeWallet?.currency) {
+      setDashboardCurrency(activeWallet.currency as "USD" | "ZIG" | "ZAR" | "EUR" | "GBP");
+    }
+  }, [activeWallet?.id]);
+
+  const selectedCurrency = dashboardCurrency;
+
+  /** Strict: one wallet row per dashboard currency — no cross-currency fallback */
+  const dashboardWallet = useMemo(
+    () => wallets.find((w) => w.currency === selectedCurrency),
+    [wallets, selectedCurrency]
+  );
+
+  const creditWalletState = useMemo(() => {
+    if (walletLoading) return { kind: "loading" as const };
+    if (wallets.length > 0 && !dashboardWallet) {
+      return {
+        kind: "missing" as const,
+        message: `No wallet found for ${selectedCurrency}. You cannot apply for credit in this currency.`,
+      };
+    }
+    if (!walletLoading && wallets.length === 0) {
+      return {
+        kind: "missing" as const,
+        message: "Wallets could not be loaded. Try again or return to the dashboard.",
+      };
+    }
+    return {
+      kind: "ok" as const,
+      savingsBalance: dashboardWallet!.savingsBalance,
+      activeLoanBalance: dashboardWallet!.activeLoanBalance,
+    };
+  }, [walletLoading, wallets.length, dashboardWallet, selectedCurrency]);
+
+  const [creditAvailability, setCreditAvailability] = useState<number | null>(null);
+  const [creditLimitFetchError, setCreditLimitFetchError] = useState(false);
+
   const [currencyTabs, setCurrencyTabs] = useState<CurrencyConfig[]>([]);
   const [walletForCurrency, setWalletForCurrency] = useState<{ savingsBalance: number; activeCredit: number; approvedCreditBalance: number; accountNumber: string } | null>(null);
+  /** Never fall back to userData.activeCredit for currency tabs — that value is profile-scoped and leaks loans across currencies. */
+  const activeCreditForTab = walletForCurrency?.activeCredit ?? 0;
   const [transactionsForCurrency, setTransactionsForCurrency] = useState<Transaction[]>([]);
   const [backendAvailable, setBackendAvailable] = useState(true);
 
@@ -229,17 +272,63 @@ export default function App() {
     }
   }, [searchParams, setSearchParams]);
 
-  // Fetch wallets for Global Account Switcher when user enters main app
+  // Fetch wallets for Global Account Switcher + credit flow (strict per-currency savings)
   useEffect(() => {
-    if (!["dashboard", "savingsWallet", "walletManagement", "depositFlow", "withdrawFlow"].includes(currentScreen))
+    if (
+      ![
+        "dashboard",
+        "savingsWallet",
+        "walletManagement",
+        "depositFlow",
+        "withdrawFlow",
+        "memberAgreement",
+        "applyForCredit",
+        "creditDetails",
+        "creditTypeSelection",
+        "collateralDetails",
+        "confirmApplication",
+      ].includes(currentScreen)
+    )
       return;
     fetchWallets(fetchWalletsForStore);
   }, [currentScreen, fetchWallets]);
 
-  // Error recovery: currency mismatch → reset to USD
+  // Per-currency credit eligibility (GET /credit/limit?currency=)
+  useEffect(() => {
+    const creditScreens = [
+      "memberAgreement",
+      "applyForCredit",
+      "creditDetails",
+      "creditTypeSelection",
+      "collateralDetails",
+      "confirmApplication",
+    ];
+    if (!creditScreens.includes(currentScreen)) return;
+    let cancelled = false;
+    setCreditAvailability(null);
+    setCreditLimitFetchError(false);
+    (async () => {
+      try {
+        if (typeof apiService.getCreditLimitForCurrency !== "function") return;
+        const r = await apiService.getCreditLimitForCurrency(selectedCurrency);
+        if (!cancelled) setCreditAvailability(r.availableCredit);
+      } catch {
+        if (!cancelled) {
+          setCreditLimitFetchError(true);
+          setCreditAvailability(null);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentScreen, selectedCurrency]);
+
+  // Error recovery: currency mismatch → reset to USD dashboard + default wallet
   useEffect(() => {
     if (storeError && storeError.toLowerCase().includes("currency")) {
       resetToDefault();
+      setDashboardCurrency("USD");
       toast.error("Account error. Switched to default.");
     }
   }, [storeError, resetToDefault]);
@@ -263,6 +352,14 @@ export default function App() {
     if (currentScreen !== "dashboard") return;
     const load = async () => {
       try {
+        if (typeof apiService.getUserProfile === "function") {
+          const profile = await apiService.getUserProfile(selectedCurrency);
+          setUserData((prev) => {
+            const merged = { ...prev, ...profile, transactions: prev.transactions };
+            saveUserData(merged);
+            return merged;
+          });
+        }
         if (typeof apiService.getWalletsByCurrency === "function") {
           const wallets = await apiService.getWalletsByCurrency(selectedCurrency);
           const w = wallets.find((x) => x.currencyCode === selectedCurrency) ?? wallets[0];
@@ -314,13 +411,18 @@ export default function App() {
     };
     const interval = setInterval(refresh, 60_000); // every 60s
     return () => clearInterval(interval);
-  }, [currentScreen, backendAvailable]);
+  }, [currentScreen, backendAvailable, selectedCurrency]);
 
   const [creditApplication, setCreditApplication] = useState<CreditApplication>({
     creditType: "essential",
     amount: 0,
     withCollateral: false,
+    currency: "USD",
   });
+
+  useEffect(() => {
+    setCreditApplication((prev) => ({ ...prev, currency: selectedCurrency }));
+  }, [selectedCurrency]);
 
   const displayAccountNumber = (() => {
     if (walletForCurrency?.accountNumber) return walletForCurrency.accountNumber;
@@ -407,13 +509,20 @@ export default function App() {
     setCurrentScreen("loginRegister");
   };
 
-  const creditDetails = (() => {
+  const creditDetails = useMemo(() => {
+    if (creditAvailability === null || creditLimitFetchError) return null;
+    const cap = creditAvailability;
     switch (creditApplication.creditType) {
-      case 'essential': return { maxAmount: Math.min(5000, userData.availableCreditLimit), repaymentCycle: "12 months", savingsRequirement: 0.2 };
-      case 'emergency': return { maxAmount: Math.min(3000, userData.availableCreditLimit), repaymentCycle: "6 months", savingsRequirement: 0 };
-      case 'business': return { maxAmount: Math.min(10000, userData.availableCreditLimit), repaymentCycle: "24 months", savingsRequirement: 0.2 };
+      case "essential":
+        return { maxAmount: Math.min(5000, cap), repaymentCycle: "12 months", savingsRequirement: 0.2 };
+      case "emergency":
+        return { maxAmount: Math.min(3000, cap), repaymentCycle: "6 months", savingsRequirement: 0 };
+      case "business":
+        return { maxAmount: Math.min(10000, cap), repaymentCycle: "24 months", savingsRequirement: 0.2 };
+      default:
+        return { maxAmount: Math.min(5000, cap), repaymentCycle: "12 months", savingsRequirement: 0.2 };
     }
-  })();
+  }, [creditApplication.creditType, creditAvailability, creditLimitFetchError]);
 
   const updateAndSave = (newData: UserData) => {
     setUserData(newData);
@@ -551,16 +660,16 @@ export default function App() {
           <DashboardV2
             userName={userData.fullName || "User"}
             savingsBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
-            activeCredit={walletForCurrency?.activeCredit ?? userData.activeCredit}
+            activeCredit={activeCreditForTab}
             availableCreditLimit={userData.availableCreditLimit}
             disciplineScore={userData.disciplineScore}
             creditScore={userData.creditScore}
             loyaltyProgress={userData.loyaltyProgress}
             selectedCurrency={selectedCurrency}
             onCurrencyChange={(c) => {
+              setDashboardCurrency(c);
               const w = wallets.find((x) => x.currency === c);
               if (w) setActiveWalletById(w.id);
-              else setFallbackCurrency(c);
             }}
             displayAccountNumber={displayAccountNumber}
             onApplyForCredit={() => setCurrentScreen("memberAgreement")}
@@ -590,8 +699,8 @@ export default function App() {
         {currentScreen === "savingsWallet" && (
           <SavingsWallet
             totalSavings={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
-            lockedSavings={(walletForCurrency?.activeCredit ?? userData.activeCredit) > 0 ? (walletForCurrency?.savingsBalance ?? userData.savingsBalance) * 0.2 : 0}
-            availableSavings={(walletForCurrency?.activeCredit ?? userData.activeCredit) > 0 ? (walletForCurrency?.savingsBalance ?? userData.savingsBalance) * 0.8 : (walletForCurrency?.savingsBalance ?? userData.savingsBalance)}
+            lockedSavings={activeCreditForTab > 0 ? (walletForCurrency?.savingsBalance ?? userData.savingsBalance) * 0.2 : 0}
+            availableSavings={activeCreditForTab > 0 ? (walletForCurrency?.savingsBalance ?? userData.savingsBalance) * 0.8 : (walletForCurrency?.savingsBalance ?? userData.savingsBalance)}
             onAddSavings={() => setCurrentScreen("depositFlow")}
             onWithdraw={() => {
               const bal = walletForCurrency?.savingsBalance ?? userData.savingsBalance;
@@ -606,7 +715,7 @@ export default function App() {
           <WalletManagement
             approvedCreditWallet={walletForCurrency?.approvedCreditBalance ?? userData.approvedCreditWallet}
             savingsWallet={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
-            activeCredit={walletForCurrency?.activeCredit ?? userData.activeCredit}
+            activeCredit={activeCreditForTab}
             onTransferToSavings={async (amount) => {
               try {
                 await apiService.transferCreditToSavings(amount, selectedCurrency);
@@ -628,6 +737,9 @@ export default function App() {
         {currentScreen === "withdrawFlow" && (
           <WithdrawFlow
             balance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            currencyCode={selectedCurrency}
+            amountSymbol={CURRENCY_AMOUNT_SYMBOLS[selectedCurrency] ?? selectedCurrency}
+            amountPlaceholder={currencyAmountPlaceholder(selectedCurrency)}
             onConfirm={async (amount, method) => {
               try {
                 await apiService.withdrawFunds({ amount, method, currency: selectedCurrency });
@@ -645,6 +757,9 @@ export default function App() {
         {currentScreen === "depositFlow" && (
           <DepositFlow
             currentBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            currencyCode={selectedCurrency}
+            amountSymbol={CURRENCY_AMOUNT_SYMBOLS[selectedCurrency] ?? selectedCurrency}
+            amountPlaceholder={currencyAmountPlaceholder(selectedCurrency)}
             onConfirm={async (amount, method, purpose) => {
               try {
                 await apiService.depositFunds({ amount, method, purpose, currency: selectedCurrency });
@@ -661,8 +776,11 @@ export default function App() {
 
         {currentScreen === "applyForCredit" && (
           <ApplyForCredit
-            savingsBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
-            hasActiveLoan={(walletForCurrency?.activeCredit ?? userData.activeCredit) > 0}
+            currencyCode={selectedCurrency}
+            isWalletLoading={creditWalletState.kind === "loading"}
+            walletError={creditWalletState.kind === "missing" ? creditWalletState.message : null}
+            savingsBalance={creditWalletState.kind === "ok" ? creditWalletState.savingsBalance : 0}
+            hasActiveLoan={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance > 0 : false}
             onSelectCreditType={(type) => {
               setCreditApplication({ ...creditApplication, creditType: type });
               setCurrentScreen("creditDetails");
@@ -673,15 +791,24 @@ export default function App() {
 
         {currentScreen === "creditDetails" && (
           <CreditDetails
+            currencyCode={selectedCurrency}
+            isWalletLoading={creditWalletState.kind === "loading"}
+            walletError={creditWalletState.kind === "missing" ? creditWalletState.message : null}
+            creditLimitLoading={creditAvailability === null && !creditLimitFetchError}
+            creditLimitError={creditLimitFetchError}
+            limitsReady={creditDetails != null}
             creditType={creditApplication.creditType}
-            maxAmount={creditDetails.maxAmount}
-            repaymentCycle={creditDetails.repaymentCycle}
-            savingsRequirement={creditDetails.savingsRequirement * 100} // Convert to %
-            currentSavings={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            maxAmount={creditDetails?.maxAmount ?? 0}
+            repaymentCycle={creditDetails?.repaymentCycle ?? ""}
+            savingsRequirement={(creditDetails?.savingsRequirement ?? 0) * 100}
+            currentSavings={creditWalletState.kind === "ok" ? creditWalletState.savingsBalance : 0}
             onContinue={(amount) => {
-              // Discipline Rule Check (20% Savings)
-              const savings = walletForCurrency?.savingsBalance ?? userData.savingsBalance;
-              if (creditApplication.creditType !== 'emergency' && savings < (amount * 0.2)) {
+              if (creditWalletState.kind !== "ok") {
+                toast.error("Wallet not found for selected currency.");
+                return;
+              }
+              const savings = creditWalletState.savingsBalance;
+              if (creditApplication.creditType !== "emergency" && savings < amount * 0.2) {
                 toast.error("Financial Discipline Notification: Savings must be at least 20% of loan amount.");
                 return;
               }
@@ -704,14 +831,19 @@ export default function App() {
         )}
 
         {currentScreen === "collateralDetails" && (
-          <CollateralDetails onSubmit={() => setCurrentScreen("confirmApplication")} onBack={() => setCurrentScreen("creditTypeSelection")} />
+          <CollateralDetails
+            currencyCode={selectedCurrency}
+            onSubmit={() => setCurrentScreen("confirmApplication")}
+            onBack={() => setCurrentScreen("creditTypeSelection")}
+          />
         )}
 
         {currentScreen === "confirmApplication" && (
           <ConfirmApplication
+            currencyCode={selectedCurrency}
             creditType={creditApplication.creditType}
             amount={creditApplication.amount}
-            repaymentTerms={creditDetails.repaymentCycle}
+            repaymentTerms={creditDetails?.repaymentCycle ?? ""}
             withCollateral={creditApplication.withCollateral}
             onSubmit={async () => {
               setCurrentScreen("applicationStatus");
@@ -728,14 +860,21 @@ export default function App() {
           />
         )}
 
-        {currentScreen === "creditApproved" && <CreditApproved approvedAmount={creditApplication.amount} repaymentSchedule={`${creditDetails.repaymentCycle}`} onViewWallet={() => setCurrentScreen("walletManagement")} />}
+        {currentScreen === "creditApproved" && (
+          <CreditApproved
+            currencyCode={selectedCurrency}
+            approvedAmount={creditApplication.amount}
+            repaymentSchedule={`${creditDetails?.repaymentCycle ?? ""}`}
+            onViewWallet={() => setCurrentScreen("walletManagement")}
+          />
+        )}
         {currentScreen === "walletCredited" && <WalletCredited amount={creditApplication.amount} onWithdrawFunds={() => setCurrentScreen("walletManagement")} onViewRepayment={() => setCurrentScreen("repaymentDashboard")} />}
         
         {currentScreen === "repaymentDashboard" && (
           <RepaymentDashboard
-            totalCredit={walletForCurrency?.activeCredit ?? userData.activeCredit}
+            totalCredit={activeCreditForTab}
             amountRepaid={0}
-            outstandingBalance={walletForCurrency?.activeCredit ?? userData.activeCredit}
+            outstandingBalance={activeCreditForTab}
             onMakeRepayment={() => setCurrentScreen("makeRepayment")} 
             onBack={() => setCurrentScreen("dashboard")} 
           />
@@ -743,7 +882,7 @@ export default function App() {
 
         {currentScreen === "makeRepayment" && (
           <MakeRepayment
-            outstandingBalance={walletForCurrency?.activeCredit ?? userData.activeCredit}
+            outstandingBalance={activeCreditForTab}
             savingsBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
             onBack={() => setCurrentScreen("repaymentDashboard")}
             onConfirm={async (amount, method) => {
@@ -751,7 +890,9 @@ export default function App() {
                 await apiService.makeRepayment({ amount, method, currency: selectedCurrency });
                 await refreshUserData();
                 setCurrentScreen("dashboard");
-                toast.success(`Repayment of $${amount} verified! Email confirmation sent.`);
+                toast.success(
+                  `Repayment of ${formatAmountWithSymbol(CURRENCY_AMOUNT_SYMBOLS[selectedCurrency] ?? "$", amount)} verified! Email confirmation sent.`
+                );
               } catch (err) {
                 toast.error(err instanceof Error ? err.message : 'Repayment failed');
                 throw err;

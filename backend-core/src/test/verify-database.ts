@@ -5,6 +5,7 @@
 
 import { prisma } from "../infrastructure/database/index.js";
 import bcrypt from "bcrypt";
+import { createUserCurrencyAccountStack } from "../services/ledger-service/account-stack.service.js";
 
 async function verifyDatabaseOperations() {
   console.log("🔍 Starting Database Verification...\n");
@@ -26,7 +27,7 @@ async function verifyDatabaseOperations() {
           fullName: "Test User",
           accountType: "STUDENT",
           accountTier: "TIER_1",
-          countryCode: "ZWE",
+          countryCode: "ZW",
           city: "Harare",
           institution: "University of Zimbabwe",
           status: "ACTIVE",
@@ -45,13 +46,10 @@ async function verifyDatabaseOperations() {
     const wallets = [];
 
     for (const currency of currencies) {
-      const wallet = await prisma.wallet.create({
-        data: {
-          userId: user.id,
-          currencyCode: currency,
-          accountNumber: `FIN${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 1000)}`,
-        },
+      const stack = await prisma.$transaction(async (tx) => {
+        return createUserCurrencyAccountStack(tx, user.id, currency);
       });
+      const wallet = await prisma.wallet.findUniqueOrThrow({ where: { id: stack.walletId } });
       wallets.push(wallet);
       console.log(`  ✅ ${currency} wallet created: ${wallet.accountNumber}`);
     }

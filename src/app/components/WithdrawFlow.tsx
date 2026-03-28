@@ -19,9 +19,17 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { AgentGateway } from "./AgentGateway";
+import {
+  CURRENCY_AMOUNT_SYMBOLS,
+  currencyAmountPlaceholder,
+  formatAmountWithSymbol,
+} from "@/types/wallet";
 
 interface WithdrawFlowProps {
   balance: number;
+  currencyCode?: string;
+  amountSymbol?: string;
+  amountPlaceholder?: string;
   onConfirm: (amount: number, method: string) => void | Promise<void>;
   onBack: () => void;
   onSuccess: () => void;
@@ -33,7 +41,18 @@ const METHODS = [
   { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
 ];
 
-export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: WithdrawFlowProps) {
+export function WithdrawFlow({
+  balance,
+  currencyCode = "USD",
+  amountSymbol,
+  amountPlaceholder: amountPlaceholderProp,
+  onConfirm,
+  onBack,
+  onSuccess,
+}: WithdrawFlowProps) {
+  const sym = amountSymbol ?? CURRENCY_AMOUNT_SYMBOLS[currencyCode] ?? currencyCode;
+  const amountPlaceholder = amountPlaceholderProp ?? currencyAmountPlaceholder(currencyCode);
+  const inputPadClass = sym.length > 2 ? "pl-24" : "pl-12";
   const [step, setStep] = useState<"method" | "amount" | "recipient" | "confirmCode" | "agent" | "atm-code" | "processing" | "success">("method");
   const [selectedMethod, setSelectedMethod] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
@@ -174,13 +193,13 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
               <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">Withdraw Funds</h2>
+              <h2 className="text-2xl font-black text-slate-900">Withdraw Funds ({currencyCode})</h2>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Available Balance</p>
-                <p className="text-2xl font-black text-slate-900">${balance.toLocaleString()}</p>
+                <p className="text-2xl font-black text-slate-900">{formatAmountWithSymbol(sym, balance)}</p>
               </div>
               <Wallet className="w-8 h-8 text-emerald-100" />
             </div>
@@ -220,25 +239,27 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
               <Button variant="ghost" size="icon" onClick={() => setStep("method")} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">Enter Amount</h2>
+              <h2 className="text-2xl font-black text-slate-900">Enter Amount ({currencyCode})</h2>
             </div>
 
             <div className="space-y-4">
               <div className="p-6 bg-emerald-600 rounded-3xl text-white">
                 <p className="text-emerald-100 text-sm font-medium">To: {METHODS.find(m => m.id === selectedMethod)?.label}</p>
                 <div className="relative mt-4">
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-4xl font-black text-emerald-200">$</span>
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl sm:text-4xl font-black text-emerald-200 max-w-[5rem] leading-none">
+                    {sym}
+                  </span>
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full bg-transparent border-none text-white text-5xl font-black focus:ring-0 placeholder:text-emerald-300 pl-8"
+                    placeholder={amountPlaceholder}
+                    className={`w-full bg-transparent border-none text-white text-5xl font-black focus:ring-0 placeholder:text-emerald-300 ${inputPadClass}`}
                     autoFocus
                   />
                 </div>
                 <div className="mt-6 flex justify-between items-center pt-6 border-t border-white/10">
-                  <p className="text-xs font-bold text-emerald-200">AVAILABLE: ${balance.toLocaleString()}</p>
+                  <p className="text-xs font-bold text-emerald-200">AVAILABLE: {formatAmountWithSymbol(sym, balance)}</p>
                   <button onClick={() => setAmount(balance.toString())} className="text-xs font-black bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full">MAX</button>
                 </div>
               </div>
@@ -361,18 +382,20 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
               <div className="p-6 bg-emerald-600 rounded-3xl text-white">
                 <p className="text-emerald-100 text-sm font-medium">To: {METHODS.find(m => m.id === selectedMethod)?.label}</p>
                 <div className="relative mt-4">
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-4xl font-black text-emerald-200">$</span>
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl sm:text-4xl font-black text-emerald-200 max-w-[5rem] leading-none">
+                    {sym}
+                  </span>
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full bg-transparent border-none text-white text-5xl font-black focus:ring-0 placeholder:text-emerald-300 pl-8"
+                    placeholder={amountPlaceholder}
+                    className={`w-full bg-transparent border-none text-white text-5xl font-black focus:ring-0 placeholder:text-emerald-300 ${inputPadClass}`}
                     autoFocus
                   />
                 </div>
                 <div className="mt-6 flex justify-between items-center pt-6 border-t border-white/10">
-                  <p className="text-xs font-bold text-emerald-200">AVAILABLE: ${balance.toLocaleString()}</p>
+                  <p className="text-xs font-bold text-emerald-200">AVAILABLE: {formatAmountWithSymbol(sym, balance)}</p>
                   <button onClick={() => setAmount(balance.toString())} className="text-xs font-black bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full">MAX</button>
                 </div>
               </div>
@@ -457,7 +480,7 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-bold text-xs uppercase">Amount</span>
-                  <span className="text-slate-900 font-black">${parseFloat(amount).toLocaleString()}</span>
+                  <span className="text-slate-900 font-black">{formatAmountWithSymbol(sym, parseFloat(amount) || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-bold text-xs uppercase">Method</span>
@@ -466,7 +489,9 @@ export function WithdrawFlow({ balance, onConfirm, onBack, onSuccess }: Withdraw
                 <div className="h-[1px] bg-slate-200 my-2" />
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-bold text-xs uppercase">Updated Balance</span>
-                  <span className="text-emerald-600 font-black">${(balance - parseFloat(amount)).toLocaleString()}</span>
+                  <span className="text-emerald-600 font-black">
+                    {formatAmountWithSymbol(sym, balance - (parseFloat(amount) || 0))}
+                  </span>
                 </div>
               </div>
             </Card>

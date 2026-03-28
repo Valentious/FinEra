@@ -5,6 +5,7 @@
 import type { Request, Response, NextFunction } from "express";
 import type { ErrorCode } from "../types/index.js";
 import { logger } from "../core/utils/logger.js";
+import type { FieldErrorItem } from "../shared/validation/zod-format.js";
 
 export class AppError extends Error {
   constructor(
@@ -18,7 +19,12 @@ export class AppError extends Error {
   }
 }
 
-export function validationError(message: string, details?: Record<string, unknown>) {
+export type ValidationErrorDetails = Record<string, unknown> & {
+  /** Per-field messages for client forms (FinEra format). */
+  fields?: FieldErrorItem[];
+};
+
+export function validationError(message: string, details?: ValidationErrorDetails) {
   return new AppError(400, "VALIDATION_ERROR", message, details);
 }
 
@@ -75,9 +81,11 @@ export function errorHandler(
   const isProd = process.env.NODE_ENV === "production";
 
   if (err instanceof AppError) {
+    const fieldErrors = err.details?.fields as FieldErrorItem[] | undefined;
     res.status(err.statusCode).json({
       success: false,
       message: err.message,
+      ...(fieldErrors?.length ? { errors: fieldErrors } : {}),
       error: {
         code: err.code,
         message: err.message,

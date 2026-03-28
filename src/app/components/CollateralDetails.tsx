@@ -15,13 +15,18 @@ import {
 import { CollateralMultiUpload } from "./CollateralMultiUpload";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { CURRENCY_AMOUNT_SYMBOLS, currencyAmountPlaceholder } from "@/types/wallet";
 
 interface CollateralDetailsProps {
-  onSubmit: (data: any) => void;
+  currencyCode: string;
+  onSubmit: (data: unknown) => void;
   onBack: () => void;
 }
 
-export function CollateralDetails({ onSubmit, onBack }: CollateralDetailsProps) {
+export function CollateralDetails({ currencyCode, onSubmit, onBack }: CollateralDetailsProps) {
+  const cc = currencyCode.toUpperCase();
+  const sym = CURRENCY_AMOUNT_SYMBOLS[cc] ?? cc;
+  const inputPadClass = sym.length > 2 ? "pl-24" : "pl-10";
   const [description, setDescription] = useState("");
   const [estimatedValue, setEstimatedValue] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -38,7 +43,7 @@ export function CollateralDetails({ onSubmit, onBack }: CollateralDetailsProps) 
     const marketValue = parseFloat(estimatedValue) || 0;
     const conditionScore = 0.85; // Mock assessment
     const liquidationValue = marketValue * conditionScore * 0.7; // 70% of adjusted
-    const insuranceMandate = Math.max(10, liquidationValue * 0.005); // 0.5% or min $10
+    const insuranceMandate = Math.max(10, liquidationValue * 0.005);
     
     onSubmit({
       liquidationValue,
@@ -141,15 +146,17 @@ export function CollateralDetails({ onSubmit, onBack }: CollateralDetailsProps) 
               <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 rounded-3xl bg-white">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <Label className="font-bold text-slate-600 ml-1">Asset Market Value (USD)</Label>
+                    <Label className="font-bold text-slate-600 ml-1">Asset Market Value ({cc})</Label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">$</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm max-w-[5rem] leading-tight">
+                        {sym}
+                      </span>
                       <Input
                         type="number"
-                        placeholder="0.00"
+                        placeholder={currencyAmountPlaceholder(cc)}
                         value={estimatedValue}
                         onChange={(e) => setEstimatedValue(e.target.value)}
-                        className="h-14 pl-10 text-xl font-black rounded-2xl border-slate-200"
+                        className={`h-14 ${inputPadClass} text-xl font-black rounded-2xl border-slate-200`}
                         required
                       />
                     </div>

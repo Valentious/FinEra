@@ -4,8 +4,10 @@ import { Card } from "@/app/components/ui/card";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { Label } from "@/app/components/ui/label";
 import { ArrowLeft, ShieldCheck, ShieldAlert, FileText } from "lucide-react";
+import { formatAmountWithCurrency } from "@/types/wallet";
 
 interface ConfirmApplicationProps {
+  currencyCode: string;
   creditType: string;
   amount: number;
   repaymentTerms: string;
@@ -15,6 +17,7 @@ interface ConfirmApplicationProps {
 }
 
 export function ConfirmApplication({
+  currencyCode,
   creditType,
   amount,
   repaymentTerms,
@@ -22,6 +25,7 @@ export function ConfirmApplication({
   onSubmit,
   onBack,
 }: ConfirmApplicationProps) {
+  const cc = currencyCode.toUpperCase();
   const [acknowledged, setAcknowledged] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,7 +45,10 @@ export function ConfirmApplication({
 
         <div className="flex items-center gap-3">
           <FileText className="w-8 h-8 text-emerald-600" />
-          <h1 className="text-3xl font-bold">Loan Terms Agreement</h1>
+          <div>
+            <h1 className="text-3xl font-bold">Loan Terms Agreement</h1>
+            <p className="text-sm font-bold text-slate-500 mt-1">Currency: {cc}</p>
+          </div>
         </div>
 
         {/* Loan Type Display */}
@@ -93,8 +100,8 @@ export function ConfirmApplication({
 
           <div className="space-y-4 mb-8">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-500">Credit Amount</span>
-              <span className="font-bold text-lg">${amount.toLocaleString()}</span>
+              <span className="text-slate-500">Credit Amount ({cc})</span>
+              <span className="font-bold text-lg">{formatAmountWithCurrency(amount, cc)}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-500">Repayment Cycle</span>

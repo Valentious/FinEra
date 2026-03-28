@@ -18,15 +18,12 @@ import {
 import { PerformancePortfolioChart } from "@/app/components/PerformancePortfolioChart";
 import { motion } from "motion/react";
 import { toast } from "sonner";
+import { CURRENCY_AMOUNT_SYMBOLS, formatAmountWithSymbol } from "@/types/wallet";
 
 export type CurrencyOption = 'USD' | 'ZIG' | 'ZAR' | 'EUR' | 'GBP';
 
 const DEFAULT_CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: '$',
-  ZIG: 'Z$',
-  ZAR: 'R',
-  EUR: '€',
-  GBP: '£',
+  ...CURRENCY_AMOUNT_SYMBOLS,
 };
 
 function exportLedgerToCsv(
@@ -44,7 +41,7 @@ function exportLedgerToCsv(
     .reverse()
     .map(
       (t) =>
-        `${new Date(t.date).toLocaleDateString()},"${t.type}","${(t.description || "").replace(/"/g, '""')}",${t.type === "deposit" ? "+" : "-"}${symbol}${t.amount.toLocaleString()},"${currencyCode}"`
+        `${new Date(t.date).toLocaleDateString()},"${t.type}","${(t.description || "").replace(/"/g, '""')}",${t.type === "deposit" ? "+" : "-"}${formatAmountWithSymbol(symbol, t.amount)},"${currencyCode}"`
     )
     .join("\n");
   const csv = headers + rows;
@@ -174,7 +171,7 @@ export function DashboardV2({
   const [showCreditScoreBreakdown, setShowCreditScoreBreakdown] = useState(false);
   const tabs = currencyTabs && currencyTabs.length > 0
     ? currencyTabs
-    : [{ currencyCode: 'USD', displayName: 'USD', symbol: '$' }, { currencyCode: 'ZIG', displayName: 'ZiG', symbol: 'Z$' }, { currencyCode: 'ZAR', displayName: 'ZAR', symbol: 'R' }];
+    : [{ currencyCode: 'USD', displayName: 'USD', symbol: '$' }, { currencyCode: 'ZIG', displayName: 'ZiG', symbol: 'ZiG' }, { currencyCode: 'ZAR', displayName: 'ZAR', symbol: 'R' }];
   const selectedTab = tabs.find((t) => t.currencyCode === selectedCurrency);
   const symbol = selectedTab?.symbol ?? DEFAULT_CURRENCY_SYMBOLS[selectedCurrency] ?? '$';
   // Strict currency isolation: ledger shows ONLY transactions for selected currency (scalable)
@@ -508,7 +505,8 @@ export function DashboardV2({
                     txn.type === 'deposit' ? 'text-green-600' : 
                     txn.type === 'withdrawal' ? 'text-red-600' : 'text-slate-900'
                   }`}>
-                    {txn.type === 'deposit' ? '+' : '-'}{symbol}{txn.amount.toLocaleString()}
+                    {txn.type === "deposit" ? "+" : "-"}
+                    {formatAmountWithSymbol(symbol, txn.amount)}
                   </p>
                 </div>
               </div>

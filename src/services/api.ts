@@ -94,6 +94,8 @@ export interface Transaction {
   date: string;
   description: string;
   status?: 'pending' | 'completed' | 'failed';
+  /** Ledger currency — required for strict multi-currency isolation */
+  currency?: string;
 }
 
 export interface CreditApplication {
@@ -485,20 +487,61 @@ export async function getDashboardConfig(currency?: string): Promise<Record<stri
   }
 }
 
-/** GET /user/wallets?currency=X - Wallets filtered by currency (per-dashboard) */
-export async function getWalletsByCurrency(currency?: string): Promise<Array<{ id: string; currencyCode: string; accountNumber: string; savingsBalance: number; balance: number; approvedCreditBalance: number; activeLoanBalance: number }>> {
-  const url = currency ? `/user/wallets?currency=${encodeURIComponent(currency)}` : "/user/wallets";
-  const res = await apiCall<{ success: boolean; data: Array<{ id: string; currencyCode: string; accountNumber: string; savingsBalance: string | number; balance: string | number; approvedCreditBalance?: string; activeLoanBalance?: string }> }>(url);
-  const list = res.data ?? [];
-  return list.map((w) => ({
+type WalletApiRow = {
+  id: string;
+  currencyCode: string;
+  accountNumber: string;
+  savingsBalance?: string | number;
+  balance?: string | number;
+  approvedCreditBalance?: string | number;
+  activeLoanBalance?: string | number;
+  ledgerAccount?: {
+    savingsBalance?: string | number;
+    balance?: string | number;
+    approvedCreditBalance?: string | number;
+    activeLoanBalance?: string | number;
+  };
+};
+
+function num(v: string | number | undefined | null): number {
+  if (typeof v === "number") return v;
+  return parseFloat(String(v ?? 0)) || 0;
+}
+
+/** Normalizes flat wallet payload or legacy nested ledgerAccount (per-currency isolation). */
+function normalizeWalletRow(w: WalletApiRow): {
+  id: string;
+  currencyCode: string;
+  accountNumber: string;
+  savingsBalance: number;
+  balance: number;
+  approvedCreditBalance: number;
+  activeLoanBalance: number;
+} {
+  const la = w.ledgerAccount;
+  return {
     id: w.id,
     currencyCode: w.currencyCode,
     accountNumber: w.accountNumber,
-    savingsBalance: typeof w.savingsBalance === "number" ? w.savingsBalance : parseFloat(String(w.savingsBalance ?? 0)),
-    balance: typeof w.balance === "number" ? w.balance : parseFloat(String(w.balance ?? 0)),
-    approvedCreditBalance: typeof w.approvedCreditBalance === "number" ? w.approvedCreditBalance : parseFloat(String(w.approvedCreditBalance ?? 0)),
-    activeLoanBalance: typeof w.activeLoanBalance === "number" ? w.activeLoanBalance : parseFloat(String(w.activeLoanBalance ?? 0)),
-  }));
+    savingsBalance: num(la?.savingsBalance ?? w.savingsBalance),
+    balance: num(la?.balance ?? w.balance),
+    approvedCreditBalance: num(la?.approvedCreditBalance ?? w.approvedCreditBalance),
+    activeLoanBalance: num(la?.activeLoanBalance ?? w.activeLoanBalance),
+  };
+}
+
+/** GET /user/wallets?currency=X - Wallets filtered by currency (per-dashboard) */
+export async function getWalletsByCurrency(currency?: string): Promise<Array<{ id: string; currencyCode: string; accountNumber: string; savingsBalance: number; balance: number; approvedCreditBalance: number; activeLoanBalance: number }>> {
+  const url = currency ? `/user/wallets?currency=${encodeURIComponent(currency)}` : "/user/wallets";
+  const res = await apiCall<{ success: boolean; data: WalletApiRow[] }>(url);
+  const list = res.data ?? [];
+  return list.map(normalizeWalletRow);
+}
+
+function normalizeTxnStatus(s: string | undefined): Transaction["status"] {
+  const v = (s ?? "").toLowerCase();
+  if (v === "pending" || v === "failed") return v;
+  return "completed";
 }
 
 /** GET /wallet/transactions?currency=X - Transactions filtered by currency (per-dashboard) */
@@ -507,7 +550,21 @@ export async function getTransactionsByCurrency(currency: string, params?: { pag
   q.set("currency", currency);
   if (params?.page) q.set("page", String(params.page));
   if (params?.limit) q.set("limit", String(params.limit));
-  const res = await apiCall<{ success: boolean; data: { transactions: Array<{ id: string; type: string; amount: number; date: string; description: string; status?: string }> } }>(`/wallet/transactions?${q}`);
+  const res = await apiCall<{
+    success: boolean;
+    data: {
+      transactions: Array<{
+        id: string;
+        type: string;
+        amount: number;
+        date?: string;
+        description?: string;
+        currency?: string;
+        status?: string;
+        createdAt?: string;
+      }>;
+    };
+  }>(`/wallet/transactions?${q}`);
   const list = res.data?.transactions ?? [];
   const mapType = (s: string): Transaction["type"] => {
     const t = (s || "").toLowerCase();
@@ -520,9 +577,10 @@ export async function getTransactionsByCurrency(currency: string, params?: { pag
     id: t.id,
     type: mapType(t.type ?? ""),
     amount: t.amount,
-    date: t.date,
-    description: t.description,
-    status: (t.status as Transaction["status"]) ?? "completed",
+    date: t.date ?? t.createdAt ?? new Date().toISOString(),
+    description: t.description?.trim() || `${mapType(t.type ?? "")} (${(t.currency ?? currency).toUpperCase()})`,
+    status: normalizeTxnStatus(t.status),
+    currency: (t.currency ?? currency).toUpperCase(),
   }));
 }
 
@@ -536,17 +594,19 @@ export async function getTransactionsByCurrency(currency: string, params?: { pag
 export async function getUserProfile(currency: string = 'USD'): Promise<UserData> {
   const [profileRes, walletsRes, limitRes] = await Promise.all([
     apiCall<{ success: boolean; data: Record<string, unknown> }>('/user/profile'),
-    apiCall<{ success: boolean; data: Array<{ currencyCode: string; balance: string; accountNumber: string; savingsBalance?: string; approvedCreditBalance?: string; activeLoanBalance?: string }> }>(`/user/wallets?currency=${encodeURIComponent(currency)}`),
-    apiCall<{ success: boolean; data: { creditLimit: number; availableCredit: number; financialDisciplineScore: number } }>('/credit/limit').catch(() => ({ success: false, data: { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 } })),
+    apiCall<{ success: boolean; data: WalletApiRow[] }>("/user/wallets"),
+    apiCall<{ success: boolean; data: { creditLimit: number; availableCredit: number; financialDisciplineScore: number } }>(
+      `/credit/limit?currency=${encodeURIComponent(currency)}`
+    ).catch(() => ({ success: false, data: { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 } })),
   ]);
   const p = profileRes.data || {};
-  const wallets = walletsRes.data || [];
-  const primaryWallet = wallets.find((w) => w.currencyCode === currency) as { savingsBalance?: string; balance?: string; accountNumber?: string; approvedCreditBalance?: string; activeLoanBalance?: string } | undefined;
+  const wallets = (walletsRes.data || []).map(normalizeWalletRow);
+  const primaryWallet = wallets.find((w) => w.currencyCode === currency);
   const usdWallet = wallets.find((w) => w.currencyCode === 'USD') as { accountNumber?: string } | undefined;
   const zigWallet = wallets.find((w) => w.currencyCode === 'ZIG') as { accountNumber?: string } | undefined;
   const zarWallet = wallets.find((w) => w.currencyCode === 'ZAR') as { accountNumber?: string } | undefined;
   const limit = limitRes.data || { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 };
-  const activeCredit = parseFloat(primaryWallet?.activeLoanBalance ?? '0');
+  const activeCredit = primaryWallet?.activeLoanBalance ?? 0;
   const dobRaw = p.dateOfBirth as string | Date | undefined | null;
   const dobStr =
     dobRaw == null
@@ -568,8 +628,8 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
     email: (p.email as string) || '',
     mobile: (p.phoneNumber as string) || '',
     accountType: ((p.accountType as string) || 'student').toLowerCase(),
-    savingsBalance: parseFloat(primaryWallet?.savingsBalance ?? primaryWallet?.balance ?? '0') || 0,
-    approvedCreditWallet: parseFloat(primaryWallet?.approvedCreditBalance || '0') || 0,
+    savingsBalance: primaryWallet?.savingsBalance ?? primaryWallet?.balance ?? 0,
+    approvedCreditWallet: primaryWallet?.approvedCreditBalance ?? 0,
     activeCredit,
     availableCreditLimit: limit.availableCredit || 200,
     loanPrincipal: 0,
@@ -819,6 +879,27 @@ export async function getCreditLimits(): Promise<{
 }> {
   // TODO: Replace with actual API call
   return apiCall('/credit/limits');
+}
+
+/**
+ * GET /credit/limit?currency=
+ * Per-currency eligibility (no cross-currency aggregation).
+ */
+export async function getCreditLimitForCurrency(currency: string): Promise<{
+  creditLimit: number;
+  availableCredit: number;
+  financialDisciplineScore: number;
+}> {
+  const res = await apiCall<{
+    success: boolean;
+    data: { creditLimit: number; availableCredit: number; financialDisciplineScore: number };
+  }>(`/credit/limit?currency=${encodeURIComponent(currency)}`);
+  const d = res.data ?? { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 };
+  return {
+    creditLimit: d.creditLimit,
+    availableCredit: d.availableCredit,
+    financialDisciplineScore: d.financialDisciplineScore,
+  };
 }
 
 /**

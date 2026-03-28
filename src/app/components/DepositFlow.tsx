@@ -17,9 +17,19 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { AgentGateway } from "./AgentGateway";
+import {
+  CURRENCY_AMOUNT_SYMBOLS,
+  currencyAmountPlaceholder,
+  formatAmountWithSymbol,
+} from "@/types/wallet";
 
 interface DepositFlowProps {
   currentBalance: number;
+  /** ISO currency for labels (USD, ZIG, ZAR, …) */
+  currencyCode?: string;
+  /** Display symbol: $, R, ZiG, €, £ */
+  amountSymbol?: string;
+  amountPlaceholder?: string;
   onConfirm: (amount: number, method: string, purpose: string) => void | Promise<void>;
   onBack: () => void;
   onSuccess: () => void;
@@ -40,7 +50,18 @@ const PURPOSES = [
 
 const MOBILE_MONEY_METHODS = ["ecocash"];
 
-export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: DepositFlowProps) {
+export function DepositFlow({
+  currentBalance,
+  currencyCode = "USD",
+  amountSymbol,
+  amountPlaceholder: amountPlaceholderProp,
+  onConfirm,
+  onBack,
+  onSuccess,
+}: DepositFlowProps) {
+  const sym = amountSymbol ?? CURRENCY_AMOUNT_SYMBOLS[currencyCode] ?? currencyCode;
+  const amountPlaceholder = amountPlaceholderProp ?? currencyAmountPlaceholder(currencyCode);
+  const inputPadClass = sym.length > 2 ? "pl-24" : "pl-10";
   const [step, setStep] = useState<"details" | "mobileMoney" | "agent" | "atm-code" | "processing" | "success">("details");
   const [amount, setAmount] = useState<string>("");
   const [method, setMethod] = useState<string>("");
@@ -160,7 +181,7 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
               <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">Add Savings / Deposit</h2>
+              <h2 className="text-2xl font-black text-slate-900">Add Savings / Deposit ({currencyCode})</h2>
             </div>
 
             <div className="space-y-6">
@@ -168,13 +189,15 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
               <div className="space-y-2">
                 <Label className="font-bold text-slate-600 ml-1">Deposit Amount</Label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm sm:text-base max-w-[5rem] leading-tight">
+                    {sym}
+                  </span>
                   <Input 
                     type="number" 
                     value={amount} 
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00" 
-                    className="h-14 pl-10 text-xl font-black rounded-2xl border-slate-200"
+                    placeholder={amountPlaceholder}
+                    className={`h-14 ${inputPadClass} text-xl font-black rounded-2xl border-slate-200`}
                   />
                 </div>
               </div>
@@ -304,7 +327,8 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
               <h2 className="text-2xl font-black text-slate-900">ATM Deposit Code</h2>
             </div>
             <p className="text-slate-600 text-sm">
-              Use this code at any supported ATM to complete your deposit of ${parseFloat(amount).toLocaleString()}.
+              Use this code at any supported ATM to complete your deposit of{" "}
+              {formatAmountWithSymbol(sym, parseFloat(amount) || 0)}.
             </p>
             <div className="p-6 bg-white rounded-3xl shadow-sm border border-slate-100 space-y-4">
               <div className="flex items-center justify-between">
@@ -382,7 +406,7 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-bold text-xs uppercase">Amount</span>
-                  <span className="text-slate-900 font-black">${parseFloat(amount).toLocaleString()}</span>
+                  <span className="text-slate-900 font-black">{formatAmountWithSymbol(sym, parseFloat(amount) || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-bold text-xs uppercase">Purpose</span>
@@ -391,7 +415,9 @@ export function DepositFlow({ currentBalance, onConfirm, onBack, onSuccess }: De
                 <div className="h-[1px] bg-slate-200 my-2" />
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-bold text-xs uppercase">New Balance</span>
-                  <span className="text-emerald-600 font-black">${(currentBalance + parseFloat(amount)).toLocaleString()}</span>
+                  <span className="text-emerald-600 font-black">
+                    {formatAmountWithSymbol(sym, currentBalance + (parseFloat(amount) || 0))}
+                  </span>
                 </div>
               </div>
             </Card>

@@ -52,7 +52,7 @@ export const apiService = USE_MOCK_DATA ? {
   },
   getCurrencies: async () => [
     { currencyCode: "USD", displayName: "US Dollar", symbol: "$", status: "active", custodyType: "bank", dashboardConfig: {} },
-    { currencyCode: "ZIG", displayName: "Zimbabwe Gold (ZiG)", symbol: "Z$", status: "active", custodyType: "momo", dashboardConfig: {} },
+    { currencyCode: "ZIG", displayName: "Zimbabwe Gold (ZiG)", symbol: "Z$", status: "active", custodyType: "bank", dashboardConfig: {} },
     { currencyCode: "ZAR", displayName: "South African Rand", symbol: "R", status: "active", custodyType: "bank", dashboardConfig: {} },
   ],
   getDashboardConfig: async () => ({}),
@@ -76,6 +76,7 @@ export const apiService = USE_MOCK_DATA ? {
       availableCreditLimit: user.availableCreditLimit,
     };
   },
+  getCreditLimitForCurrency: mockApi.mockGetCreditLimitForCurrency,
   approveCreditApplication: async (id: string) => ({
     success: true,
     approvedAmount: 1000,
@@ -115,6 +116,7 @@ export const apiService = USE_MOCK_DATA ? {
   applyCreditApplication: realApi.applyCreditApplication,
   getCreditApplicationStatus: realApi.getCreditApplicationStatus,
   getCreditLimits: realApi.getCreditLimits,
+  getCreditLimitForCurrency: realApi.getCreditLimitForCurrency,
   approveCreditApplication: realApi.approveCreditApplication,
   makeRepayment: realApi.makeRepayment,
   getRepaymentSchedule: realApi.getRepaymentSchedule,

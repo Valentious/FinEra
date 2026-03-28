@@ -259,7 +259,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
             <TabsContent value="register">
               <Card className="border-slate-200 shadow-xl shadow-slate-200/50 rounded-2xl overflow-hidden">
                 <CardHeader className="space-y-1 pt-8">
-                  <CardTitle className="text-2xl font-bold text-center">Create account</CardTitle>
+                  <CardTitle className="text-2xl font-bold text-center">Create Account Profile</CardTitle>
                   <CardDescription className="text-center">
                     Join the academic financial community
                   </CardDescription>
@@ -436,7 +436,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                       disabled={showPasswordMismatch}
                       className="w-full h-12 bg-primary hover:bg-emerald-700 rounded-xl font-semibold text-lg text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Create Account
+                      Create Account Profile
                     </Button>
                   </form>
                 </CardContent>

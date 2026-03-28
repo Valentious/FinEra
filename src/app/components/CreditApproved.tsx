@@ -1,19 +1,23 @@
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { CheckCircle2, Calendar } from "lucide-react";
+import { formatAmountWithCurrency } from "@/types/wallet";
 
 interface CreditApprovedProps {
+  currencyCode: string;
   approvedAmount: number;
   repaymentSchedule: string;
   onViewWallet: () => void;
 }
 
-export function CreditApproved({ approvedAmount, repaymentSchedule, onViewWallet }: CreditApprovedProps) {
+export function CreditApproved({ currencyCode, approvedAmount, repaymentSchedule, onViewWallet }: CreditApprovedProps) {
+  const cc = currencyCode.toUpperCase();
   // Calculate fee breakdown
   const principal = approvedAmount;
-  const commission = principal * 0.02; // 2%
-  const interest = principal * 0.18; // 18%
+  const commission = principal * 0.02;
+  const interest = principal * 0.18;
   const totalCost = principal + commission + interest;
+  const fmt = (n: number) => formatAmountWithCurrency(n, cc);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
@@ -24,13 +28,13 @@ export function CreditApproved({ approvedAmount, repaymentSchedule, onViewWallet
         
         <h1 className="text-3xl text-center mb-2">Credit Approved!</h1>
         <p className="text-center text-slate-600 mb-8 font-medium">
-          Your credit has been added to your Approved Credit Wallet
+          Your credit ({cc}) has been added to your Approved Credit Wallet for this currency
         </p>
         
         <div className="space-y-6 mb-8">
           <div className="p-6 bg-green-50 rounded-lg border border-green-200">
-            <p className="text-sm text-slate-600 mb-2 font-medium">Approved Principal Amount</p>
-            <p className="text-4xl text-green-700 font-black">${principal.toFixed(2)}</p>
+            <p className="text-sm text-slate-600 mb-2 font-medium">Approved Principal Amount ({cc})</p>
+            <p className="text-4xl text-green-700 font-black">{fmt(principal)}</p>
             <p className="text-xs text-green-700 mt-2 font-bold">
               ✓ Now available in your Approved Credit Wallet
             </p>
@@ -42,19 +46,19 @@ export function CreditApproved({ approvedAmount, repaymentSchedule, onViewWallet
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-600">Principal</span>
-                <span className="font-semibold">${principal.toFixed(2)}</span>
+                <span className="font-semibold">{fmt(principal)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-600">Commission (2%)</span>
-                <span className="font-semibold">${commission.toFixed(2)}</span>
+                <span className="font-semibold">{fmt(commission)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-600">Interest (18%)</span>
-                <span className="font-semibold">${interest.toFixed(2)}</span>
+                <span className="font-semibold">{fmt(interest)}</span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-emerald-300">
                 <span className="font-semibold text-slate-700">Active Credit Balance</span>
-                <span className="font-bold text-emerald-700">${totalCost.toFixed(2)}</span>
+                <span className="font-bold text-emerald-700">{fmt(totalCost)}</span>
               </div>
             </div>
             <p className="text-xs text-slate-500 mt-2">

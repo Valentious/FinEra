@@ -11,6 +11,38 @@ Production-grade backend for FinEra Inclusive Credit platform.
 - **Auth**: JWT (access + refresh tokens)
 - **Security**: bcrypt, Helmet, rate limiting, Zod validation
 
+## Architecture
+
+### System layers
+
+| Layer | Location | Role |
+|--------|----------|------|
+| **Presentation** | Repository root `src/` (React/Vite frontend) | UI, client-side validation, calls HTTP APIs only |
+| **Application** | `backend-core/` — `src/api-gateway/` + `src/services/*` | Business rules, orchestration, credit scoring, ledger flows |
+| **Data** | PostgreSQL + Prisma (`prisma/schema.prisma`, `src/infrastructure/database/`) | Persistent storage; access goes through Prisma in services |
+
+### Inside the backend: gateway vs services
+
+- **`src/api-gateway/`** (communication layer): HTTP server entry (`server.ts`), Express app (`app.ts`), route mounting, global middleware (CORS, Helmet, rate limits), health/readiness. This is the **only** process entry point for `npm run dev` / `npm start`.
+- **`src/services/*`** (logic tier): Domain behavior grouped by bounded context:
+  - `auth-service/` — authentication, sessions, OTP
+  - `user-service/` — profile, KYC uploads, reference/registration data
+  - `credit-engine/` — scoring, limits, loans, interest; `domain/` holds pure engines
+  - `ledger-service/` — wallets, transactions, currencies, FX, fraud middleware
+  - `admin-service/` — notifications, learning, partner program
+
+Shared cross-cutting code stays at `src/` scope: `middlewares/`, `infrastructure/`, `config/`, `core/`, `shared/`, `types/`, `constants/`.
+
+### Boundaries and scaling
+
+- **Target rule:** services do not import another service’s *internal* modules; communicate via **HTTP APIs** (or a message bus) when split into separate deployables. Today the repo may still ship as one Node process for velocity; treat direct imports between services as **technical debt** to replace with API calls when you extract containers.
+- **Database:** Prisma client usage should remain in the service that owns that aggregate; avoid ad hoc SQL scattered outside `infrastructure` + service repositories.
+
+### Docker (current vs target)
+
+- **Current:** `docker-compose.yml` runs **PostgreSQL** and **Redis** for local development. The API runs on the host via `npm run dev` (or your process manager).
+- **Target (multi-container):** one image per service (`api-gateway`, each `*-service`), **api-gateway** as the only public port (e.g. `4000`), internal URLs for service-to-service calls, shared `DATABASE_URL` / secrets via env. Add Dockerfiles per service when you split the monolith; until then, a single backend image building `dist/api-gateway/server.js` remains valid.
+
 ## Quick Start
 
 ### 1. Install Dependencies
@@ -117,23 +149,21 @@ backend-core/
 │   ├── schema.prisma
 │   └── seed.ts
 ├── src/
+│   ├── api-gateway/          # HTTP entry: app.ts, server.ts
+│   ├── services/
+│   │   ├── auth-service/
+│   │   ├── user-service/
+│   │   ├── credit-engine/
+│   │   ├── ledger-service/
+│   │   └── admin-service/
 │   ├── config/
 │   ├── constants/
 │   ├── core/
-│   │   ├── database/
-│   │   └── utils/
+│   ├── infrastructure/       # Prisma / DB connection
 │   ├── middlewares/
-│   ├── modules/
-│   │   ├── auth/
-│   │   ├── credit/
-│   │   ├── kyc/
-│   │   ├── notifications/
-│   │   ├── security/
-│   │   ├── transactions/
-│   │   └── users/
+│   ├── shared/
 │   ├── types/
-│   ├── app.ts
-│   └── server.ts
+│   └── test/
 ├── .env.example
 ├── package.json
 └── tsconfig.json

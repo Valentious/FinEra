@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "FinEra Inclusive Credit - Production Backend",
   "type": "module",
-  "main": "dist/server.js",
+  "main": "dist/api-gateway/server.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch src/server.ts",
-    "start": "node dist/server.js",
+    "dev": "tsx watch src/api-gateway/server.ts",
+    "start": "node dist/api-gateway/server.js",
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:migrate": "npx prisma migrate dev",
@@ -18,7 +18,7 @@
     "setup:verify": "powershell -ExecutionPolicy Bypass -File ./scripts/verify-stack.ps1",
     "test:db": "npx tsx src/test/verify-database.ts",
     "test:integration": "powershell -ExecutionPolicy Bypass -File ./scripts/test-full-stack.ps1",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:security": "npm run test -- --run security",
     "test:load": "artillery quick --count 10 -n 20 http://localhost:4000/health"
