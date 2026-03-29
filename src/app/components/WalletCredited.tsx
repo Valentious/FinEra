@@ -36,7 +36,7 @@ export function WalletCredited({ currencyCode, amount, onWithdrawFunds, onViewRe
 
         <div className="space-y-3">
           <Button onClick={onWithdrawFunds} className="w-full" size="lg">
-            Withdraw Funds
+            Cash Out
           </Button>
           <Button onClick={onViewRepayment} variant="outline" className="w-full" size="lg">
             View Repayment Plan ({cc})

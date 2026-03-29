@@ -204,7 +204,7 @@ export function PerformancePortfolioChart({
     return (
       <div className="rounded-2xl bg-slate-900 p-8 text-center">
         <p className="text-slate-400 font-medium">No portfolio data yet.</p>
-        <p className="text-slate-500 text-sm mt-2">Deposits and withdrawals will populate the chart.</p>
+        <p className="text-slate-500 text-sm mt-2">Cash in and cash out will populate the chart.</p>
       </div>
     );
   }
@@ -223,7 +223,7 @@ export function PerformancePortfolioChart({
         </div>
         <div className="flex items-center gap-2">
           <DollarSign className="w-4 h-4 text-slate-500" />
-          <span className="text-slate-400 text-sm">Net deposits</span>
+          <span className="text-slate-400 text-sm">Net cash in</span>
           <span className={`font-black ${metrics.netDeposits >= 0 ? "text-emerald-400" : "text-red-400"}`}>
             {metrics.netDeposits >= 0 ? "+" : ""}
             {currencySymbol}

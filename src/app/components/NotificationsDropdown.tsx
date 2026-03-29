@@ -41,9 +41,9 @@ const TYPE_COLORS: Record<NotifType, string> = {
 
 // Mock data - replace with GET /api/notifications
 const MOCK_NOTIFICATIONS: Notification[] = [
-  { id: "1", type: "transaction", title: "Deposit Confirmed", message: "Your deposit of $500 has been credited.", date: new Date().toISOString(), read: false },
+  { id: "1", type: "transaction", title: "Cash In Confirmed", message: "Your cash in of $500 has been credited.", date: new Date().toISOString(), read: false },
   { id: "2", type: "repayment", title: "Loan Repayment Reminder", message: "Your next payment of $120 is due in 7 days (D-7).", date: new Date().toISOString(), read: false },
-  { id: "3", type: "feature", title: "New Payment Method", message: "EcoCash and OneMoney are now available for deposits.", date: new Date().toISOString(), read: true },
+  { id: "3", type: "feature", title: "New Payment Method", message: "EcoCash and OneMoney are now available for cash in.", date: new Date().toISOString(), read: true },
   { id: "4", type: "system", title: "Scheduled Maintenance", message: "Platform maintenance on March 20, 2:00 AM - 4:00 AM.", date: new Date().toISOString(), read: true },
 ];
 

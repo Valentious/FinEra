@@ -50,7 +50,7 @@ export function SavingsWallet({
               <p className="text-2xl">{formatAmountWithCurrency(lockedSavings, cc)}</p>
             </div>
             <div>
-              <p className="text-sm opacity-90">Available to withdraw</p>
+              <p className="text-sm opacity-90">Available to cash out</p>
               <p className="text-2xl">{formatAmountWithCurrency(availableSavings, cc)}</p>
             </div>
           </div>
@@ -97,7 +97,7 @@ export function SavingsWallet({
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Button size="lg" onClick={onAddSavings} className="h-14">
-            Deposit to wallet
+            Cash In to wallet
           </Button>
           <Button 
             size="lg" 
@@ -106,7 +106,7 @@ export function SavingsWallet({
             className="h-14"
             disabled={availableSavings === 0}
           >
-            Withdraw Available Funds
+            Cash Out Available Funds
           </Button>
         </div>
       </div>

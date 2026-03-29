@@ -31,7 +31,7 @@ const ONBOARDING_STEPS = [
   { step: 4, title: "Go Live", desc: "Start appearing on the platform's nearby agent map." },
 ];
 
-const SERVICE_OPTIONS = ["Deposits", "Withdrawals", "Loan Support", "Payment Assistance"];
+const SERVICE_OPTIONS = ["Cash In", "Cash Out", "Loan Support", "Payment Assistance"];
 
 export function PartnerProgram() {
   const [status, setStatus] = useState<"NOT_APPLIED" | "PENDING" | "APPROVED" | "REJECTED">("NOT_APPLIED");
@@ -181,7 +181,7 @@ export function PartnerProgram() {
             <Users className="w-10 h-10 text-emerald-600 mb-6" />
             <h3 className="text-xl font-black text-slate-900 mb-2">Become an Agent</h3>
             <p className="text-slate-500 text-sm font-medium mb-6">
-              Earn commissions by facilitating deposits and withdrawals for your community.
+              Earn commissions by facilitating cash in and cash out for your community.
             </p>
             {status === "NOT_APPLIED" && (
               <Button

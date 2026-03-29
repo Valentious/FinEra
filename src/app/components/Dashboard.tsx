@@ -36,7 +36,7 @@ interface DashboardProps {
   availableCreditLimit: number;
   onApplyForCredit: () => void;
   onAddSavings: () => void;
-  onViewSavings: () => void;
+  onWithdrawFunds: () => void;
   onViewRepayment: () => void;
   transactions: any[];
 }
@@ -58,7 +58,7 @@ export function Dashboard({
   availableCreditLimit,
   onApplyForCredit,
   onAddSavings,
-  onViewSavings,
+  onWithdrawFunds,
   onViewRepayment,
   transactions
 }: DashboardProps) {
@@ -124,10 +124,10 @@ export function Dashboard({
             </div>
             <div className="mt-6 flex gap-2">
               <Button size="sm" className="bg-white text-emerald-600 hover:bg-emerald-50 font-black flex-1 h-10 rounded-xl" onClick={onAddSavings}>
-                Deposit
+                Cash In
               </Button>
-              <Button size="sm" variant="ghost" className="bg-white/10 hover:bg-white/20 text-white font-black flex-1 h-10 rounded-xl" onClick={onViewSavings}>
-                Details
+              <Button size="sm" variant="ghost" className="bg-white/10 hover:bg-white/20 text-white font-black flex-1 h-10 rounded-xl" onClick={onWithdrawFunds}>
+                Cash Out
               </Button>
             </div>
           </Card>
@@ -238,7 +238,7 @@ export function Dashboard({
                   <Info className="w-8 h-8 text-slate-300" />
                 </div>
                 <p className="text-slate-500 font-medium">No ledger activity found.</p>
-                <Button variant="link" onClick={onAddSavings} className="text-emerald-600 font-bold">Initiate first deposit</Button>
+                <Button variant="link" onClick={onAddSavings} className="text-emerald-600 font-bold">Start with Cash In</Button>
               </div>
             )}
           </div>

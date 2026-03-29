@@ -147,7 +147,7 @@ export function AccountCreationSuccess({
               <h4 className="text-sm font-black text-amber-900 mb-2">📌 Account Purpose</h4>
               <p className="text-sm text-amber-800 leading-relaxed">
                 All currency-specific account numbers displayed enable you to access loans in your preferred currency. 
-                These accounts support deposits, withdrawals, loan repayments, and payments within the FinEra Inclusive Financial Ecosystem Platform.
+                These accounts support cash in, cash out, loan repayments, and payments within the FinEra Inclusive Financial Ecosystem Platform.
               </p>
             </div>
 

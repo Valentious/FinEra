@@ -111,7 +111,7 @@ export function WalletManagement({
                   </div>
                   <div className="px-3 py-1.5 bg-amber-500/90 text-white text-xs font-black rounded-full backdrop-blur-md uppercase tracking-wide flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />
-                    Non-Withdrawable
+                    No direct cash out
                   </div>
                 </div>
                 
@@ -159,7 +159,7 @@ export function WalletManagement({
                   </div>
                   <div className="px-3 py-1.5 bg-green-900/40 text-white text-xs font-black rounded-full backdrop-blur-md uppercase tracking-wide flex items-center gap-1">
                     <CheckCircle className="w-3 h-3" />
-                    Withdrawable
+                    Cash out ready
                   </div>
                 </div>
                 
@@ -174,7 +174,7 @@ export function WalletManagement({
                   <div className="flex items-center gap-2 text-sm">
                     <Info className="w-4 h-4 text-green-200" />
                     <p className="text-green-100 font-medium">
-                      Available for withdrawal & deposit
+                      Available for cash out & cash in
                     </p>
                   </div>
                   
@@ -184,14 +184,14 @@ export function WalletManagement({
                       variant="outline"
                       className="bg-white/10 text-white hover:bg-white/20 border-white/30 h-10 rounded-xl font-black backdrop-blur-md"
                     >
-                      Deposit
+                      Cash In
                     </Button>
                     <Button
                       onClick={onWithdraw}
                       disabled={walletBalance === 0}
                       className="bg-white text-green-600 hover:bg-green-50 h-10 rounded-xl font-black"
                     >
-                      Withdraw
+                      Cash Out
                     </Button>
                   </div>
                 </div>
@@ -245,14 +245,14 @@ export function WalletManagement({
           </motion.div>
         )}
 
-        {/* Withdrawal & Deposit Methods */}
+        {/* Cash Out & Cash In Methods */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
           <Card className="p-6 border-slate-200">
-            <h3 className="text-lg font-black text-slate-900 mb-4">Withdrawal & Deposit Methods</h3>
+            <h3 className="text-lg font-black text-slate-900 mb-4">Cash Out & Cash In Methods</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
@@ -263,7 +263,7 @@ export function WalletManagement({
                   <h4 className="font-black text-slate-900">ATM Access</h4>
                 </div>
                 <p className="text-sm text-slate-600 font-medium mb-2">
-                  Withdraw or deposit funds at any SFIS-affiliated ATM
+                  Cash out or cash in at any SFIS-affiliated ATM
                 </p>
                 <p className="text-xs text-slate-500">
                   Available 24/7 • No fees for first 3 transactions/month
@@ -297,11 +297,11 @@ export function WalletManagement({
                 Wallet System Rules
               </p>
               <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
-                <li>Approved Credit Wallet funds cannot be withdrawn directly</li>
+                <li>Approved Credit Wallet funds cannot be cashed out directly</li>
                 <li>Transfer from Approved Credit → {walletLabel} to access funds</li>
                 <li>For Essential & Business Credit: Maintain 20% minimum wallet balance</li>
                 <li>Emergency Credit: No minimum wallet balance requirement</li>
-                <li>Withdrawal restrictions apply if the requirement is not met</li>
+                <li>Cash out restrictions apply if the requirement is not met</li>
               </ul>
             </div>
           </div>
@@ -329,7 +329,7 @@ export function WalletManagement({
                 Transfer to {walletLabel}
               </h3>
               <p className="text-sm text-slate-600 font-medium mb-6">
-                Move funds from your Approved Credit Wallet to make them withdrawable
+                Move funds from your Approved Credit Wallet to make them available for cash out
               </p>
 
               <div className="space-y-4 mb-6">

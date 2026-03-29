@@ -79,7 +79,6 @@ interface DashboardV2Props {
   displayAccountNumber?: string;
   onApplyForCredit: () => void;
   onAddSavings: () => void;
-  onViewSavings: () => void;
   onViewRepayment: () => void;
   onWithdrawFunds: () => void;
   onMakePayment?: () => void;
@@ -162,7 +161,6 @@ export function DashboardV2({
   displayAccountNumber,
   onApplyForCredit,
   onAddSavings,
-  onViewSavings,
   onViewRepayment,
   onWithdrawFunds,
   onMakePayment,
@@ -288,10 +286,10 @@ export function DashboardV2({
             </div>
             <div className="mt-6 flex gap-2">
               <Button size="sm" className="bg-white text-emerald-600 hover:bg-emerald-50 font-black flex-1 h-10 rounded-xl" onClick={onAddSavings}>
-                Deposit
+                Cash In
               </Button>
-              <Button size="sm" variant="ghost" className="bg-white/10 hover:bg-white/20 text-white font-black flex-1 h-10 rounded-xl" onClick={onViewSavings}>
-                Details
+              <Button size="sm" variant="ghost" className="bg-white/10 hover:bg-white/20 text-white font-black flex-1 h-10 rounded-xl" onClick={onWithdrawFunds}>
+                Cash Out
               </Button>
             </div>
           </Card>
@@ -525,11 +523,11 @@ export function DashboardV2({
                 <div className="p-4 bg-slate-50 rounded-full mb-4">
                   <Info className="w-8 h-8 text-slate-300" />
                 </div>
-                <p className="text-slate-500 font-medium">No {selectedCurrency} ledger activity yet. Deposit to this account to see transactions.</p>
+                <p className="text-slate-500 font-medium">No {selectedCurrency} ledger activity yet. Use Cash In to add funds and see transactions.</p>
                 {onMakePayment ? (
                   <Button variant="link" onClick={onMakePayment} className="text-emerald-600 font-bold">Make Payment</Button>
                 ) : (
-                  <Button variant="link" onClick={onAddSavings} className="text-emerald-600 font-bold">Initiate first deposit</Button>
+                  <Button variant="link" onClick={onAddSavings} className="text-emerald-600 font-bold">Start with Cash In</Button>
                 )}
               </div>
             )}

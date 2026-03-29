@@ -748,11 +748,6 @@ export default function App() {
             displayAccountNumber={displayAccountNumber}
             onApplyForCredit={() => setCurrentScreen("memberAgreement")}
             onAddSavings={() => setCurrentScreen("depositFlow")}
-            onViewSavings={() => {
-              const approved = (walletForCurrency?.approvedCreditBalance ?? userData.approvedCreditWallet) > 0;
-              if (approved) setCurrentScreen("walletManagement");
-              else setCurrentScreen("savingsWallet");
-            }}
             onViewRepayment={() => setCurrentScreen("repaymentDashboard")}
             onWithdrawFunds={() => setCurrentScreen("withdrawFlow")}
             onMakePayment={() => setCurrentScreen("makePayment")}
@@ -823,7 +818,7 @@ export default function App() {
                 await apiService.withdrawFunds({ amount, method, currency: selectedCurrency });
                 await refreshUserData();
               } catch (err) {
-                toast.error(err instanceof Error ? err.message : 'Withdrawal failed');
+                toast.error(err instanceof Error ? err.message : 'Cash out failed');
                 throw err;
               }
             }}
@@ -843,7 +838,7 @@ export default function App() {
                 await apiService.depositFunds({ amount, method, purpose, currency: selectedCurrency });
                 await refreshUserData();
               } catch (err) {
-                toast.error(err instanceof Error ? err.message : 'Deposit failed');
+                toast.error(err instanceof Error ? err.message : 'Cash in failed');
                 throw err;
               }
             }}

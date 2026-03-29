@@ -37,7 +37,7 @@ interface WithdrawFlowProps {
 
 const METHODS = [
   { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
-  { id: "atm", label: "ATM Cardless Withdrawal", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
+  { id: "atm", label: "ATM Cardless Cash Out", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
   { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
 ];
 
@@ -153,7 +153,7 @@ export function WithdrawFlow({
       setAtmExpiry(expiry);
       
       setStep("atm-code");
-      toast.success("ATM withdrawal code generated successfully");
+      toast.success("ATM cash out code generated successfully");
     }, 1500);
   };
 
@@ -193,7 +193,7 @@ export function WithdrawFlow({
               <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">Withdraw Funds ({currencyCode})</h2>
+              <h2 className="text-2xl font-black text-slate-900">Cash Out ({currencyCode})</h2>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
@@ -205,7 +205,7 @@ export function WithdrawFlow({
             </div>
 
             <div className="space-y-3">
-              <p className="text-sm font-bold text-slate-500">Select Withdrawal Method</p>
+              <p className="text-sm font-bold text-slate-500">Select Cash Out Method</p>
               {METHODS.map((method) => (
                 <button
                   key={method.id}
@@ -268,7 +268,7 @@ export function WithdrawFlow({
                 onClick={handleWithdraw}
                 className="w-full h-14 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-lg font-bold"
               >
-                Confirm Withdrawal
+                Confirm Cash Out
               </Button>
             </div>
           </motion.div>
@@ -287,7 +287,7 @@ export function WithdrawFlow({
             </Button>
             <h2 className="text-xl font-black text-slate-900">Recipient Details</h2>
             <p className="text-slate-600 text-sm">
-              Enter the phone number or account to receive the withdrawal via {METHODS.find(m => m.id === selectedMethod)?.label}
+              Enter the phone number or account to receive this cash out via {METHODS.find(m => m.id === selectedMethod)?.label}
             </p>
             <div className="space-y-2">
               <Label>Phone / Account Number</Label>
@@ -317,7 +317,7 @@ export function WithdrawFlow({
             </Button>
             <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200">
               <p className="text-sm font-bold text-amber-900">
-                Enter the confirmation code sent to your device to complete withdrawal.
+                Enter the confirmation code sent to your device to complete cash out.
               </p>
             </div>
             <div className="space-y-2">
@@ -335,7 +335,7 @@ export function WithdrawFlow({
               disabled={confirmCode.length !== 6}
               className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-black disabled:opacity-50"
             >
-              Complete Withdrawal
+              Complete Cash Out
             </Button>
           </motion.div>
         )}
@@ -375,7 +375,7 @@ export function WithdrawFlow({
               <Button variant="ghost" size="icon" onClick={() => setStep("amount")} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">ATM Withdrawal Code</h2>
+              <h2 className="text-2xl font-black text-slate-900">ATM Cash Out Code</h2>
             </div>
 
             <div className="space-y-4">
@@ -404,7 +404,7 @@ export function WithdrawFlow({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Banknote className="w-5 h-5 text-amber-600" />
-                    <p className="text-sm font-bold text-slate-500">ATM Withdrawal Code</p>
+                    <p className="text-sm font-bold text-slate-500">ATM Cash Out Code</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Copy className="w-5 h-5 text-slate-500 cursor-pointer" onClick={() => copyToClipboard(atmCode, 'code')} />
@@ -439,7 +439,7 @@ export function WithdrawFlow({
                 onClick={completeATMWithdrawal}
                 className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-bold"
               >
-                Complete Withdrawal
+                Complete Cash Out
               </Button>
             </div>
           </motion.div>
@@ -472,7 +472,7 @@ export function WithdrawFlow({
               <CheckCircle2 className="w-16 h-16" />
             </div>
             <div>
-              <h2 className="text-3xl font-black text-slate-900">Withdrawal Successful</h2>
+              <h2 className="text-3xl font-black text-slate-900">Cash Out Successful</h2>
               <p className="text-slate-500 font-medium mt-2">Your money is on its way!</p>
             </div>
 

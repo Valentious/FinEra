@@ -37,7 +37,7 @@ interface DepositFlowProps {
 
 const METHODS = [
   { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
-  { id: "atm", label: "ATM Cardless Deposit", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
+  { id: "atm", label: "ATM Cardless Cash In", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
   { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
 ];
 
@@ -85,12 +85,12 @@ export function DepositFlow({
     }
 
     if (!method) {
-      toast.error("Select a deposit method");
+      toast.error("Select a cash in method");
       return;
     }
 
     if (!purpose) {
-      toast.error("Select purpose of deposit");
+      toast.error("Select purpose of cash in");
       return;
     }
 
@@ -145,7 +145,7 @@ export function DepositFlow({
       setAtmReference(`DEP${Date.now().toString().slice(-8)}`);
       setAtmExpiry(new Date(Date.now() + 30 * 60 * 1000));
       setStep("atm-code");
-      toast.success("ATM deposit code generated successfully");
+      toast.success("ATM cash in code generated successfully");
     }, 1500);
   };
 
@@ -181,13 +181,13 @@ export function DepositFlow({
               <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">Deposit to wallet ({currencyCode})</h2>
+              <h2 className="text-2xl font-black text-slate-900">Cash In to wallet ({currencyCode})</h2>
             </div>
 
             <div className="space-y-6">
               {/* Amount Input */}
               <div className="space-y-2">
-                <Label className="font-bold text-slate-600 ml-1">Deposit Amount</Label>
+                <Label className="font-bold text-slate-600 ml-1">Cash In Amount</Label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm sm:text-base max-w-[5rem] leading-tight">
                     {sym}
@@ -204,7 +204,7 @@ export function DepositFlow({
 
               {/* Method Selection */}
               <div className="space-y-3">
-                <Label className="font-bold text-slate-600 ml-1">Select Deposit Method</Label>
+                <Label className="font-bold text-slate-600 ml-1">Select Cash In Method</Label>
                 <div className="grid grid-cols-1 gap-2">
                   {METHODS.map((m) => (
                     <button
@@ -228,7 +228,7 @@ export function DepositFlow({
 
               {/* Purpose Selection */}
               <div className="space-y-3">
-                <Label className="font-bold text-slate-600 ml-1">Purpose of Deposit</Label>
+                <Label className="font-bold text-slate-600 ml-1">Purpose of Cash In</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {PURPOSES.map((p) => (
                     <button
@@ -249,7 +249,7 @@ export function DepositFlow({
                 disabled={loading}
                 className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-bold shadow-xl shadow-emerald-200 disabled:opacity-50"
               >
-                {loading ? "Processing..." : "Confirm Deposit"}
+                {loading ? "Processing..." : "Confirm Cash In"}
               </Button>
             </div>
           </motion.div>
@@ -266,7 +266,7 @@ export function DepositFlow({
             <Button variant="ghost" size="sm" onClick={() => setStep("details")}>
               ← Back
             </Button>
-            <h3 className="text-xl font-black text-slate-900">Mobile Money Deposit</h3>
+            <h3 className="text-xl font-black text-slate-900">Mobile Money Cash In</h3>
             <p className="text-slate-600 text-sm">
               {METHODS.find(m => m.id === method)?.label} - Enter the phone number linked to your account
             </p>
@@ -324,17 +324,17 @@ export function DepositFlow({
               <Button variant="ghost" size="icon" onClick={() => setStep("details")} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">ATM Deposit Code</h2>
+              <h2 className="text-2xl font-black text-slate-900">ATM Cash In Code</h2>
             </div>
             <p className="text-slate-600 text-sm">
-              Use this code at any supported ATM to complete your deposit of{" "}
+              Use this code at any supported ATM to complete your cash in of{" "}
               {formatAmountWithSymbol(sym, parseFloat(amount) || 0)}.
             </p>
             <div className="p-6 bg-white rounded-3xl shadow-sm border border-slate-100 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Banknote className="w-5 h-5 text-amber-600" />
-                  <p className="text-sm font-bold text-slate-500">ATM Deposit Code</p>
+                  <p className="text-sm font-bold text-slate-500">ATM Cash In Code</p>
                 </div>
                 <button onClick={() => copyToClipboard(atmCode, 'code')} className="flex items-center gap-2">
                   <Copy className="w-5 h-5 text-slate-500 cursor-pointer" />
@@ -360,7 +360,7 @@ export function DepositFlow({
               onClick={completeATMDeposit}
               className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-bold"
             >
-              I've Completed My Deposit
+              I've Completed My Cash In
             </Button>
           </motion.div>
         )}
@@ -398,7 +398,7 @@ export function DepositFlow({
               <CheckCircle2 className="w-16 h-16" />
             </div>
             <div>
-              <h2 className="text-3xl font-black text-slate-900">Deposit Successful</h2>
+              <h2 className="text-3xl font-black text-slate-900">Cash In Successful</h2>
               <p className="text-slate-500 font-medium mt-2">Your funds have been added to your wallet.</p>
             </div>
 

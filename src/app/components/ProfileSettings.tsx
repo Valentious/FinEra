@@ -634,7 +634,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-600">Daily Withdrawal Limit</Label>
+                    <Label className="text-xs font-bold text-slate-600">Daily Cash Out Limit</Label>
                     <Input type="number" defaultValue="500" className="h-11 rounded-xl" />
                   </div>
                   <div className="space-y-2">
@@ -785,7 +785,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                     </div>
                     <div>
                       <CardTitle className="text-lg">Payment Methods</CardTitle>
-                      <CardDescription>Manage your deposit and withdrawal options</CardDescription>
+                      <CardDescription>Manage your cash in and cash out options</CardDescription>
                     </div>
                   </div>
                 </CardHeader>

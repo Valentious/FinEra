@@ -33,7 +33,7 @@ export function QuickActionsScreen({
         )}
         <div>
           <h1 className="text-2xl font-black text-slate-900">Quick Actions</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Deposit, withdraw, repay, or make payments</p>
+          <p className="text-slate-500 text-sm mt-0.5">Cash in, cash out, repay, or make payments</p>
         </div>
       </div>
 
@@ -45,7 +45,7 @@ export function QuickActionsScreen({
               className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-xl font-black"
             >
               <Plus className="w-6 h-6" />
-              <span>Deposit to wallet</span>
+              <span>Cash In to wallet</span>
             </Button>
           </motion.div>
 
@@ -55,7 +55,7 @@ export function QuickActionsScreen({
               className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white rounded-2xl shadow-xl font-black"
             >
               <ArrowDown className="w-6 h-6" />
-              <span>Withdraw Funds</span>
+              <span>Cash Out</span>
             </Button>
           </motion.div>
 
