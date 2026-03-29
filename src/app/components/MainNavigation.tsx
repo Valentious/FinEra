@@ -62,7 +62,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
         </div>
 
         <div className="flex items-center gap-4">
-          <NotificationsDropdown />
+          <NotificationsDropdown onNavigate={onNavigate} />
           <div className="h-8 w-[1px] bg-slate-500/50 mx-1" />
           <div className="flex items-center gap-2 pl-2">
             <div className="text-right hidden sm:block">

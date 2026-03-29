@@ -18,7 +18,9 @@ import type {
   DepositRequest,
   WithdrawalRequest,
   RepaymentRequest,
-  CreditApplication
+  CreditApplication,
+  NotificationItem,
+  NotificationListPayload,
 } from './api';
 import { getWalletLabel } from '@/types/wallet';
 
@@ -483,6 +485,8 @@ export async function mockWithdrawFunds(data: WithdrawalRequest): Promise<{ tran
 export async function mockTransferCreditToSavings(amount: number, currency: string = 'USD'): Promise<{
   approvedCreditWallet: number;
   balance: number;
+  fee: number;
+  netCredited: number;
   transaction: Transaction;
   currency: string;
   walletLabel: string;
@@ -505,17 +509,20 @@ export async function mockTransferCreditToSavings(amount: number, currency: stri
     throw new Error('Insufficient funds in Approved Credit Wallet');
   }
 
+  const fee = Math.round(amount * 0.015 * 100) / 100;
+  const net = Math.round((amount - fee) * 100) / 100;
+
   const prevBal = getWalletBalance(user, c);
-  const newBal = prevBal + amount;
+  const newBal = prevBal + net;
   setWalletBalance(user, c, newBal);
   setApprovedCreditForCurrency(user, c, approved - amount);
 
   const transaction: Transaction & { currency?: string } = {
     id: 'TXN' + Date.now(),
     type: 'deposit',
-    amount,
+    amount: net,
     date: new Date().toISOString(),
-    description: 'Transfer from Approved Credit to FinCash wallet',
+    description: `Transfer from Approved Credit to FinCash wallet (1.5% commission ${fee.toFixed(2)} ${c})`,
     status: 'completed',
   };
   (transaction as { currency?: string }).currency = c;
@@ -525,6 +532,8 @@ export async function mockTransferCreditToSavings(amount: number, currency: stri
   return {
     approvedCreditWallet: getApprovedCreditForCurrency(user, c),
     balance: newBal,
+    fee,
+    netCredited: net,
     transaction: transaction as Transaction,
     currency: c,
     walletLabel: getWalletLabel(c),
@@ -817,6 +826,118 @@ export async function mockGetFinancialMetrics(): Promise<{
     creditTier,
     sfisTier,
   };
+}
+
+const MOCK_NOTIF_KEY = 'finera_mock_in_app_notifications_v1';
+
+function seedMockNotifications(): NotificationItem[] {
+  const now = new Date();
+  return [
+    {
+      id: 'mock-n1',
+      type: 'TRANSACTION',
+      priority: 'MEDIUM',
+      title: 'Cash in confirmed',
+      message: 'Your deposit was credited to your FinCash wallet. Funds are available for use.',
+      isRead: false,
+      createdAt: new Date(now.getTime() - 3600000).toISOString(),
+      actionUrl: null,
+    },
+    {
+      id: 'mock-n2',
+      type: 'LOAN_REMINDER',
+      priority: 'HIGH',
+      title: 'Repayment reminder',
+      message: 'Your next loan instalment is due soon. Pay on time to protect your discipline score.',
+      isRead: false,
+      createdAt: new Date(now.getTime() - 86400000 * 2).toISOString(),
+      actionUrl: 'app:repaymentDashboard',
+    },
+    {
+      id: 'mock-n3',
+      type: 'SYSTEM_ALERT',
+      priority: 'MEDIUM',
+      title: 'Security tip',
+      message: 'Never share your OTP or FinEra credentials. We will never ask for your password by phone.',
+      isRead: true,
+      readAt: new Date(now.getTime() - 86400000 * 3).toISOString(),
+      createdAt: new Date(now.getTime() - 86400000 * 4).toISOString(),
+      actionUrl: null,
+    },
+    {
+      id: 'mock-n4',
+      type: 'LEARNING_NUDGE',
+      priority: 'LOW',
+      title: 'Learning Hub',
+      message: 'New module: understanding interest and APR. Strengthen your financial literacy in minutes.',
+      isRead: true,
+      readAt: new Date(now.getTime() - 86400000 * 5).toISOString(),
+      createdAt: new Date(now.getTime() - 86400000 * 6).toISOString(),
+      actionUrl: 'app:financialEducation',
+    },
+  ];
+}
+
+function loadMockNotifications(): NotificationItem[] {
+  try {
+    const raw = localStorage.getItem(MOCK_NOTIF_KEY);
+    if (!raw) {
+      const seeded = seedMockNotifications();
+      localStorage.setItem(MOCK_NOTIF_KEY, JSON.stringify(seeded));
+      return seeded;
+    }
+    const parsed = JSON.parse(raw) as NotificationItem[];
+    return Array.isArray(parsed) ? parsed : seedMockNotifications();
+  } catch {
+    return seedMockNotifications();
+  }
+}
+
+function saveMockNotifications(list: NotificationItem[]) {
+  localStorage.setItem(MOCK_NOTIF_KEY, JSON.stringify(list));
+}
+
+export async function mockGetNotifications(): Promise<{
+  success: boolean;
+  data?: NotificationListPayload;
+  message?: string;
+}> {
+  await delay(220);
+  const notifications = loadMockNotifications();
+  return {
+    success: true,
+    data: {
+      notifications,
+      pagination: {
+        page: 1,
+        limit: 50,
+        total: notifications.length,
+        totalPages: 1,
+      },
+    },
+  };
+}
+
+export async function mockMarkNotificationRead(id: string): Promise<{ success: boolean; message?: string }> {
+  await delay(120);
+  const list = loadMockNotifications();
+  const idx = list.findIndex((n) => n.id === id);
+  if (idx === -1) return { success: false, message: 'Notification not found' };
+  const now = new Date().toISOString();
+  list[idx] = { ...list[idx], isRead: true, readAt: now };
+  saveMockNotifications(list);
+  return { success: true, message: 'Marked as read' };
+}
+
+export async function mockMarkAllNotificationsRead(): Promise<{ success: boolean; message?: string }> {
+  await delay(180);
+  const list = loadMockNotifications().map((n) => ({
+    ...n,
+    isRead: true,
+    readAt: n.readAt ?? new Date().toISOString(),
+  }));
+  saveMockNotifications(list);
+  return { success: true, message: 'All marked as read' };
 }
 
 export async function mockGetAdminOverview(): Promise<{

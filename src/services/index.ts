@@ -91,6 +91,11 @@ export const apiService = USE_MOCK_DATA ? {
   // Financial Metrics
   getFinancialMetrics: mockApi.mockGetFinancialMetrics,
 
+  // Notifications (in-app inbox; mirrors ledger / credit / security events from backend)
+  getNotifications: mockApi.mockGetNotifications,
+  markNotificationRead: mockApi.mockMarkNotificationRead,
+  markAllNotificationsRead: mockApi.mockMarkAllNotificationsRead,
+
   // Admin
   getAdminOverview: mockApi.mockGetAdminOverview,
   getAllUsers: async () => ({ users: [], total: 0, page: 1, totalPages: 1 }),
@@ -121,12 +126,24 @@ export const apiService = USE_MOCK_DATA ? {
   makeRepayment: realApi.makeRepayment,
   getRepaymentSchedule: realApi.getRepaymentSchedule,
   getFinancialMetrics: realApi.getFinancialMetrics,
+  getNotifications: realApi.getNotifications,
+  markNotificationRead: realApi.markNotificationRead,
+  markAllNotificationsRead: realApi.markAllNotificationsRead,
   getAdminOverview: realApi.getAdminOverview,
   getAllUsers: realApi.getAllUsers,
 };
 
 // Export types
-export type { UserData, Transaction, CreditApplication, FinEraAccountNumbers, BankLinkingData, CurrencyConfig } from './api';
+export type {
+  UserData,
+  Transaction,
+  CreditApplication,
+  FinEraAccountNumbers,
+  BankLinkingData,
+  CurrencyConfig,
+  NotificationItem,
+  NotificationListPayload,
+} from './api';
 export { checkBackendHealth } from './api';
 
 // Export default

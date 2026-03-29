@@ -2,6 +2,13 @@ import { useState } from "react";
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { Progress } from "@/app/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/components/ui/select";
 import { 
   Wallet,
   CreditCard, 
@@ -200,42 +207,52 @@ export function DashboardV2({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-12">
-      {/* Dynamic Currency Dashboard Selector - Each currency = independent dashboard */}
-      {onCurrencyChange && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-bold text-slate-600">Dashboard:</span>
-          <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl">
-            {tabs.map((tab) => (
-              <button
-                key={tab.currencyCode}
-                onClick={() => onCurrencyChange(tab.currencyCode as CurrencyOption)}
-                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
-                  selectedCurrency === tab.currencyCode
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {tab.displayName} Dashboard
-              </button>
-            ))}
-          </div>
-          {displayAccountNumber && (
-            <span className="text-xs text-slate-500 font-medium ml-2">
-              Acc: {displayAccountNumber}
-            </span>
-          )}
-          {custodyLabel && (
-            <span className="text-xs text-slate-400 ml-2">• {custodyLabel}</span>
-          )}
+      {/* Greeting + dashboard currency — same row (global pattern: locale/currency next to identity) */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-3xl font-black text-slate-900">Welcome, {userName}</h1>
+          <p className="mt-0.5 text-sm font-medium text-slate-500">
+            Empowering your financial literacy journey.
+          </p>
+          {displayAccountNumber ? (
+            <p className="mt-2 text-xs font-medium text-slate-400">Account · {displayAccountNumber}</p>
+          ) : null}
         </div>
-      )}
 
-      {/* 1️⃣ Greeting Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900">Hello, {userName}</h1>
-          <p className="text-slate-500 font-medium text-sm">Empowering your financial literacy journey.</p>
-        </div>
+        {onCurrencyChange ? (
+          <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:min-w-[min(100%,280px)] sm:items-end">
+            <span
+              id="dashboard-currency-label"
+              className="text-[10px] font-black uppercase tracking-widest text-slate-500 sm:text-right"
+            >
+              Dashboard currency
+            </span>
+            <Select
+              value={selectedCurrency}
+              onValueChange={(v) => onCurrencyChange(v as CurrencyOption)}
+            >
+              <SelectTrigger
+                aria-labelledby="dashboard-currency-label"
+                className="h-11 w-full border-emerald-200 bg-white font-bold text-slate-900 shadow-sm hover:bg-emerald-50/90 focus:ring-emerald-500/25 sm:min-w-[260px]"
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <Coins className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                  <SelectValue placeholder="Select currency" />
+                </div>
+              </SelectTrigger>
+              <SelectContent align="end" className="border-emerald-100">
+                {tabs.map((tab) => (
+                  <SelectItem key={tab.currencyCode} value={tab.currencyCode}>
+                    {tab.currencyCode} — {tab.displayName} ({tab.symbol})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {custodyLabel ? (
+              <p className="text-[10px] font-medium text-slate-400 sm:text-right">{custodyLabel}</p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {/* 2️⃣ Primary Financial Overview */}

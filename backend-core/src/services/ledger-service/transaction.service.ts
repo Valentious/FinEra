@@ -130,8 +130,12 @@ export async function processTransfer(
   });
 }
 
+/** Commission on moving funds from Approved Credit → FinCash wallet (same currency). */
+const APPROVED_CREDIT_TO_WALLET_FEE_RATE = new Decimal("0.015");
+
 /**
  * Transfer from approved credit to user's FinCash wallet (same currency). Atomic.
+ * Charges 1.5% commission on the gross amount moved from approved credit; net is credited to the wallet.
  */
 export async function processTransferCreditToWallet(
   userId: string,
@@ -140,6 +144,8 @@ export async function processTransferCreditToWallet(
 ): Promise<{
   approvedCreditWallet: number;
   balance: number;
+  fee: number;
+  netCredited: number;
   transaction: { id: string; type: string; amount: number; date: string; description: string };
 }> {
   return prisma.$transaction(async (tx) => {
@@ -156,6 +162,10 @@ export async function processTransferCreditToWallet(
       );
     }
 
+    const gross = new Decimal(amount);
+    const fee = gross.mul(APPROVED_CREDIT_TO_WALLET_FEE_RATE).toDecimalPlaces(8, Decimal.ROUND_HALF_UP);
+    const netToWallet = gross.sub(fee);
+
     const reference = generateReference();
 
     const [txn] = await Promise.all([
@@ -165,22 +175,26 @@ export async function processTransferCreditToWallet(
           walletId: wallet.id,
           reference,
           transactionType: "TRANSFER",
-          amount: new Decimal(amount),
-          fee: new Decimal(0),
-          netAmount: new Decimal(amount),
+          amount: gross,
+          fee,
+          netAmount: netToWallet,
           currency,
           status: "COMPLETED",
           completedAt: new Date(),
-          metadata: { type: "credit_to_wallet" } as object,
+          metadata: {
+            type: "credit_to_wallet",
+            commissionRate: 0.015,
+            grossFromApprovedCredit: Number(gross),
+          } as object,
         },
       }),
       tx.wallet.update({
         where: { id: wallet.id },
         data: {
-          approvedCreditBalance: { decrement: amount },
-          savingsBalance: { increment: amount },
-          balance: { increment: amount },
-          availableBalance: { increment: amount },
+          approvedCreditBalance: { decrement: gross },
+          savingsBalance: { increment: netToWallet },
+          balance: { increment: netToWallet },
+          availableBalance: { increment: netToWallet },
           lastTransactionAt: new Date(),
         },
       }),
@@ -191,15 +205,20 @@ export async function processTransferCreditToWallet(
       select: { balance: true, approvedCreditBalance: true },
     });
 
+    const feeNum = Number(fee);
+    const netNum = Number(netToWallet);
+
     return {
       approvedCreditWallet: Number(updated?.approvedCreditBalance ?? 0),
       balance: Number(updated?.balance ?? 0),
+      fee: feeNum,
+      netCredited: netNum,
       transaction: {
         id: txn.id,
         type: "deposit",
-        amount,
+        amount: netNum,
         date: txn.completedAt?.toISOString() ?? new Date().toISOString(),
-        description: "Transfer from Approved Credit to FinCash wallet",
+        description: `Transfer from Approved Credit to FinCash wallet (1.5% commission ${feeNum.toFixed(2)} ${currency})`,
       },
     };
   });

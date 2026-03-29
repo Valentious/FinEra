@@ -14,7 +14,8 @@ import {
   Clock,
   Shield,
   Copy,
-  Check
+  Check,
+  CreditCard,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
@@ -23,10 +24,16 @@ import {
   CURRENCY_AMOUNT_SYMBOLS,
   currencyAmountPlaceholder,
   formatAmountWithSymbol,
+  getWalletLabel,
 } from "@/types/wallet";
+
+/** Same rate as backend `processTransferCreditToWallet` (Approved Credit → FinCash). */
+export const APPROVED_CREDIT_TO_WALLET_FEE_RATE = 0.015;
 
 interface WithdrawFlowProps {
   balance: number;
+  /** Approved credit available for this dashboard currency (USD / ZiG / ZAR, etc.) */
+  approvedCreditBalance?: number;
   currencyCode?: string;
   amountSymbol?: string;
   amountPlaceholder?: string;
@@ -36,6 +43,12 @@ interface WithdrawFlowProps {
 }
 
 const METHODS = [
+  {
+    id: "approved_credit",
+    label: "From Approved Credit Wallet",
+    icon: <CreditCard className="w-5 h-5" />,
+    color: "bg-violet-50 text-violet-700",
+  },
   { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
   { id: "atm", label: "ATM Cardless Cash Out", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
   { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
@@ -43,6 +56,7 @@ const METHODS = [
 
 export function WithdrawFlow({
   balance,
+  approvedCreditBalance = 0,
   currencyCode = "USD",
   amountSymbol,
   amountPlaceholder: amountPlaceholderProp,
@@ -53,7 +67,17 @@ export function WithdrawFlow({
   const sym = amountSymbol ?? CURRENCY_AMOUNT_SYMBOLS[currencyCode] ?? currencyCode;
   const amountPlaceholder = amountPlaceholderProp ?? currencyAmountPlaceholder(currencyCode);
   const inputPadClass = sym.length > 2 ? "pl-24" : "pl-12";
-  const [step, setStep] = useState<"method" | "amount" | "recipient" | "confirmCode" | "agent" | "atm-code" | "processing" | "success">("method");
+  const [step, setStep] = useState<
+    | "method"
+    | "approvedCreditAmount"
+    | "amount"
+    | "recipient"
+    | "confirmCode"
+    | "agent"
+    | "atm-code"
+    | "processing"
+    | "success"
+  >("method");
   const [selectedMethod, setSelectedMethod] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [recipientDetails, setRecipientDetails] = useState<string>("");
@@ -69,9 +93,47 @@ export function WithdrawFlow({
   const MOBILE_METHODS = ["ecocash"];
   const needsConfirmCode = MOBILE_METHODS.includes(selectedMethod);
 
+  const grossAmount = parseFloat(amount) || 0;
+  const approvedCreditFee =
+    Math.round(grossAmount * APPROVED_CREDIT_TO_WALLET_FEE_RATE * 100) / 100;
+  const approvedCreditNet = Math.round((grossAmount - approvedCreditFee) * 100) / 100;
+
   const handleMethodSelect = (methodId: string) => {
+    if (methodId === "approved_credit") {
+      if (approvedCreditBalance <= 0) {
+        toast.error("No balance in Approved Credit Wallet for this currency");
+        return;
+      }
+      setSelectedMethod(methodId);
+      setAmount("");
+      setStep("approvedCreditAmount");
+      return;
+    }
     setSelectedMethod(methodId);
+    setAmount("");
     setStep("amount");
+  };
+
+  const handleApprovedCreditTransfer = () => {
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+    if (numAmount > approvedCreditBalance) {
+      toast.error("Amount exceeds your Approved Credit balance");
+      return;
+    }
+    setStep("processing");
+    const run = async () => {
+      try {
+        await Promise.resolve(onConfirm(numAmount, "approved_credit"));
+        setStep("success");
+      } catch {
+        setStep("approvedCreditAmount");
+      }
+    };
+    setTimeout(run, 600);
   };
 
   const handleWithdraw = () => {
@@ -206,23 +268,143 @@ export function WithdrawFlow({
 
             <div className="space-y-3">
               <p className="text-sm font-bold text-slate-500">Select Cash Out Method</p>
-              {METHODS.map((method) => (
-                <button
-                  key={method.id}
-                  onClick={() => handleMethodSelect(method.id)}
-                  className="w-full flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-emerald-600 hover:shadow-lg hover:shadow-emerald-50 transition-all group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl ${method.color}`}>
-                      {method.icon}
+              {METHODS.map((method) => {
+                const disabled = method.id === "approved_credit" && approvedCreditBalance <= 0;
+                return (
+                  <button
+                    key={method.id}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => handleMethodSelect(method.id)}
+                    className={`w-full flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl transition-all text-left group ${
+                      disabled
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:border-emerald-600 hover:shadow-lg hover:shadow-emerald-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className={`p-3 rounded-xl shrink-0 ${method.color}`}>{method.icon}</div>
+                      <div>
+                        <span
+                          className={`font-bold text-slate-700 block ${
+                            disabled ? "" : "group-hover:text-emerald-600"
+                          }`}
+                        >
+                          {method.label}
+                        </span>
+                        {method.id === "approved_credit" && (
+                          <span className="text-xs text-slate-500 font-medium">
+                            Move to {getWalletLabel(currencyCode)} — 1.5% commission
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <span className="font-bold text-slate-700 group-hover:text-emerald-600">{method.label}</span>
+                    <div
+                      className={`w-6 h-6 rounded-full border-2 border-slate-100 flex items-center justify-center transition-all shrink-0 ${
+                        disabled ? "" : "group-hover:border-emerald-600 group-hover:bg-emerald-600"
+                      }`}
+                    >
+                      <div
+                        className={`w-2 h-2 rounded-full bg-white ${
+                          disabled ? "" : "opacity-0 group-hover:opacity-100"
+                        }`}
+                      />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {step === "approvedCreditAmount" && (
+          <motion.div
+            key="approvedCreditAmount"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => setStep("method")} className="rounded-full">
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <h2 className="text-2xl font-black text-slate-900">Approved Credit → FinCash ({currencyCode})</h2>
+            </div>
+
+            <p className="text-sm text-slate-600 font-medium leading-relaxed">
+              Move funds from your <strong>Approved Credit Wallet</strong> into your{" "}
+              <strong>{getWalletLabel(currencyCode)}</strong> (internal wallet). You can then cash out via Ecocash,
+              ATM, or agent. A <strong>1.5% commission</strong> applies on the amount moved.
+            </p>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Available in Approved Credit</p>
+              <p className="text-2xl font-black text-slate-900">{formatAmountWithSymbol(sym, approvedCreditBalance)}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-6 bg-violet-600 rounded-3xl text-white">
+                <p className="text-violet-100 text-sm font-medium">Amount to move (gross)</p>
+                <div className="relative mt-4">
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl sm:text-4xl font-black text-violet-200 max-w-[5rem] leading-none">
+                    {sym}
+                  </span>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder={amountPlaceholder}
+                    className={`w-full bg-transparent border-none text-white text-5xl font-black focus:ring-0 placeholder:text-violet-300 ${inputPadClass}`}
+                    autoFocus
+                  />
+                </div>
+                <div className="mt-6 flex justify-between items-center pt-6 border-t border-white/10">
+                  <p className="text-xs font-bold text-violet-200">MAX: {formatAmountWithSymbol(sym, approvedCreditBalance)}</p>
+                  <button
+                    type="button"
+                    onClick={() => setAmount(approvedCreditBalance.toString())}
+                    className="text-xs font-black bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full"
+                  >
+                    MAX
+                  </button>
+                </div>
+              </div>
+
+              {parseFloat(amount) > 0 && !isNaN(parseFloat(amount)) && (
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-sm">
+                  <div className="flex justify-between font-bold text-slate-700">
+                    <span>Commission (1.5%)</span>
+                    <span>
+                      {formatAmountWithSymbol(
+                        sym,
+                        Math.round(parseFloat(amount) * APPROVED_CREDIT_TO_WALLET_FEE_RATE * 100) / 100
+                      )}
+                    </span>
                   </div>
-                  <div className="w-6 h-6 rounded-full border-2 border-slate-100 group-hover:border-emerald-600 group-hover:bg-emerald-600 flex items-center justify-center transition-all">
-                    <div className="w-2 h-2 rounded-full bg-white opacity-0 group-hover:opacity-100" />
+                  <div className="flex justify-between font-black text-emerald-700">
+                    <span>Credited to {getWalletLabel(currencyCode)}</span>
+                    <span>
+                      {formatAmountWithSymbol(
+                        sym,
+                        Math.round(
+                          (parseFloat(amount) -
+                            Math.round(parseFloat(amount) * APPROVED_CREDIT_TO_WALLET_FEE_RATE * 100) / 100) *
+                            100
+                        ) / 100
+                      )}
+                    </span>
                   </div>
-                </button>
-              ))}
+                </div>
+              )}
+
+              <Button
+                type="button"
+                onClick={handleApprovedCreditTransfer}
+                className="w-full h-14 bg-violet-700 hover:bg-violet-800 text-white rounded-2xl text-lg font-bold"
+              >
+                Confirm move to FinCash
+              </Button>
             </div>
           </motion.div>
         )}
@@ -457,7 +639,11 @@ export function WithdrawFlow({
               <Loader2 className="w-24 h-24 text-emerald-600 animate-spin absolute top-0 left-0" />
             </div>
             <h3 className="text-2xl font-black mt-8 text-slate-900">Processing...</h3>
-            <p className="text-slate-500 font-medium mt-2">Moving your funds securely.</p>
+            <p className="text-slate-500 font-medium mt-2">
+              {selectedMethod === "approved_credit"
+                ? `Moving funds from Approved Credit to your ${getWalletLabel(currencyCode)}…`
+                : "Moving your funds securely."}
+            </p>
           </motion.div>
         )}
 
@@ -472,25 +658,53 @@ export function WithdrawFlow({
               <CheckCircle2 className="w-16 h-16" />
             </div>
             <div>
-              <h2 className="text-3xl font-black text-slate-900">Cash Out Successful</h2>
-              <p className="text-slate-500 font-medium mt-2">Your money is on its way!</p>
+              <h2 className="text-3xl font-black text-slate-900">
+                {selectedMethod === "approved_credit" ? "Transfer complete" : "Cash Out Successful"}
+              </h2>
+              <p className="text-slate-500 font-medium mt-2">
+                {selectedMethod === "approved_credit"
+                  ? `Your ${getWalletLabel(currencyCode)} has been credited (after 1.5% commission).`
+                  : "Your money is on its way!"}
+              </p>
             </div>
 
             <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 rounded-3xl bg-slate-50 text-left">
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold text-xs uppercase">Amount</span>
-                  <span className="text-slate-900 font-black">{formatAmountWithSymbol(sym, parseFloat(amount) || 0)}</span>
-                </div>
+                {selectedMethod === "approved_credit" ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400 font-bold text-xs uppercase">Amount moved (gross)</span>
+                      <span className="text-slate-900 font-black">{formatAmountWithSymbol(sym, grossAmount)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400 font-bold text-xs uppercase">Commission (1.5%)</span>
+                      <span className="text-slate-900 font-bold">−{formatAmountWithSymbol(sym, approvedCreditFee)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400 font-bold text-xs uppercase">Credited to FinCash</span>
+                      <span className="text-emerald-700 font-black">{formatAmountWithSymbol(sym, approvedCreditNet)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-bold text-xs uppercase">Amount</span>
+                    <span className="text-slate-900 font-black">{formatAmountWithSymbol(sym, grossAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-slate-400 font-bold text-xs uppercase">Method</span>
                   <span className="text-slate-900 font-bold">{METHODS.find(m => m.id === selectedMethod)?.label}</span>
                 </div>
                 <div className="h-[1px] bg-slate-200 my-2" />
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold text-xs uppercase">Updated Balance</span>
+                  <span className="text-slate-400 font-bold text-xs uppercase">Updated FinCash balance</span>
                   <span className="text-emerald-600 font-black">
-                    {formatAmountWithSymbol(sym, balance - (parseFloat(amount) || 0))}
+                    {formatAmountWithSymbol(
+                      sym,
+                      selectedMethod === "approved_credit"
+                        ? balance + approvedCreditNet
+                        : balance - grossAmount
+                    )}
                   </span>
                 </div>
               </div>

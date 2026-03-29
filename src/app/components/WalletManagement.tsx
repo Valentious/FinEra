@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
-import { Progress } from "@/app/components/ui/progress";
 import { 
   ArrowLeft, 
   Info, 
@@ -10,19 +9,18 @@ import {
   ArrowRight,
   CheckCircle,
   AlertTriangle,
-  Banknote,
-  Smartphone
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { formatAmountWithCurrency } from "@/types/wallet";
+
+const APPROVED_CREDIT_TRANSFER_FEE = 0.015;
 
 interface WalletManagementProps {
   currencyCode: string;
   walletLabel: string;
   approvedCreditWallet: number;
   walletBalance: number;
-  activeCredit: number;
   onTransferToSavings: (amount: number) => void;
   onAddSavings: () => void;
   onWithdraw: () => void;
@@ -34,7 +32,6 @@ export function WalletManagement({
   walletLabel,
   approvedCreditWallet,
   walletBalance,
-  activeCredit,
   onTransferToSavings,
   onAddSavings,
   onWithdraw,
@@ -44,39 +41,28 @@ export function WalletManagement({
   const [transferAmount, setTransferAmount] = useState<string>("");
   const [showTransferModal, setShowTransferModal] = useState(false);
 
-  // Calculate 20% minimum savings requirement for active credit
-  const minimumSavingsRequired = activeCredit > 0 ? activeCredit * 0.2 : 0;
-  const savingsRequirementMet = walletBalance >= minimumSavingsRequired;
-  const savingsProgressPercentage = minimumSavingsRequired > 0 
-    ? Math.min((walletBalance / minimumSavingsRequired) * 100, 100) 
-    : 100;
-
   const handleTransfer = () => {
-    const amount = parseFloat(transferAmount);
-    
-    if (!amount || amount <= 0) {
+    const gross = parseFloat(transferAmount);
+
+    if (!gross || gross <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
 
-    if (amount > approvedCreditWallet) {
+    if (gross > approvedCreditWallet) {
       toast.error("Transfer amount exceeds approved credit wallet balance");
       return;
     }
 
-    // Check if transfer would violate 20% savings requirement
-    const newWalletBalance = walletBalance + amount;
-    if (activeCredit > 0 && newWalletBalance < minimumSavingsRequired) {
-      toast.error(
-        `You must maintain at least ${formatAmountWithCurrency(minimumSavingsRequired, cc)} in ${walletLabel} (20% of loan amount)`
-      );
-      return;
-    }
+    const fee = Math.round(gross * APPROVED_CREDIT_TRANSFER_FEE * 100) / 100;
+    const netToWallet = Math.round((gross - fee) * 100) / 100;
 
-    onTransferToSavings(amount);
+    onTransferToSavings(gross);
     setTransferAmount("");
     setShowTransferModal(false);
-    toast.success(`${formatAmountWithCurrency(amount, cc)} transferred to ${walletLabel}`);
+    toast.success(
+      `${formatAmountWithCurrency(netToWallet, cc)} credited to ${walletLabel} (${formatAmountWithCurrency(fee, cc)} commission)`
+    );
   };
 
   return (
@@ -200,94 +186,6 @@ export function WalletManagement({
           </motion.div>
         </div>
 
-        {/* Savings Requirement Progress (if active credit exists) */}
-        {activeCredit > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Card className={`p-6 ${savingsRequirementMet ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-              <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-xl ${savingsRequirementMet ? 'bg-green-100' : 'bg-red-100'}`}>
-                  {savingsRequirementMet ? (
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  ) : (
-                    <AlertTriangle className="w-6 h-6 text-red-600" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-black text-slate-900 mb-2">
-                    {savingsRequirementMet ? 'Collateral requirement met ✓' : 'Minimum wallet balance required'}
-                  </h3>
-                  <p className="text-sm text-slate-600 font-medium mb-4">
-                    You must maintain at least{" "}
-                    <span className="font-black">{formatAmountWithCurrency(minimumSavingsRequired, cc)}</span> (20% of your loan) in {walletLabel}.
-                  </p>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs font-black text-slate-600">
-                      <span>Current: {formatAmountWithCurrency(walletBalance, cc)}</span>
-                      <span>{savingsProgressPercentage.toFixed(0)}% of Required</span>
-                    </div>
-                    <Progress value={savingsProgressPercentage} className="h-3" />
-                    
-                    {!savingsRequirementMet && (
-                      <p className="text-xs text-red-600 font-bold mt-2 flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" />
-                        You need {formatAmountWithCurrency(Math.max(0, minimumSavingsRequired - walletBalance), cc)} more to meet the requirement
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-        )}
-
-        {/* Cash Out & Cash In Methods */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <Card className="p-6 border-slate-200">
-            <h3 className="text-lg font-black text-slate-900 mb-4">Cash Out & Cash In Methods</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-emerald-100 rounded-lg">
-                    <Banknote className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <h4 className="font-black text-slate-900">ATM Access</h4>
-                </div>
-                <p className="text-sm text-slate-600 font-medium mb-2">
-                  Cash out or cash in at any SFIS-affiliated ATM
-                </p>
-                <p className="text-xs text-slate-500">
-                  Available 24/7 • No fees for first 3 transactions/month
-                </p>
-              </div>
-
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Smartphone className="w-5 h-5 text-green-600" />
-                  </div>
-                  <h4 className="font-black text-slate-900">Mobile Wallet</h4>
-                </div>
-                <p className="text-sm text-slate-600 font-medium mb-2">
-                  Transfer to M-Pesa, Airtel Money, or other mobile wallets
-                </p>
-                <p className="text-xs text-slate-500">
-                  Instant transfer • 1% transaction fee applies
-                </p>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
         {/* Important Information */}
         <Card className="p-4 bg-amber-50 border-amber-200">
           <div className="flex gap-3">
@@ -299,9 +197,6 @@ export function WalletManagement({
               <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
                 <li>Approved Credit Wallet funds cannot be cashed out directly</li>
                 <li>Transfer from Approved Credit → {walletLabel} to access funds</li>
-                <li>For Essential & Business Credit: Maintain 20% minimum wallet balance</li>
-                <li>Emergency Credit: No minimum wallet balance requirement</li>
-                <li>Cash out restrictions apply if the requirement is not met</li>
               </ul>
             </div>
           </div>
@@ -329,7 +224,7 @@ export function WalletManagement({
                 Transfer to {walletLabel}
               </h3>
               <p className="text-sm text-slate-600 font-medium mb-6">
-                Move funds from your Approved Credit Wallet to make them available for cash out
+                Move funds from your Approved Credit Wallet into your FinCash wallet (USD, ZiG, ZAR, etc.). A 1.5% commission applies on each transfer.
               </p>
 
               <div className="space-y-4 mb-6">
@@ -369,12 +264,30 @@ export function WalletManagement({
                   </button>
                 </div>
 
-                {activeCredit > 0 && (
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                    <p className="text-xs text-amber-800 font-medium flex items-center gap-2">
-                      <Info className="w-4 h-4" />
-                      Remember: You must maintain at least {formatAmountWithCurrency(minimumSavingsRequired, cc)} in {walletLabel}
-                    </p>
+                {transferAmount && parseFloat(transferAmount) > 0 && (
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm space-y-1">
+                    <div className="flex justify-between font-bold text-slate-700">
+                      <span>Commission (1.5%)</span>
+                      <span>
+                        {formatAmountWithCurrency(
+                          Math.round(parseFloat(transferAmount) * APPROVED_CREDIT_TRANSFER_FEE * 100) / 100,
+                          cc
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-black text-emerald-700">
+                      <span className="uppercase text-xs tracking-wide">You receive in {walletLabel}</span>
+                      <span>
+                        {formatAmountWithCurrency(
+                          Math.round(
+                            (parseFloat(transferAmount) -
+                              Math.round(parseFloat(transferAmount) * APPROVED_CREDIT_TRANSFER_FEE * 100) / 100) *
+                              100
+                          ) / 100,
+                          cc
+                        )}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>

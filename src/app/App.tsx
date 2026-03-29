@@ -663,7 +663,14 @@ export default function App() {
 
       <AccountSwitchOverlay />
 
-      <main className={`${isAuthScreen ? "pt-20 md:pl-64 p-4 md:p-8" : ""}`}>
+      <main
+        className={
+          isAuthScreen
+            ? // Fixed header is h-16 (4rem). Never use p-* / md:p-* on all sides — it overrides padding-top (~32px on md) and hides content under the bar.
+              "pt-[max(calc(4rem+1.5rem),calc(env(safe-area-inset-top,0px)+4rem+1rem))] md:pl-64 px-4 pb-6 md:px-8 md:pb-8"
+            : ""
+        }
+      >
         <AppErrorBoundary onReset={() => setCurrentScreen("dashboard")}>
         {currentScreen === "splash" && <SplashScreen onComplete={() => setCurrentScreen("accountType")} />}
         {currentScreen === "accountType" && <AccountTypeSelection onSelectType={handlePreSelectAccountType} onBack={() => setCurrentScreen("splash")} />}
@@ -788,7 +795,6 @@ export default function App() {
             walletLabel={walletForCurrency?.walletLabel ?? getWalletLabel(selectedCurrency)}
             approvedCreditWallet={walletForCurrency?.approvedCreditBalance ?? userData.approvedCreditWallet}
             walletBalance={walletForCurrency?.balance ?? userData.walletBalance}
-            activeCredit={activeCreditForTab}
             onTransferToSavings={async (amount) => {
               try {
                 await apiService.transferCreditToSavings(amount, selectedCurrency);
@@ -810,12 +816,17 @@ export default function App() {
         {currentScreen === "withdrawFlow" && (
           <WithdrawFlow
             balance={walletForCurrency?.balance ?? userData.walletBalance}
+            approvedCreditBalance={walletForCurrency?.approvedCreditBalance ?? userData.approvedCreditWallet ?? 0}
             currencyCode={selectedCurrency}
             amountSymbol={CURRENCY_AMOUNT_SYMBOLS[selectedCurrency] ?? selectedCurrency}
             amountPlaceholder={currencyAmountPlaceholder(selectedCurrency)}
             onConfirm={async (amount, method) => {
               try {
-                await apiService.withdrawFunds({ amount, method, currency: selectedCurrency });
+                if (method === "approved_credit") {
+                  await apiService.transferCreditToSavings(amount, selectedCurrency);
+                } else {
+                  await apiService.withdrawFunds({ amount, method, currency: selectedCurrency });
+                }
                 await refreshUserData();
               } catch (err) {
                 toast.error(err instanceof Error ? err.message : 'Cash out failed');

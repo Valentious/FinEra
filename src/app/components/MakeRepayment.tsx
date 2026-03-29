@@ -286,7 +286,10 @@ export function MakeRepayment({
                 You are about to repay{" "}
                 <span className="font-black text-slate-900">{formatAmountWithCurrency(parseFloat(amount) || 0, cc)}</span>{" "}
                 ({cc}) using{" "}
-                <span className="font-bold text-emerald-600">{LOCAL_METHODS.find((m) => m.id === selectedMethod)?.label}</span>.
+                <span className="font-bold text-emerald-600">
+                  {localMethods.find((m) => m.id === selectedMethod)?.label ?? selectedMethod}
+                </span>
+                .
               </p>
 
               <div className="space-y-3">

@@ -770,6 +770,8 @@ export async function withdrawFunds(data: WithdrawalRequest): Promise<{ transact
 export async function transferCreditToSavings(amount: number, currency: string = 'USD'): Promise<{
   approvedCreditWallet: number;
   balance: number;
+  fee?: number;
+  netCredited?: number;
   transaction: Transaction;
   currency?: string;
   walletLabel?: string;
@@ -779,6 +781,8 @@ export async function transferCreditToSavings(amount: number, currency: string =
     data: {
       approvedCreditWallet: number;
       balance: number;
+      fee?: number;
+      netCredited?: number;
       transaction: Transaction;
       currency?: string;
       walletLabel?: string;
@@ -1197,21 +1201,60 @@ export async function uploadKycDocument(
 }
 
 // ==================== NOTIFICATIONS API ====================
+/** Aligns with Prisma `Notification` + `NotificationType` from backend-core */
 
 export interface NotificationItem {
   id: string;
   type: string;
+  priority?: string;
   title: string;
   message: string;
-  date: string;
-  read: boolean;
+  isRead: boolean;
+  createdAt: string;
+  readAt?: string | null;
+  actionUrl?: string | null;
 }
 
-export async function getNotifications(): Promise<ApiResponse<NotificationItem[]>> {
+export interface NotificationListPayload {
+  notifications: NotificationItem[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export async function getNotifications(params?: {
+  page?: number;
+  limit?: number;
+  unreadOnly?: boolean;
+}): Promise<{ success: boolean; message?: string; data?: NotificationListPayload }> {
   try {
-    return await apiCall('/notifications');
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set("page", String(params.page));
+    if (params?.limit != null) q.set("limit", String(params.limit));
+    if (params?.unreadOnly) q.set("unreadOnly", "true");
+    const qs = q.toString();
+    return await apiCall(`/notifications${qs ? `?${qs}` : ""}`);
   } catch (e) {
-    return { success: false, message: e instanceof Error ? e.message : 'Failed to load notifications', data: [] };
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : "Failed to load notifications",
+    };
+  }
+}
+
+export async function markNotificationRead(
+  id: string
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    return await apiCall(`/notifications/${encodeURIComponent(id)}/read`, { method: "PUT" });
+  } catch (e) {
+    return { success: false, message: e instanceof Error ? e.message : "Failed to update notification" };
+  }
+}
+
+export async function markAllNotificationsRead(): Promise<{ success: boolean; message?: string }> {
+  try {
+    return await apiCall(`/notifications/read-all`, { method: "PUT" });
+  } catch (e) {
+    return { success: false, message: e instanceof Error ? e.message : "Failed to mark all as read" };
   }
 }
 
@@ -1511,4 +1554,7 @@ export default {
   getFinancialMetrics,
   getAdminOverview,
   getAllUsers,
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
 };
