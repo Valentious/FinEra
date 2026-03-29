@@ -13,6 +13,8 @@ import {
 
 interface CreditDetailsProps {
   currencyCode: string;
+  /** e.g. FinCash USD Wallet — matches active dashboard currency */
+  walletLabel: string;
   isWalletLoading: boolean;
   walletError: string | null;
   creditLimitLoading: boolean;
@@ -29,6 +31,7 @@ interface CreditDetailsProps {
 
 export function CreditDetails({
   currencyCode,
+  walletLabel,
   isWalletLoading,
   walletError,
   creditLimitLoading,
@@ -143,12 +146,12 @@ export function CreditDetails({
             </div>
 
             <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-slate-600 font-medium">Savings Requirement</span>
+              <span className="text-slate-600 font-medium">Wallet balance rule</span>
               <span className="font-black">{savingsCheckApplies ? "20% of loan" : "Not required"}</span>
             </div>
 
             <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-slate-600 font-medium">Your Current Savings ({cc})</span>
+              <span className="text-slate-600 font-medium">Your {walletLabel} ({cc})</span>
               <span className="font-black text-green-600">{formatAmountWithCurrency(currentSavings, cc)}</span>
             </div>
           </div>
@@ -178,7 +181,7 @@ export function CreditDetails({
               <p className="text-sm text-slate-500 font-medium">
                 Maximum allowed: {formatAmountWithCurrency(maxAmount, cc)}
                 {savingsCheckApplies &&
-                  ` (Based on your savings: ${formatAmountWithCurrency(Math.min(maxAllowedLoan, maxAmount), cc)})`}
+                  ` (Based on ${walletLabel}: ${formatAmountWithCurrency(Math.min(maxAllowedLoan, maxAmount), cc)})`}
               </p>
             </div>
 
@@ -199,7 +202,7 @@ export function CreditDetails({
                     </div>
                     <div className="flex-1">
                       <h4 className="font-black text-slate-900 mb-2">
-                        {savingsMet && !amountExceedsLimit ? "Savings Check Passed ✓" : "Savings Requirement Check"}
+                        {savingsMet && !amountExceedsLimit ? "Wallet balance check passed ✓" : "Wallet balance requirement"}
                       </h4>
 
                       <div className="space-y-3">
@@ -209,13 +212,13 @@ export function CreditDetails({
                             <span className="font-black">{formatAmountWithCurrency(requestedAmount, cc)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-slate-600 font-medium">Required Savings (20%):</span>
+                            <span className="text-slate-600 font-medium">Required in wallet (20%):</span>
                             <span className="font-black text-emerald-600">
                               {formatAmountWithCurrency(requiredSavings, cc)}
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-slate-600 font-medium">Your Current Savings:</span>
+                            <span className="text-slate-600 font-medium">Your current balance:</span>
                             <span
                               className={`font-black ${currentSavings >= requiredSavings ? "text-green-600" : "text-red-600"}`}
                             >
@@ -226,7 +229,7 @@ export function CreditDetails({
 
                         <div>
                           <div className="flex justify-between text-xs font-bold text-slate-600 mb-1">
-                            <span>Savings Progress</span>
+                            <span>Progress toward 20%</span>
                             <span>{Math.min((currentSavings / requiredSavings) * 100, 100).toFixed(0)}%</span>
                           </div>
                           <Progress
@@ -240,7 +243,7 @@ export function CreditDetails({
                             <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
                             <div>
                               <p className="text-sm text-red-800 font-bold">
-                                Your selected loan amount exceeds allowed limit based on your current savings.
+                                Your selected loan amount exceeds the limit based on your current {walletLabel} balance.
                               </p>
                               <p className="text-xs text-red-700 mt-1">
                                 Maximum loan you can request: {formatAmountWithCurrency(maxAllowedLoan, cc)}
@@ -253,7 +256,7 @@ export function CreditDetails({
                           <div className="flex items-start gap-2 p-3 bg-amber-100 rounded-lg">
                             <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                             <p className="text-sm text-amber-800 font-bold">
-                              You need {formatAmountWithCurrency(requiredSavings - currentSavings, cc)} more in savings
+                              You need {formatAmountWithCurrency(requiredSavings - currentSavings, cc)} more in {walletLabel}{" "}
                               to qualify for this loan amount.
                             </p>
                           </div>
@@ -268,7 +271,7 @@ export function CreditDetails({
                     <Info className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-xs text-emerald-900 font-bold">
-                        Financial Discipline Rule: 20% minimum savings required ({cc})
+                        Financial discipline: 20% minimum balance in {walletLabel} ({cc})
                       </p>
                     </div>
                   </div>
@@ -281,7 +284,7 @@ export function CreditDetails({
                 <div className="flex items-center gap-3">
                   <CheckCircle className="w-5 h-5 text-green-600" />
                   <div>
-                    <p className="text-sm text-green-800 font-bold">No minimum savings requirement for Emergency Credit</p>
+                    <p className="text-sm text-green-800 font-bold">No minimum wallet balance rule for Emergency Credit</p>
                   </div>
                 </div>
               </Card>

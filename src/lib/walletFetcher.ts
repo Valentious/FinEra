@@ -1,14 +1,14 @@
 /**
  * Fetches wallets from API and maps to Wallet[] for account store.
- * When API returns empty, seeds with default FinEra accounts from getCurrencies (scalable).
+ * When API returns empty, seeds with default FinCash accounts from getCurrencies (scalable).
  */
 
 import apiService from "@/services/index";
 import { toWallet } from "@/stores/accountStore";
 import type { Wallet } from "@/types/wallet";
-import { CURRENCY_LABELS, CURRENCY_TO_COUNTRY } from "@/types/wallet";
+import { CURRENCY_LABELS, CURRENCY_TO_COUNTRY, getWalletLabel } from "@/types/wallet";
 
-/** Build default FinEra accounts from available currencies (scalable) */
+/** Build default FinCash accounts from available currencies (scalable) */
 function buildDefaultWallets(currencies: { currencyCode: string }[]): Wallet[] {
   const supported = currencies.length > 0 ? currencies : [
     { currencyCode: "USD" },
@@ -22,10 +22,10 @@ function buildDefaultWallets(currencies: { currencyCode: string }[]): Wallet[] {
       currency: cc,
       label: CURRENCY_LABELS[cc] ?? `${cc} Account`,
       countryCode: CURRENCY_TO_COUNTRY[cc] ?? "XX",
-      provider: "FinEra",
+      provider: "FinCash",
       accountNumber: "",
-      savingsBalance: 0,
       balance: 0,
+      walletLabel: getWalletLabel(cc),
       approvedCreditBalance: 0,
       activeLoanBalance: 0,
     };
@@ -39,8 +39,8 @@ export async function fetchWalletsForStore(): Promise<Wallet[]> {
       id: w.id,
       currencyCode: w.currencyCode,
       accountNumber: w.accountNumber,
-      savingsBalance: w.savingsBalance,
       balance: w.balance,
+      walletLabel: w.walletLabel ?? getWalletLabel(w.currencyCode),
       approvedCreditBalance: w.approvedCreditBalance,
       activeLoanBalance: w.activeLoanBalance,
     })

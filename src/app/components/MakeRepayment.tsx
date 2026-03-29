@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -27,26 +27,19 @@ interface MakeRepaymentProps {
   isWalletLoading?: boolean;
   walletError?: string | null;
   outstandingBalance: number;
-  savingsBalance: number;
+  walletBalance: number;
+  walletLabel: string;
   onConfirm: (amount: number, method: string) => void | Promise<void>;
   onBack: () => void;
 }
-
-const LOCAL_METHODS = [
-  { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
-  { id: "innbucks", label: "Innbucks", icon: <Zap className="w-5 h-5" />, color: "bg-orange-50 text-orange-600" },
-  { id: "onemoney", label: "One Money", icon: <Smartphone className="w-5 h-5" />, color: "bg-red-50 text-red-600" },
-  { id: "savings", label: "Pay from Savings", icon: <Wallet className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
-  { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
-  { id: "bank", label: "Partner Banks", icon: <Building2 className="w-5 h-5" />, color: "bg-slate-50 text-slate-600" },
-];
 
 export function MakeRepayment({
   currencyCode,
   isWalletLoading,
   walletError,
   outstandingBalance,
-  savingsBalance,
+  walletBalance,
+  walletLabel,
   onConfirm,
   onBack,
 }: MakeRepaymentProps) {
@@ -60,6 +53,23 @@ export function MakeRepayment({
   const sym = CURRENCY_AMOUNT_SYMBOLS[cc] ?? cc;
   const inputPadClass = sym.length > 2 ? "pl-24" : "pl-12";
 
+  const localMethods = useMemo(
+    () => [
+      { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
+      { id: "innbucks", label: "Innbucks", icon: <Zap className="w-5 h-5" />, color: "bg-orange-50 text-orange-600" },
+      { id: "onemoney", label: "One Money", icon: <Smartphone className="w-5 h-5" />, color: "bg-red-50 text-red-600" },
+      {
+        id: "savings",
+        label: `Pay from ${walletLabel}`,
+        icon: <Wallet className="w-5 h-5" />,
+        color: "bg-green-50 text-green-600",
+      },
+      { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
+      { id: "bank", label: "Partner Banks", icon: <Building2 className="w-5 h-5" />, color: "bg-slate-50 text-slate-600" },
+    ],
+    [walletLabel]
+  );
+
   const handleRepay = () => {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
@@ -67,8 +77,8 @@ export function MakeRepayment({
       return;
     }
 
-    if (selectedMethod === "savings" && savingsBalance < numAmount) {
-      toast.error(`Insufficient ${cc} savings for this repayment.`);
+    if (selectedMethod === "savings" && walletBalance < numAmount) {
+      toast.error(`Insufficient balance in ${walletLabel} for this repayment.`);
       return;
     }
 
@@ -160,8 +170,10 @@ export function MakeRepayment({
                 <p className="text-2xl font-black text-red-500">{formatAmountWithCurrency(outstandingBalance, cc)}</p>
               </Card>
               <Card className="p-4 border-slate-100 bg-white shadow-sm">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Savings ({cc})</p>
-                <p className="text-2xl font-black text-green-600">{formatAmountWithCurrency(savingsBalance, cc)}</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-tight">
+                  {walletLabel}
+                </p>
+                <p className="text-2xl font-black text-green-600">{formatAmountWithCurrency(walletBalance, cc)}</p>
               </Card>
             </div>
 
@@ -201,9 +213,9 @@ export function MakeRepayment({
               <div className="space-y-3">
                 <Label className="font-bold ml-1">Select payment method</Label>
                 <div className="grid grid-cols-2 gap-3">
-                  {LOCAL_METHODS.map((method) => {
+                  {localMethods.map((method) => {
                     const isSavings = method.id === "savings";
-                    const isSavingsDisabled = isSavings && savingsBalance <= 0;
+                    const isSavingsDisabled = isSavings && walletBalance <= 0;
 
                     return (
                       <button
@@ -223,7 +235,7 @@ export function MakeRepayment({
                         <span className="font-bold text-xs text-slate-700">{method.label}</span>
                         {isSavings && (
                           <span className="text-[8px] font-black text-slate-400 mt-1">
-                            {formatAmountWithCurrency(savingsBalance, cc)} AVAILABLE
+                            {formatAmountWithCurrency(walletBalance, cc)} AVAILABLE
                           </span>
                         )}
                       </button>

@@ -755,7 +755,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                 <CardContent className="pt-6">
                   <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-4">
                     <p className="text-sm text-amber-900">
-                      <strong>Warning:</strong> This action is irreversible. All your data, savings, and credit history will be permanently deleted.
+                      <strong>Warning:</strong> This action is irreversible. All your data, wallet balances, and credit history will be permanently deleted.
                     </p>
                   </div>
                   <Button 

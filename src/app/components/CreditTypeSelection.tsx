@@ -88,7 +88,7 @@ export function CreditTypeSelection({ onSelect, onBack }: CreditTypeSelectionPro
           <div>
             <h4 className="font-black text-lg mb-2">Discipline Policy</h4>
             <p className="text-slate-300 text-sm leading-relaxed">
-              Non-collateral loans require a savings balance of at least <span className="text-white font-bold">20% of the requested amount</span> to demonstrate financial discipline.
+              Non-collateral loans require a wallet balance of at least <span className="text-white font-bold">20% of the requested amount</span> in your FinCash currency wallet to demonstrate financial discipline.
             </p>
           </div>
         </div>

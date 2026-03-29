@@ -18,7 +18,7 @@ import {
   processDeposit,
   processWithdrawal,
   processTransfer,
-  processTransferCreditToSavings,
+  processTransferCreditToWallet,
   processLoanRepayment,
   listTransactions,
 } from "./transaction.service.js";
@@ -28,6 +28,7 @@ import { verifyLedgerConsistency, verifyAllLedgers, initializeAllLedgers } from 
 import { getPortfolioSummary } from "./portfolio.service.js";
 import { validationError } from "../../middlewares/errorHandler.js";
 import type { Transaction as PrismaTransaction } from "@prisma/client";
+import { getWalletLabel, normalizeCurrencyCode } from "../../shared/wallet-label.js";
 
 function describeTransaction(t: PrismaTransaction): string {
   const meta = t.metadata as Record<string, unknown> | null | undefined;
@@ -94,15 +95,16 @@ router.get("/balance", async (req, res, next) => {
     const { currency } = parsed.data;
 
     const wallet = await getWalletOrThrow(req.user!.id, currency);
-    const available = calculateAvailableForWithdrawal(wallet.savingsBalance, wallet.activeLoanBalance);
+    const available = calculateAvailableForWithdrawal(wallet.balance, wallet.activeLoanBalance);
 
+    const wb = Number(wallet.balance);
     res.json({
       success: true,
       data: {
-        currencyCode: wallet.currencyCode,
+        currency: wallet.currencyCode,
+        walletLabel: getWalletLabel(wallet.currencyCode),
+        balance: wb,
         accountNumber: wallet.accountNumber,
-        balance: Number(wallet.balance),
-        savingsBalance: Number(wallet.savingsBalance),
         availableBalance: Number(wallet.availableBalance),
         availableForWithdrawal: available,
         activeLoanBalance: Number(wallet.activeLoanBalance),
@@ -122,11 +124,15 @@ router.post("/deposit", fraudDetectionMiddleware, async (req, res, next) => {
     const input = validateDepositInput(req.body);
     const result = await processDeposit(req.user!.id, input);
 
+    const cur = normalizeCurrencyCode(input.currency);
     res.status(201).json({
       success: true,
       data: {
+        currency: cur,
+        walletLabel: getWalletLabel(cur),
         transactionId: result.transactionId,
         reference: result.reference,
+        balance: result.newBalance,
         newBalance: result.newBalance,
         transaction: result.transaction,
         status: "COMPLETED",
@@ -146,11 +152,15 @@ router.post("/withdraw", fraudDetectionMiddleware, async (req, res, next) => {
     const input = validateWithdrawInput(req.body);
     const result = await processWithdrawal(req.user!.id, input);
 
+    const cur = normalizeCurrencyCode(input.currency);
     res.status(201).json({
       success: true,
       data: {
+        currency: cur,
+        walletLabel: getWalletLabel(cur),
         transactionId: result.transactionId,
         reference: result.reference,
+        balance: result.newBalance,
         newBalance: result.newBalance,
         transaction: result.transaction,
         status: "COMPLETED",
@@ -224,12 +234,22 @@ const fxConvertSchema = z.object({
   referenceId: z.string().max(100).optional(),
 });
 
-const repaySchema = z.object({
-  amount: z.number().positive(),
-  method: z.string().min(1),
-  currency: z.enum(CURRENCIES),
-  deductFromSavings: z.boolean().optional().default(false),
-});
+const repaySchema = z
+  .object({
+    amount: z.number().positive(),
+    method: z.string().min(1),
+    currency: z.enum(CURRENCIES),
+    /** Preferred: deduct repayment from user's FinCash wallet for this currency */
+    deductFromWallet: z.boolean().optional(),
+    /** @deprecated use deductFromWallet */
+    deductFromSavings: z.boolean().optional(),
+  })
+  .transform((b) => ({
+    amount: b.amount,
+    method: b.method,
+    currency: b.currency,
+    deductFromWallet: b.deductFromWallet ?? b.deductFromSavings ?? false,
+  }));
 
 /**
  * POST /wallet/transfer
@@ -300,7 +320,7 @@ router.post("/convert", fraudDetectionMiddleware, async (req, res, next) => {
 
 /**
  * POST /wallet/transfer-credit-to-savings
- * Transfer from approved credit wallet to savings.
+ * Transfer from approved credit to the user's FinCash wallet (same currency).
  */
 router.post("/transfer-credit-to-savings", async (req, res, next) => {
   try {
@@ -308,11 +328,15 @@ router.post("/transfer-credit-to-savings", async (req, res, next) => {
     if (!parsed.success) throw validationError("Invalid request", { zod: parsed.error.flatten() });
     const { amount, currency } = parsed.data;
 
-    const result = await processTransferCreditToSavings(req.user!.id, amount, currency);
+    const result = await processTransferCreditToWallet(req.user!.id, amount, currency);
 
     res.status(201).json({
       success: true,
-      data: result,
+      data: {
+        ...result,
+        currency,
+        walletLabel: getWalletLabel(currency),
+      },
     });
   } catch (e) {
     next(e);
@@ -327,21 +351,23 @@ router.post("/repay", fraudDetectionMiddleware, async (req, res, next) => {
   try {
     const parsed = repaySchema.safeParse(req.body);
     if (!parsed.success) throw validationError("Invalid request", { zod: parsed.error.flatten() });
-    const { amount, method, currency, deductFromSavings } = parsed.data;
+    const { amount, method, currency, deductFromWallet } = parsed.data;
 
     const result = await processLoanRepayment(req.user!.id, {
       amount,
       method,
       currency,
-      deductFromSavings,
+      deductFromWallet,
     });
 
     res.status(201).json({
       success: true,
       data: {
+        currency: parsed.data.currency,
+        walletLabel: getWalletLabel(parsed.data.currency),
         transactionId: result.transactionId,
         remainingBalance: result.remainingBalance,
-        newSavingsBalance: result.newSavingsBalance,
+        newBalance: result.newBalance,
         loanFullyPaid: result.loanFullyPaid,
       },
     });

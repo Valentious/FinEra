@@ -45,7 +45,7 @@ export function QuickActionsScreen({
               className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-xl font-black"
             >
               <Plus className="w-6 h-6" />
-              <span>Deposit Savings</span>
+              <span>Deposit to wallet</span>
             </Button>
           </motion.div>
 

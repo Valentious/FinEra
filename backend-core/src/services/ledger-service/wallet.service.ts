@@ -100,18 +100,18 @@ export async function unfreezeWallet(userId: string, currency: CurrencyCode) {
 }
 
 /**
- * Calculate available balance for withdrawal (savings minus locked portion when loan active).
+ * Calculate available balance for withdrawal (wallet balance minus locked portion when loan active).
  */
 export function calculateAvailableForWithdrawal(
-  savingsBalance: Decimal | number,
+  walletBalance: Decimal | number,
   activeLoanBalance: Decimal | number,
   lockRatio = 0.2
 ): number {
-  const savings = Number(savingsBalance);
+  const wb = Number(walletBalance);
   const loan = Number(activeLoanBalance);
-  if (loan <= 0) return savings;
-  const locked = savings * lockRatio;
-  return Math.max(0, savings - locked);
+  if (loan <= 0) return wb;
+  const locked = wb * lockRatio;
+  return Math.max(0, wb - locked);
 }
 
 /**

@@ -9,6 +9,7 @@ import {
   CURRENCY_TO_COUNTRY,
   CURRENCY_LABELS,
   CUSTODY_PROVIDER,
+  getWalletLabel,
 } from "@/types/wallet";
 
 const STORAGE_KEY = "finera_active_wallet_id";
@@ -35,6 +36,7 @@ export function toWallet(apiWallet: {
   id: string;
   currencyCode: string;
   accountNumber: string;
+  walletLabel?: string;
   savingsBalance?: number;
   balance?: number;
   approvedCreditBalance?: number;
@@ -42,15 +44,16 @@ export function toWallet(apiWallet: {
   custodyType?: string;
 }): Wallet {
   const currency = apiWallet.currencyCode || "USD";
+  const bal = apiWallet.balance ?? apiWallet.savingsBalance ?? 0;
   return {
     id: apiWallet.id,
     currency,
     label: CURRENCY_LABELS[currency] ?? `${currency} Account`,
     countryCode: CURRENCY_TO_COUNTRY[currency] ?? "XX",
-    provider: CUSTODY_PROVIDER[apiWallet.custodyType as string] ?? "FinEra",
+    provider: CUSTODY_PROVIDER[apiWallet.custodyType as string] ?? "FinCash",
     accountNumber: apiWallet.accountNumber ?? "",
-    savingsBalance: apiWallet.savingsBalance ?? 0,
-    balance: apiWallet.balance ?? 0,
+    balance: bal,
+    walletLabel: apiWallet.walletLabel ?? getWalletLabel(currency),
     approvedCreditBalance: apiWallet.approvedCreditBalance ?? 0,
     activeLoanBalance: apiWallet.activeLoanBalance ?? 0,
   };

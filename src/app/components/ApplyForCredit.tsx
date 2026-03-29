@@ -18,7 +18,8 @@ interface ApplyForCreditProps {
   currencyCode: string;
   isWalletLoading: boolean;
   walletError: string | null;
-  savingsBalance: number;
+  walletBalance: number;
+  walletLabel: string;
   hasActiveLoan: boolean;
   onSelectCreditType: (type: "essential" | "emergency" | "business") => void;
   onBack: () => void;
@@ -31,7 +32,7 @@ const CREDIT_TYPES = [
     desc: "For daily needs and campus essentials.",
     icon: <PiggyBank className="w-6 h-6" />,
     color: "emerald",
-    rule: "Requires 20% savings discipline",
+    rule: "Requires 20% wallet balance discipline",
   },
   {
     id: "emergency",
@@ -39,7 +40,7 @@ const CREDIT_TYPES = [
     desc: "Immediate funds for urgent situations.",
     icon: <Flame className="w-6 h-6" />,
     color: "red",
-    rule: "Savings rule waived with proof",
+    rule: "Wallet rule waived with proof",
   },
   {
     id: "business",
@@ -47,7 +48,7 @@ const CREDIT_TYPES = [
     desc: "Startup capital for student entrepreneurs.",
     icon: <Briefcase className="w-6 h-6" />,
     color: "purple",
-    rule: "Requires 20% savings discipline",
+    rule: "Requires 20% wallet balance discipline",
   },
 ];
 
@@ -55,12 +56,13 @@ export function ApplyForCredit({
   currencyCode,
   isWalletLoading,
   walletError,
-  savingsBalance,
+  walletBalance,
+  walletLabel,
   hasActiveLoan,
   onSelectCreditType,
   onBack,
 }: ApplyForCreditProps) {
-  const isSavingsTooLow = savingsBalance <= 1;
+  const isWalletTooLow = walletBalance <= 1;
   const cc = currencyCode.toUpperCase();
 
   if (isWalletLoading) {
@@ -101,10 +103,10 @@ export function ApplyForCredit({
             <p className="text-sm font-bold text-slate-500 mt-1">{cc} dashboard — amounts in {cc}</p>
           </div>
         </div>
-        <div className="bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm text-right">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Savings ({cc})</p>
-          <p className={`text-sm font-black ${isSavingsTooLow ? "text-red-500" : "text-green-600"}`}>
-            {formatAmountWithCurrency(savingsBalance, cc)}
+        <div className="bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm text-right max-w-[min(100%,14rem)]">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-tight">{walletLabel}</p>
+          <p className={`text-sm font-black ${isWalletTooLow ? "text-red-500" : "text-green-600"}`}>
+            {formatAmountWithCurrency(walletBalance, cc)}
           </p>
         </div>
       </div>
@@ -125,17 +127,16 @@ export function ApplyForCredit({
         </Card>
       )}
 
-      {!hasActiveLoan && isSavingsTooLow && (
+      {!hasActiveLoan && isWalletTooLow && (
         <Card className="p-6 bg-amber-50 border-amber-100 border-2 rounded-3xl">
           <div className="flex gap-4">
             <div className="p-3 bg-amber-100 text-amber-600 rounded-2xl h-fit">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-black text-amber-900 text-lg">Savings Gateway Check</h4>
+              <h4 className="font-black text-amber-900 text-lg">Wallet funding check</h4>
               <p className="text-amber-700 text-sm font-medium mt-1 leading-relaxed">
-                Minimum savings activity ({formatAmountWithCurrency(1, cc)}+) is required in your {cc} wallet before
-                credit access.
+                Minimum balance ({formatAmountWithCurrency(1, cc)}+) is required in {walletLabel} before credit access.
               </p>
             </div>
           </div>
@@ -144,7 +145,7 @@ export function ApplyForCredit({
 
       <div className="grid grid-cols-1 gap-4">
         {CREDIT_TYPES.map((type) => {
-          const isDisabled = hasActiveLoan || isSavingsTooLow;
+          const isDisabled = hasActiveLoan || isWalletTooLow;
 
           return (
             <motion.div

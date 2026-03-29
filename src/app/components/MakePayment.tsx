@@ -12,6 +12,7 @@ import { ArrowLeft, Smartphone, Zap, Droplets, GraduationCap, Shield, Wallet } f
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { getPaymentOptionsByCountry } from "@/data/paymentOptions";
+import { formatAmountWithCurrency } from "@/types/wallet";
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   airtime: <Smartphone className="w-5 h-5" />,
@@ -26,11 +27,22 @@ interface MakePaymentProps {
   onBack: () => void;
   onSuccess?: (payment: { amount: number; description: string; gatewayId?: string }) => void;
   countryCode?: string;
-  savingsBalance?: number;
+  /** Active dashboard currency (ISO-style code, e.g. ZIG for ZiG) */
+  currencyCode?: string;
+  walletBalance?: number;
+  walletLabel?: string;
   currencySymbol?: string;
 }
 
-export function MakePayment({ onBack, onSuccess, countryCode = "zw", savingsBalance = 0, currencySymbol = "$" }: MakePaymentProps) {
+export function MakePayment({
+  onBack,
+  onSuccess,
+  countryCode = "zw",
+  currencyCode = "USD",
+  walletBalance = 0,
+  walletLabel = "FinCash Wallet",
+  currencySymbol = "$",
+}: MakePaymentProps) {
   const options = getPaymentOptionsByCountry(countryCode);
   const [step, setStep] = useState<"category" | "details" | "gateway" | "confirm" | "success">("category");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -61,8 +73,10 @@ export function MakePayment({ onBack, onSuccess, countryCode = "zw", savingsBala
       toast.error("Select a payment gateway");
       return;
     }
-    if (selectedGateway === "from_savings" && numAmount > savingsBalance) {
-      toast.error(`Insufficient balance. Savings balance: ${currencySymbol}${savingsBalance.toLocaleString()}`);
+    if (selectedGateway === "from_savings" && numAmount > walletBalance) {
+      toast.error(
+        `Insufficient balance in ${walletLabel}. Available: ${formatAmountWithCurrency(walletBalance, currencyCode)}`
+      );
       return;
     }
     const description = item ? `${cat?.label || "Payment"}: ${item.label}` : `Payment - ${recipient || "Bill"}`;
@@ -189,7 +203,7 @@ export function MakePayment({ onBack, onSuccess, countryCode = "zw", savingsBala
               <Label>Payment Gateway</Label>
               {selectedGateway === "from_savings" && (
                 <p className="text-sm text-emerald-600 font-medium">
-                  Paying from Savings Wallet • Balance: {currencySymbol}{savingsBalance.toLocaleString()}
+                  Paying from {walletLabel} • Balance: {formatAmountWithCurrency(walletBalance, currencyCode)}
                 </p>
               )}
               <div className="grid grid-cols-2 gap-2">

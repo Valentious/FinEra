@@ -1,7 +1,7 @@
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { CheckCircle2, Calendar } from "lucide-react";
-import { formatAmountWithCurrency } from "@/types/wallet";
+import { formatAmountWithCurrency, getWalletLabel } from "@/types/wallet";
 
 interface CreditApprovedProps {
   currencyCode: string;
@@ -12,6 +12,7 @@ interface CreditApprovedProps {
 
 export function CreditApproved({ currencyCode, approvedAmount, repaymentSchedule, onViewWallet }: CreditApprovedProps) {
   const cc = currencyCode.toUpperCase();
+  const walletLabel = getWalletLabel(cc);
   // Calculate fee breakdown
   const principal = approvedAmount;
   const commission = principal * 0.02;
@@ -81,8 +82,8 @@ export function CreditApproved({ currencyCode, approvedAmount, repaymentSchedule
             <p className="text-sm font-bold text-amber-900 mb-2">📋 Next Steps</p>
             <ol className="list-decimal list-inside text-sm text-amber-800 space-y-1">
               <li>View your Approved Credit Wallet</li>
-              <li>Transfer funds from Approved Credit → Savings Wallet</li>
-              <li>Once in Savings Wallet, funds are withdrawable via ATM</li>
+              <li>Transfer funds from Approved Credit → {walletLabel}</li>
+              <li>Once in {walletLabel}, funds are withdrawable per your currency rules</li>
             </ol>
           </div>
         </div>

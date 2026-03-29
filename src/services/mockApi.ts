@@ -20,6 +20,7 @@ import type {
   RepaymentRequest,
   CreditApplication
 } from './api';
+import { getWalletLabel } from '@/types/wallet';
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -98,7 +99,7 @@ function loadUserData(email: string): MockUserData | null {
   // Migrate legacy users: single savingsBalance → per-currency
   if (!parsed.walletBalances || typeof parsed.walletBalances !== 'object') {
     parsed.walletBalances = {
-      USD: parsed.savingsBalance ?? 0,
+      USD: (parsed as { walletBalance?: number; savingsBalance?: number }).walletBalance ?? (parsed as { savingsBalance?: number }).savingsBalance ?? 0,
       ZIG: 0,
       ZAR: 0,
     };
@@ -280,7 +281,7 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     email,
     mobile: data.phoneNumber,
     accountType: data.accountType,
-    savingsBalance: 0,
+    walletBalance: 0,
     approvedCreditWallet: 0,
     activeCredit: 0,
     availableCreditLimit: calculateCreditLimit(data.accountType),
@@ -335,9 +336,14 @@ export async function mockLogin(data: LoginRequest): Promise<{ user: UserData; t
   const updatedUser = { ...user, lastLogin: Date.now() };
   saveUserData(updatedUser);
 
+  const token = "mock_jwt_token_" + Date.now();
+  localStorage.setItem("auth_token", token);
+  localStorage.setItem("accessToken", token);
+  localStorage.setItem("refreshToken", "mock_refresh_" + Date.now());
+
   return {
     user: toPublicUser(updatedUser),
-    token: "mock_jwt_token_" + Date.now(),
+    token,
   };
 }
 
@@ -365,14 +371,14 @@ export async function mockGetUserProfile(currency?: string): Promise<UserData> {
     const bal = getWalletBalance(user, c);
     return {
       ...user,
-      savingsBalance: bal,
+      walletBalance: bal,
       activeCredit: getActiveLoanForCurrency(user, c),
       approvedCreditWallet: getApprovedCreditForCurrency(user, c),
     };
   }
   return {
     ...user,
-    savingsBalance: getWalletBalance(user, "USD"),
+    walletBalance: getWalletBalance(user, "USD"),
     activeCredit: getActiveLoanForCurrency(user, "USD"),
     approvedCreditWallet: getApprovedCreditForCurrency(user, "USD"),
   };
@@ -474,10 +480,12 @@ export async function mockWithdrawFunds(data: WithdrawalRequest): Promise<{ tran
   };
 }
 
-export async function mockTransferCreditToSavings(amount: number, currency: string = 'USD'): Promise<{ 
-  approvedCreditWallet: number; 
-  savingsBalance: number; 
-  transaction: Transaction 
+export async function mockTransferCreditToSavings(amount: number, currency: string = 'USD'): Promise<{
+  approvedCreditWallet: number;
+  balance: number;
+  transaction: Transaction;
+  currency: string;
+  walletLabel: string;
 }> {
   await delay(800);
   
@@ -507,7 +515,7 @@ export async function mockTransferCreditToSavings(amount: number, currency: stri
     type: 'deposit',
     amount,
     date: new Date().toISOString(),
-    description: 'Transfer from Approved Credit to Savings',
+    description: 'Transfer from Approved Credit to FinCash wallet',
     status: 'completed',
   };
   (transaction as { currency?: string }).currency = c;
@@ -516,12 +524,22 @@ export async function mockTransferCreditToSavings(amount: number, currency: stri
 
   return {
     approvedCreditWallet: getApprovedCreditForCurrency(user, c),
-    savingsBalance: newBal,
+    balance: newBal,
     transaction: transaction as Transaction,
+    currency: c,
+    walletLabel: getWalletLabel(c),
   };
 }
 
-type WalletResponse = { id: string; currencyCode: string; accountNumber: string; savingsBalance: number; balance: number; approvedCreditBalance: number; activeLoanBalance: number };
+type WalletResponse = {
+  id: string;
+  currencyCode: string;
+  accountNumber: string;
+  balance: number;
+  walletLabel: string;
+  approvedCreditBalance: number;
+  activeLoanBalance: number;
+};
 
 export async function mockGetWalletsByCurrency(currency?: string): Promise<WalletResponse[]> {
   await delay(200);
@@ -541,8 +559,8 @@ export async function mockGetWalletsByCurrency(currency?: string): Promise<Walle
       id: `finera-${c.toLowerCase()}`,
       currencyCode: c,
       accountNumber: accounts[key] || `FE-${c}-${baseAccount.slice(-6)}`,
-      savingsBalance: bal,
       balance: bal,
+      walletLabel: getWalletLabel(c),
       approvedCreditBalance: getApprovedCreditForCurrency(user, c),
       activeLoanBalance: getActiveLoanForCurrency(user, c),
     };

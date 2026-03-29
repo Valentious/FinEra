@@ -15,6 +15,7 @@ import {
 import { updateProfileSchema } from "./user.validation.js";
 import { logger } from "../../core/utils/logger.js";
 import { zodErrorToFieldErrors } from "../../shared/validation/zod-format.js";
+import { getWalletLabel } from "../../shared/wallet-label.js";
 
 const router = Router();
 
@@ -172,7 +173,6 @@ router.get("/wallets", async (req, res, next) => {
           accountNumber: true,
           balance: true,
           availableBalance: true,
-          savingsBalance: true,
           approvedCreditBalance: true,
           activeLoanBalance: true,
         },
@@ -188,13 +188,15 @@ router.get("/wallets", async (req, res, next) => {
     );
     const data = wallets.map((w) => {
       const activeLoanBalance = outstandingByWalletId[w.id] ?? 0;
+      const wb = Number(w.balance);
       return {
         id: w.id,
+        currency: w.currencyCode,
         currencyCode: w.currencyCode,
+        walletLabel: getWalletLabel(w.currencyCode),
         accountNumber: w.accountNumber,
-        balance: Number(w.balance),
+        balance: wb,
         availableBalance: Number(w.availableBalance),
-        savingsBalance: Number(w.savingsBalance),
         approvedCreditBalance: Number(w.approvedCreditBalance),
         activeLoanBalance,
       };

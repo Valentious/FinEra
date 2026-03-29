@@ -13,6 +13,7 @@
  */
 
 import { fetchWithRetry } from "@/utils/fetchWithRetry";
+import { getWalletLabel } from "@/types/wallet";
 
 /** API base URL - use full URL in dev (backend on different port than frontend) */
 export const API_BASE_URL =
@@ -67,7 +68,7 @@ export interface UserData {
   email: string;
   mobile: string;
   accountType: 'student' | 'staff' | 'alumni';
-  savingsBalance: number;
+  walletBalance: number;
   approvedCreditWallet: number;
   activeCredit: number;
   availableCreditLimit: number;
@@ -252,7 +253,7 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
       email: data.email,
       mobile: data.phoneNumber,
       accountType: data.accountType,
-      savingsBalance: 0,
+      walletBalance: 0,
       approvedCreditWallet: 0,
       activeCredit: 0,
       availableCreditLimit: 200,
@@ -288,7 +289,7 @@ export async function verifyRegistrationEmail(
     localStorage.setItem("accessToken", res.data.accessToken);
     localStorage.setItem("refreshToken", res.data.refreshToken || "");
   }
-  localStorage.setItem("active_user_email", email.trim().toLowerCase());
+  localStorage.setItem("active_user_email", email.trim().toLowerCase()); // must match App member_* keys
   const user = await getUserProfile();
   return {
     user,
@@ -491,6 +492,7 @@ type WalletApiRow = {
   id: string;
   currencyCode: string;
   accountNumber: string;
+  walletLabel?: string;
   savingsBalance?: string | number;
   balance?: string | number;
   approvedCreditBalance?: string | number;
@@ -513,25 +515,37 @@ function normalizeWalletRow(w: WalletApiRow): {
   id: string;
   currencyCode: string;
   accountNumber: string;
-  savingsBalance: number;
   balance: number;
+  walletLabel: string;
   approvedCreditBalance: number;
   activeLoanBalance: number;
 } {
   const la = w.ledgerAccount;
+  const cc = w.currencyCode;
+  const bal = num(la?.balance ?? w.balance ?? la?.savingsBalance ?? w.savingsBalance);
   return {
     id: w.id,
-    currencyCode: w.currencyCode,
+    currencyCode: cc,
     accountNumber: w.accountNumber,
-    savingsBalance: num(la?.savingsBalance ?? w.savingsBalance),
-    balance: num(la?.balance ?? w.balance),
+    balance: bal,
+    walletLabel: w.walletLabel ?? getWalletLabel(cc),
     approvedCreditBalance: num(la?.approvedCreditBalance ?? w.approvedCreditBalance),
     activeLoanBalance: num(la?.activeLoanBalance ?? w.activeLoanBalance),
   };
 }
 
 /** GET /user/wallets?currency=X - Wallets filtered by currency (per-dashboard) */
-export async function getWalletsByCurrency(currency?: string): Promise<Array<{ id: string; currencyCode: string; accountNumber: string; savingsBalance: number; balance: number; approvedCreditBalance: number; activeLoanBalance: number }>> {
+export async function getWalletsByCurrency(currency?: string): Promise<
+  Array<{
+    id: string;
+    currencyCode: string;
+    accountNumber: string;
+    balance: number;
+    walletLabel: string;
+    approvedCreditBalance: number;
+    activeLoanBalance: number;
+  }>
+> {
   const url = currency ? `/user/wallets?currency=${encodeURIComponent(currency)}` : "/user/wallets";
   const res = await apiCall<{ success: boolean; data: WalletApiRow[] }>(url);
   const list = res.data ?? [];
@@ -628,7 +642,7 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
     email: (p.email as string) || '',
     mobile: (p.phoneNumber as string) || '',
     accountType: ((p.accountType as string) || 'student').toLowerCase(),
-    savingsBalance: primaryWallet?.savingsBalance ?? primaryWallet?.balance ?? 0,
+    walletBalance: primaryWallet?.balance ?? 0,
     approvedCreditWallet: primaryWallet?.approvedCreditBalance ?? 0,
     activeCredit,
     availableCreditLimit: limit.availableCredit || 200,
@@ -703,7 +717,7 @@ export async function completeProfile(profileData: any): Promise<{ success: bool
  * Backend should:
  * - Validate amount
  * - Process payment through payment gateway
- * - Update savingsBalance
+ * - Update wallet balance
  * - Create transaction record
  * - Update financial metrics (disciplineScore)
  * - Return updated balance and transaction
@@ -730,7 +744,7 @@ export async function depositFunds(data: DepositRequest): Promise<{ transaction:
  * - Validate sufficient balance
  * - Check if funds are not locked (loan collateral)
  * - Process withdrawal to selected method
- * - Update savingsBalance
+ * - Update wallet balance
  * - Create transaction record
  * - Return updated balance and transaction
  */
@@ -751,14 +765,25 @@ export async function withdrawFunds(data: WithdrawalRequest): Promise<{ transact
 
 /**
  * POST /wallet/transfer-credit-to-savings
- * Transfer from approved credit wallet to savings wallet. REQUIRES currency for isolation.
+ * Transfer from approved credit to FinCash wallet for that currency. REQUIRES currency for isolation.
  */
-export async function transferCreditToSavings(amount: number, currency: string = 'USD'): Promise<{ 
-  approvedCreditWallet: number; 
-  savingsBalance: number; 
-  transaction: Transaction 
+export async function transferCreditToSavings(amount: number, currency: string = 'USD'): Promise<{
+  approvedCreditWallet: number;
+  balance: number;
+  transaction: Transaction;
+  currency?: string;
+  walletLabel?: string;
 }> {
-  const res = await apiCall<{ success: boolean; data: { approvedCreditWallet: number; savingsBalance: number; transaction: Transaction } }>('/wallet/transfer-credit-to-savings', {
+  const res = await apiCall<{
+    success: boolean;
+    data: {
+      approvedCreditWallet: number;
+      balance: number;
+      transaction: Transaction;
+      currency?: string;
+      walletLabel?: string;
+    };
+  }>('/wallet/transfer-credit-to-savings', {
     method: 'POST',
     body: JSON.stringify({ amount, currency }),
   });
@@ -973,7 +998,7 @@ export async function makeRepayment(data: RepaymentRequest): Promise<{
     body: JSON.stringify({
       amount: data.amount,
       method: data.method,
-      deductFromSavings: data.method === 'savings',
+      deductFromWallet: data.method === 'savings',
       currency,
     }),
   });
@@ -1443,7 +1468,7 @@ export const mockResponses = {
       email: data.email,
       mobile: data.phoneNumber,
       accountType: data.accountType,
-      savingsBalance: 0,
+      walletBalance: 0,
       approvedCreditWallet: 0,
       activeCredit: 0,
       availableCreditLimit: data.accountType === 'student' ? 200 : 2000,

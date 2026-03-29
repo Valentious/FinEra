@@ -301,6 +301,7 @@ model Wallet {
   balance               Decimal     @default(0) @db.Decimal(18, 8)
   availableBalance      Decimal     @default(0) @db.Decimal(18, 8)
   holdBalance           Decimal     @default(0) @db.Decimal(18, 8)
+  /// Legacy column name; kept in sync with `balance` for each currency wallet. API uses `balance` only.
   savingsBalance        Decimal     @default(0) @db.Decimal(18, 8)
   approvedCreditBalance  Decimal     @default(0) @db.Decimal(18, 8)
   savingsGoal           Decimal?    @db.Decimal(18, 8)

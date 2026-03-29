@@ -120,9 +120,9 @@ export async function getTotalWalletBalance(currencyCode: CurrencyCode): Promise
       isActive: true,
       status: "active",
     },
-    _sum: { savingsBalance: true },
+    _sum: { balance: true },
   });
-  return Number(result._sum.savingsBalance ?? 0);
+  return Number(result._sum.balance ?? 0);
 }
 
 /**

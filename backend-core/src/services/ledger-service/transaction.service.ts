@@ -1,4 +1,4 @@
-﻿/**
+/**
  * FinEra Backend - Transaction Service
  * Delegates deposit/withdrawal to Transaction Engine (strict currency isolation).
  * Loan flows remain for credit/repayment.
@@ -131,15 +131,15 @@ export async function processTransfer(
 }
 
 /**
- * Transfer from approved credit to savings. Atomic.
+ * Transfer from approved credit to user's FinCash wallet (same currency). Atomic.
  */
-export async function processTransferCreditToSavings(
+export async function processTransferCreditToWallet(
   userId: string,
   amount: number,
   currency: import("@prisma/client").CurrencyCode = "USD"
 ): Promise<{
   approvedCreditWallet: number;
-  savingsBalance: number;
+  balance: number;
   transaction: { id: string; type: string; amount: number; date: string; description: string };
 }> {
   return prisma.$transaction(async (tx) => {
@@ -171,7 +171,7 @@ export async function processTransferCreditToSavings(
           currency,
           status: "COMPLETED",
           completedAt: new Date(),
-          metadata: { type: "credit_to_savings" } as object,
+          metadata: { type: "credit_to_wallet" } as object,
         },
       }),
       tx.wallet.update({
@@ -188,22 +188,25 @@ export async function processTransferCreditToSavings(
 
     const updated = await tx.wallet.findUnique({
       where: { id: wallet.id },
-      select: { savingsBalance: true, approvedCreditBalance: true },
+      select: { balance: true, approvedCreditBalance: true },
     });
 
     return {
       approvedCreditWallet: Number(updated?.approvedCreditBalance ?? 0),
-      savingsBalance: Number(updated?.savingsBalance ?? 0),
+      balance: Number(updated?.balance ?? 0),
       transaction: {
         id: txn.id,
         type: "deposit",
         amount,
         date: txn.completedAt?.toISOString() ?? new Date().toISOString(),
-        description: "Transfer from Approved Credit to Savings",
+        description: "Transfer from Approved Credit to FinCash wallet",
       },
     };
   });
 }
+
+/** @deprecated Use processTransferCreditToWallet */
+export const processTransferCreditToSavings = processTransferCreditToWallet;
 
 /**
  * Loan disbursement - atomic: create loan record, update wallet, create transaction.
@@ -311,12 +314,13 @@ export async function processLoanRepayment(
     amount: number;
     method: string;
     currency: CurrencyCode;
-    deductFromSavings?: boolean;
+    /** When true, repayment is settled from the user's FinCash wallet for this currency */
+    deductFromWallet?: boolean;
   }
 ): Promise<{
   transactionId: string;
   remainingBalance: number;
-  newSavingsBalance: number;
+  newBalance: number;
   loanFullyPaid: boolean;
 }> {
   return prisma.$transaction(async (tx) => {
@@ -335,10 +339,11 @@ export async function processLoanRepayment(
       throw validationError(`Invalid repayment amount. Outstanding: ${activeLoan.toFixed(2)}`);
     }
 
-    if (params.deductFromSavings) {
-      const savings = Number(wallet.savingsBalance);
-      if (params.amount > savings) {
-        throw validationError(`Insufficient savings. Available: ${savings.toFixed(2)}`);
+    const deductFromWallet = params.deductFromWallet === true;
+    if (deductFromWallet) {
+      const avail = Number(wallet.savingsBalance);
+      if (params.amount > avail) {
+        throw validationError(`Insufficient wallet balance. Available: ${avail.toFixed(2)}`);
       }
     }
 
@@ -347,7 +352,7 @@ export async function processLoanRepayment(
     const newActiveLoan = activeLoan - repaymentAmount;
     const loanFullyPaid = newActiveLoan <= 0;
 
-    const walletUpdate = params.deductFromSavings
+    const walletUpdate = deductFromWallet
       ? {
           activeLoanBalance: { decrement: repaymentAmount },
           totalRepaidAmount: { increment: repaymentAmount },
@@ -386,13 +391,13 @@ export async function processLoanRepayment(
 
     const updated = await tx.wallet.findUnique({
       where: { id: wallet.id },
-      select: { activeLoanBalance: true, savingsBalance: true },
+      select: { activeLoanBalance: true, balance: true },
     });
 
     return {
       transactionId: txn.id,
       remainingBalance: newActiveLoan,
-      newSavingsBalance: Number(updated?.savingsBalance ?? wallet.savingsBalance),
+      newBalance: Number(updated?.balance ?? wallet.balance),
       loanFullyPaid,
     };
   });

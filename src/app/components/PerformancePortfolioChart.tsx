@@ -1,6 +1,6 @@
 /**
  * FinEra - Performance Portfolio Chart
- * Line chart driven by Savings Wallet transactions.
+ * Line chart driven by per-currency wallet (ledger) transactions.
  * Real-time, dynamic Y-axis, no mock data.
  */
 
@@ -22,7 +22,7 @@ interface PerformancePortfolioChartProps {
   currencySymbol?: string;
 }
 
-/** Generate balance timeline from transactions (deposits + withdrawals affect savings) */
+/** Generate balance timeline from transactions (deposits + withdrawals affect wallet balance) */
 function buildBalanceTimeline(
   transactions: TransactionInput[],
   currentBalance: number
@@ -116,51 +116,64 @@ export function PerformancePortfolioChart({
   useEffect(() => {
     if (!chartRef.current) return;
 
-    const isDark = true;
     const sym = currencySymbol;
-    const chart = createChart(chartRef.current, {
-      layout: {
-        background: { type: ColorType.Solid, color: "#0f172a" },
-        textColor: "#94a3b8",
-      },
-      localization: {
-        priceFormatter: (price: number) => `${sym}${price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
-      },
-      grid: {
-        vertLines: { color: "rgba(148,163,184,0.1)" },
-        horzLines: { color: "rgba(148,163,184,0.1)" },
-      },
-      width: chartRef.current.clientWidth,
-      height: 320,
-      rightPriceScale: {
-        borderColor: "rgba(148,163,184,0.2)",
-        scaleMargins: { top: 0.1, bottom: 0.2 },
-        autoScale: true,
-      },
-      timeScale: {
-        borderColor: "rgba(148,163,184,0.2)",
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      crosshair: {
-        vertLine: { labelVisible: true },
-        horzLine: { labelVisible: true },
-      },
-      handleScroll: { vertTouchDrag: true, horzTouchDrag: true },
-    });
+    const w = Math.max(chartRef.current.clientWidth || 0, 1);
 
-    chartInstance.current = chart;
+    let chart: ReturnType<typeof createChart> | null = null;
+    try {
+      chart = createChart(chartRef.current, {
+        layout: {
+          background: { type: ColorType.Solid, color: "#0f172a" },
+          textColor: "#94a3b8",
+        },
+        localization: {
+          priceFormatter: (price: number) =>
+            `${sym}${price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
+        },
+        grid: {
+          vertLines: { color: "rgba(148,163,184,0.1)" },
+          horzLines: { color: "rgba(148,163,184,0.1)" },
+        },
+        width: w,
+        height: 320,
+        rightPriceScale: {
+          borderColor: "rgba(148,163,184,0.2)",
+          scaleMargins: { top: 0.1, bottom: 0.2 },
+          autoScale: true,
+        },
+        timeScale: {
+          borderColor: "rgba(148,163,184,0.2)",
+          timeVisible: true,
+          secondsVisible: false,
+        },
+        crosshair: {
+          vertLine: { labelVisible: true },
+          horzLine: { labelVisible: true },
+        },
+        handleScroll: { vertTouchDrag: true, horzTouchDrag: true },
+      });
 
-    const lineSeries = chart.addSeries(LineSeries, {
-      color: "#6366f1",
-      lineWidth: 2,
-      priceLineVisible: false,
-      lastValueVisible: true,
-    });
-    lineRef.current = lineSeries;
+      chartInstance.current = chart;
+
+      const lineSeries = chart.addSeries(LineSeries, {
+        color: "#6366f1",
+        lineWidth: 2,
+        priceLineVisible: false,
+        lastValueVisible: true,
+      });
+      lineRef.current = lineSeries;
+    } catch (e) {
+      console.error("[FinEra] Chart init failed:", e);
+      chartInstance.current = null;
+      lineRef.current = null;
+    }
 
     return () => {
-      chart.remove();
+      try {
+        chart?.remove();
+      } catch {
+        /* ignore */
+      }
       chartInstance.current = null;
       lineRef.current = null;
     };
@@ -168,8 +181,13 @@ export function PerformancePortfolioChart({
 
   useEffect(() => {
     if (!lineRef.current) return;
-    lineRef.current.setData(lineData);
-    chartInstance.current?.timeScale().fitContent();
+    try {
+      const sorted = [...lineData].sort((a, b) => a.time - b.time);
+      lineRef.current.setData(sorted);
+      chartInstance.current?.timeScale().fitContent();
+    } catch (e) {
+      console.error("[FinEra] Chart setData failed:", e);
+    }
   }, [lineData]);
 
   useEffect(() => {

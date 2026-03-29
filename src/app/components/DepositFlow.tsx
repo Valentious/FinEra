@@ -42,7 +42,7 @@ const METHODS = [
 ];
 
 const PURPOSES = [
-  { id: "savings", label: "Savings" },
+  { id: "savings", label: "Wallet / general" },
   { id: "repayment", label: "Loan Repayment" },
   { id: "investment", label: "Investment Pool" },
   { id: "other", label: "Other" },
@@ -181,7 +181,7 @@ export function DepositFlow({
               <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">Add Savings / Deposit ({currencyCode})</h2>
+              <h2 className="text-2xl font-black text-slate-900">Deposit to wallet ({currencyCode})</h2>
             </div>
 
             <div className="space-y-6">

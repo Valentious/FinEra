@@ -181,9 +181,9 @@ router.post("/apply-instant", async (req, res, next) => {
 
     await assertWalletHasNoActiveLoan(prisma, wallet.id);
 
-    const savingsBalance = Number(wallet.savingsBalance);
-    if (creditType !== "emergency" && savingsBalance < amount * 0.2) {
-      throw validationError("Savings must be at least 20% of loan amount for this credit type");
+    const walletBal = Number(wallet.balance);
+    if (creditType !== "emergency" && walletBal < amount * 0.2) {
+      throw validationError("Wallet balance must be at least 20% of loan amount for this credit type");
     }
 
     const serviceFee = amount * 0.015;

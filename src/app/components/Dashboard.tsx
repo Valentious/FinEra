@@ -24,10 +24,14 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { motion } from "framer-motion";
+import { getWalletLabel } from "@/types/wallet";
 
 interface DashboardProps {
   userName: string;
-  savingsBalance: number;
+  /** Primary balance for active currency wallet */
+  walletBalance: number;
+  /** USD | ZIG | ZAR — drives FinCash … Wallet label */
+  dashboardCurrency?: string;
   activeCredit: number;
   availableCreditLimit: number;
   onApplyForCredit: () => void;
@@ -48,7 +52,8 @@ const savingsData = [
 
 export function Dashboard({
   userName,
-  savingsBalance,
+  walletBalance,
+  dashboardCurrency = "USD",
   activeCredit,
   availableCreditLimit,
   onApplyForCredit,
@@ -57,6 +62,7 @@ export function Dashboard({
   onViewRepayment,
   transactions
 }: DashboardProps) {
+  const walletLabel = getWalletLabel(dashboardCurrency);
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
       {/* Welcome Section */}
@@ -100,7 +106,7 @@ export function Dashboard({
           </Card>
         </motion.div>
 
-        {/* Total Savings Balance */}
+        {/* FinCash wallet (currency-scoped) */}
         <motion.div whileHover={{ y: -4 }} className="order-2">
           <Card className="p-6 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white border-none shadow-xl shadow-emerald-100 h-full flex flex-col justify-between">
             <div>
@@ -113,8 +119,8 @@ export function Dashboard({
                   <span className="text-[10px] font-bold">+12.5%</span>
                 </div>
               </div>
-              <p className="text-emerald-100 text-xs font-black uppercase tracking-widest">Savings Balance</p>
-              <h3 className="text-3xl font-black mt-1">${savingsBalance.toLocaleString()}</h3>
+              <p className="text-emerald-100 text-xs font-black uppercase tracking-widest">{walletLabel}</p>
+              <h3 className="text-3xl font-black mt-1">${walletBalance.toLocaleString()}</h3>
             </div>
             <div className="mt-6 flex gap-2">
               <Button size="sm" className="bg-white text-emerald-600 hover:bg-emerald-50 font-black flex-1 h-10 rounded-xl" onClick={onAddSavings}>

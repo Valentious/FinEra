@@ -66,7 +66,9 @@ export interface CurrencyTab {
 
 interface DashboardV2Props {
   userName: string;
-  savingsBalance: number;
+  walletBalance: number;
+  /** e.g. FinCash USD Wallet — must match active dashboard currency */
+  walletLabel: string;
   activeCredit: number;
   availableCreditLimit: number;
   disciplineScore: number;
@@ -142,18 +144,19 @@ function getSFISEligibilityTier(score: number): { tier: string; color: string; b
     tier: "Restricted", 
     color: "text-red-600", 
     bgColor: "bg-red-100",
-    description: "Requires savings improvement"
+    description: "Requires wallet balance improvement"
   };
 }
 
 export function DashboardV2({
   userName,
-  savingsBalance,
+  walletBalance,
+  walletLabel,
   activeCredit,
   availableCreditLimit,
   disciplineScore,
   creditScore,
-  loyaltyProgress,
+  loyaltyProgress: loyaltyProgressRaw,
   selectedCurrency = 'USD',
   onCurrencyChange,
   displayAccountNumber,
@@ -167,6 +170,13 @@ export function DashboardV2({
   currencyTabs,
   dashboardConfig = {},
 }: DashboardV2Props) {
+  const safeAvailableCreditLimit = Number.isFinite(Number(availableCreditLimit)) ? Number(availableCreditLimit) : 0;
+  const safeWalletBalance = Number.isFinite(Number(walletBalance)) ? Number(walletBalance) : 0;
+  const safeActiveCredit = Number.isFinite(Number(activeCredit)) ? Number(activeCredit) : 0;
+  const safeDisciplineScore = Number.isFinite(Number(disciplineScore)) ? Number(disciplineScore) : 50;
+  const safeCreditScore = Number.isFinite(Number(creditScore)) ? Number(creditScore) : 82;
+  const safeLoyaltyProgress = Number.isFinite(Number(loyaltyProgressRaw)) ? Number(loyaltyProgressRaw) : 0;
+
   const [showDisciplineDetails, setShowDisciplineDetails] = useState(false);
   const [showCreditScoreBreakdown, setShowCreditScoreBreakdown] = useState(false);
   const tabs = currencyTabs && currencyTabs.length > 0
@@ -181,14 +191,14 @@ export function DashboardV2({
   );
   const custodyLabel = selectedTab?.custodyType === 'blockchain' ? 'Blockchain custody' : selectedTab?.custodyType === 'momo' ? 'Mobile money' : selectedTab?.custodyType ? 'Bank custody' : '';
 
-  const disciplineColor = getDisciplineScoreColor(disciplineScore);
-  const disciplineRingColor = getDisciplineScoreRingColor(disciplineScore);
-  const creditTier = getCreditScoreTier(creditScore);
-  const sfisTier = getSFISEligibilityTier(creditScore);
+  const disciplineColor = getDisciplineScoreColor(safeDisciplineScore);
+  const disciplineRingColor = getDisciplineScoreRingColor(safeDisciplineScore);
+  const creditTier = getCreditScoreTier(safeCreditScore);
+  const sfisTier = getSFISEligibilityTier(safeCreditScore);
 
   // Calculate circular progress for discipline score
   const circumference = 2 * Math.PI * 70; // radius = 70
-  const strokeDashoffset = circumference - (disciplineScore / 100) * circumference;
+  const strokeDashoffset = circumference - (safeDisciplineScore / 100) * circumference;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-12">
@@ -246,7 +256,7 @@ export function DashboardV2({
                 </div>
               </div>
               <p className="text-gray-300 text-xs font-black uppercase tracking-widest">Potential Credit Limit</p>
-              <h3 className="text-4xl font-black mt-1">{selectedCurrency} {symbol}{availableCreditLimit.toLocaleString()}</h3>
+              <h3 className="text-4xl font-black mt-1">{selectedCurrency} {symbol}{safeAvailableCreditLimit.toLocaleString()}</h3>
               <p className="text-gray-400 text-xs mt-2 font-medium">Increase TrustScore, Unlock More Credit</p>
             </div>
             <div className="relative z-10 mt-8">
@@ -260,7 +270,7 @@ export function DashboardV2({
           </Card>
         </motion.div>
 
-        {/* 2️⃣ Savings Balance */}
+        {/* 2️⃣ FinCash wallet (currency-scoped) */}
         <motion.div whileHover={{ y: -4 }} className="order-2">
           <Card className="p-6 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white border-none shadow-xl shadow-emerald-100 h-full flex flex-col justify-between">
             <div>
@@ -273,8 +283,8 @@ export function DashboardV2({
                   <span className="text-[10px] font-bold">+12.5%</span>
                 </div>
               </div>
-              <p className="text-emerald-100 text-xs font-black uppercase tracking-widest">Savings Balance</p>
-              <h3 className="text-3xl font-black mt-1">{symbol}{savingsBalance.toLocaleString()}</h3>
+              <p className="text-emerald-100 text-xs font-black uppercase tracking-widest">{walletLabel}</p>
+              <h3 className="text-3xl font-black mt-1">{symbol}{safeWalletBalance.toLocaleString()}</h3>
             </div>
             <div className="mt-6 flex gap-2">
               <Button size="sm" className="bg-white text-emerald-600 hover:bg-emerald-50 font-black flex-1 h-10 rounded-xl" onClick={onAddSavings}>
@@ -298,7 +308,7 @@ export function DashboardV2({
                 <div className="px-2 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded-full uppercase">Current Debt</div>
               </div>
               <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Active Loan</p>
-              <h3 className="text-3xl font-black mt-1 text-slate-900">{symbol}{activeCredit.toLocaleString()}</h3>
+              <h3 className="text-3xl font-black mt-1 text-slate-900">{symbol}{safeActiveCredit.toLocaleString()}</h3>
             </div>
             <div className="mt-6">
               <div className="flex justify-between text-[10px] font-black mb-1 text-slate-400 uppercase">
@@ -359,7 +369,7 @@ export function DashboardV2({
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
-                        <div className="text-5xl font-black">{disciplineScore}</div>
+                        <div className="text-5xl font-black">{safeDisciplineScore}</div>
                         <div className="text-sm opacity-90">/100</div>
                       </div>
                     </div>
@@ -367,10 +377,10 @@ export function DashboardV2({
                 </div>
 
                 <p className="text-white/90 text-sm mb-2 font-medium text-center">
-                  Your repayment discipline and savings consistency rating.
+                  Your repayment discipline and wallet balance consistency rating.
                 </p>
                 <p className="text-white/70 text-xs mb-4 text-center">
-                  Improves with on-time payments and stable savings.
+                  Improves with on-time payments and stable wallet funding.
                 </p>
 
                 <Button 
@@ -384,19 +394,19 @@ export function DashboardV2({
             </Card>
           </motion.div>
 
-          {/* B. Performance Portfolio Chart - Savings Wallet driven */}
+          {/* B. Performance Portfolio Chart — ledger for active currency wallet */}
           <motion.div whileHover={{ y: -4 }}>
             <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden h-full">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-black text-slate-900">Performance Portfolio ({selectedCurrency})</h3>
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase">
                   <ShieldCheck className="w-3 h-3 text-green-500" />
-                  Savings Wallet
+                  {walletLabel}
                 </div>
               </div>
               <PerformancePortfolioChart
                 transactions={ledgerTxns}
-                currentBalance={savingsBalance}
+                currentBalance={safeWalletBalance}
                 currencySymbol={symbol}
               />
             </Card>
@@ -408,8 +418,8 @@ export function DashboardV2({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* C. Loyalty Progress Card™ (10-Cycle Engine) */}
         <motion.div whileHover={{ y: -4 }}>
-          <Card className={`p-6 border-slate-200 shadow-xl shadow-slate-200/50 h-full ${loyaltyProgress === 10 ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white border-none' : ''}`}>
-            <h3 className={`text-lg font-black mb-6 ${loyaltyProgress === 10 ? 'text-white' : 'text-slate-900'}`}>
+          <Card className={`p-6 border-slate-200 shadow-xl shadow-slate-200/50 h-full ${safeLoyaltyProgress === 10 ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white border-none' : ''}`}>
+            <h3 className={`text-lg font-black mb-6 ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-slate-900'}`}>
               Loyalty Reward Progress
             </h3>
             
@@ -419,13 +429,13 @@ export function DashboardV2({
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((cycle) => (
                   <div key={cycle} className="flex flex-col items-center">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${
-                      cycle <= loyaltyProgress 
-                        ? (loyaltyProgress === 10 ? 'bg-white text-amber-600' : 'bg-green-500 text-white') 
+                      cycle <= safeLoyaltyProgress 
+                        ? (safeLoyaltyProgress === 10 ? 'bg-white text-amber-600' : 'bg-green-500 text-white') 
                         : 'bg-slate-200 text-slate-400'
                     }`}>
-                      {cycle <= loyaltyProgress ? '✓' : cycle}
+                      {cycle <= safeLoyaltyProgress ? '✓' : cycle}
                     </div>
-                    <div className={`text-[8px] mt-1 font-bold ${loyaltyProgress === 10 ? 'text-white' : 'text-slate-400'}`}>
+                    <div className={`text-[8px] mt-1 font-bold ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-slate-400'}`}>
                       {cycle}
                     </div>
                   </div>
@@ -433,19 +443,19 @@ export function DashboardV2({
               </div>
               <div className="relative h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full ${loyaltyProgress === 10 ? 'bg-white' : 'bg-green-500'} transition-all duration-500`}
-                  style={{ width: `${(loyaltyProgress / 10) * 100}%` }}
+                  className={`h-full ${safeLoyaltyProgress === 10 ? 'bg-white' : 'bg-green-500'} transition-all duration-500`}
+                  style={{ width: `${(safeLoyaltyProgress / 10) * 100}%` }}
                 />
               </div>
             </div>
 
-            <p className={`text-sm mb-4 font-medium ${loyaltyProgress === 10 ? 'text-white' : 'text-slate-600'}`}>
-              {loyaltyProgress === 10 
+            <p className={`text-sm mb-4 font-medium ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-slate-600'}`}>
+              {safeLoyaltyProgress === 10 
                 ? "12% Interest Discount Activated On Next Loan." 
                 : "Complete 10 loans with zero repayment default to unlock one-time complete interest discount"}
             </p>
 
-            {loyaltyProgress === 9 && (
+            {safeLoyaltyProgress === 9 && (
               <div className="px-4 py-3 bg-amber-50 border-2 border-amber-400 rounded-xl mb-4">
                 <p className="text-amber-900 font-black text-sm text-center">
                   🎉 1 Loan Away From 12% Discount!
@@ -453,7 +463,7 @@ export function DashboardV2({
               </div>
             )}
 
-            {loyaltyProgress === 10 && (
+            {safeLoyaltyProgress === 10 && (
               <div className="px-4 py-3 bg-white/20 backdrop-blur-md border-2 border-white/40 rounded-xl">
                 <p className="text-white font-black text-sm text-center">
                   🏆 Congratulations! Loyalty Milestone Achieved!
@@ -461,10 +471,10 @@ export function DashboardV2({
               </div>
             )}
 
-            {loyaltyProgress < 9 && (
+            {safeLoyaltyProgress < 9 && (
               <div className="text-center">
-                <p className={`text-xs font-bold ${loyaltyProgress === 10 ? 'text-white/80' : 'text-slate-500'}`}>
-                  {10 - loyaltyProgress} more successful {10 - loyaltyProgress === 1 ? 'cycle' : 'cycles'} to go
+                <p className={`text-xs font-bold ${safeLoyaltyProgress === 10 ? 'text-white/80' : 'text-slate-500'}`}>
+                  {10 - safeLoyaltyProgress} more successful {10 - safeLoyaltyProgress === 1 ? 'cycle' : 'cycles'} to go
                 </p>
               </div>
             )}

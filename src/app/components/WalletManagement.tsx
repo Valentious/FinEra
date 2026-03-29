@@ -15,10 +15,13 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
+import { formatAmountWithCurrency } from "@/types/wallet";
 
 interface WalletManagementProps {
+  currencyCode: string;
+  walletLabel: string;
   approvedCreditWallet: number;
-  savingsWallet: number;
+  walletBalance: number;
   activeCredit: number;
   onTransferToSavings: (amount: number) => void;
   onAddSavings: () => void;
@@ -27,22 +30,25 @@ interface WalletManagementProps {
 }
 
 export function WalletManagement({
+  currencyCode,
+  walletLabel,
   approvedCreditWallet,
-  savingsWallet,
+  walletBalance,
   activeCredit,
   onTransferToSavings,
   onAddSavings,
   onWithdraw,
   onBack,
 }: WalletManagementProps) {
+  const cc = currencyCode.toUpperCase();
   const [transferAmount, setTransferAmount] = useState<string>("");
   const [showTransferModal, setShowTransferModal] = useState(false);
 
   // Calculate 20% minimum savings requirement for active credit
   const minimumSavingsRequired = activeCredit > 0 ? activeCredit * 0.2 : 0;
-  const savingsRequirementMet = savingsWallet >= minimumSavingsRequired;
+  const savingsRequirementMet = walletBalance >= minimumSavingsRequired;
   const savingsProgressPercentage = minimumSavingsRequired > 0 
-    ? Math.min((savingsWallet / minimumSavingsRequired) * 100, 100) 
+    ? Math.min((walletBalance / minimumSavingsRequired) * 100, 100) 
     : 100;
 
   const handleTransfer = () => {
@@ -59,16 +65,18 @@ export function WalletManagement({
     }
 
     // Check if transfer would violate 20% savings requirement
-    const newSavingsBalance = savingsWallet + amount;
-    if (activeCredit > 0 && newSavingsBalance < minimumSavingsRequired) {
-      toast.error(`You must maintain at least $${minimumSavingsRequired.toLocaleString()} in savings (20% of loan amount)`);
+    const newWalletBalance = walletBalance + amount;
+    if (activeCredit > 0 && newWalletBalance < minimumSavingsRequired) {
+      toast.error(
+        `You must maintain at least ${formatAmountWithCurrency(minimumSavingsRequired, cc)} in ${walletLabel} (20% of loan amount)`
+      );
       return;
     }
 
     onTransferToSavings(amount);
     setTransferAmount("");
     setShowTransferModal(false);
-    toast.success(`$${amount.toLocaleString()} transferred to Savings Wallet`);
+    toast.success(`${formatAmountWithCurrency(amount, cc)} transferred to ${walletLabel}`);
   };
 
   return (
@@ -82,7 +90,7 @@ export function WalletManagement({
         <div>
           <h1 className="text-3xl font-black text-slate-900">Wallet Management</h1>
           <p className="text-slate-500 font-medium mt-1">
-            Manage your credit and savings wallets
+            Manage approved credit and {walletLabel} ({cc})
           </p>
         </div>
 
@@ -111,14 +119,14 @@ export function WalletManagement({
                   Approved Credit Wallet
                 </p>
                 <h3 className="text-5xl font-black mb-4">
-                  ${approvedCreditWallet.toLocaleString()}
+                  {formatAmountWithCurrency(approvedCreditWallet, cc)}
                 </h3>
                 
                 <div className="space-y-3 pt-4 border-t border-white/20">
                   <div className="flex items-center gap-2 text-sm">
                     <Info className="w-4 h-4 text-emerald-200" />
                     <p className="text-emerald-100 font-medium">
-                      Can only transfer to Savings Wallet
+                      Can only transfer to {walletLabel}
                     </p>
                   </div>
                   
@@ -127,7 +135,7 @@ export function WalletManagement({
                       onClick={() => setShowTransferModal(true)}
                       className="w-full bg-white text-emerald-600 hover:bg-emerald-50 h-12 rounded-xl font-black gap-2 shadow-lg"
                     >
-                      Transfer to Savings
+                      Transfer to wallet
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   )}
@@ -156,10 +164,10 @@ export function WalletManagement({
                 </div>
                 
                 <p className="text-green-100 text-xs font-black uppercase tracking-widest mb-1">
-                  Saving Balance Wallet
+                  {walletLabel}
                 </p>
                 <h3 className="text-5xl font-black mb-4">
-                  ${savingsWallet.toLocaleString()}
+                  {formatAmountWithCurrency(walletBalance, cc)}
                 </h3>
                 
                 <div className="space-y-3 pt-4 border-t border-white/20">
@@ -180,7 +188,7 @@ export function WalletManagement({
                     </Button>
                     <Button
                       onClick={onWithdraw}
-                      disabled={savingsWallet === 0}
+                      disabled={walletBalance === 0}
                       className="bg-white text-green-600 hover:bg-green-50 h-10 rounded-xl font-black"
                     >
                       Withdraw
@@ -210,15 +218,16 @@ export function WalletManagement({
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-black text-slate-900 mb-2">
-                    {savingsRequirementMet ? 'Savings Requirement Met ✓' : 'Minimum Savings Requirement'}
+                    {savingsRequirementMet ? 'Collateral requirement met ✓' : 'Minimum wallet balance required'}
                   </h3>
                   <p className="text-sm text-slate-600 font-medium mb-4">
-                    You must maintain at least <span className="font-black">${minimumSavingsRequired.toLocaleString()}</span> (20% of your loan amount) in your Savings Wallet.
+                    You must maintain at least{" "}
+                    <span className="font-black">{formatAmountWithCurrency(minimumSavingsRequired, cc)}</span> (20% of your loan) in {walletLabel}.
                   </p>
                   
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs font-black text-slate-600">
-                      <span>Current Savings: ${savingsWallet.toLocaleString()}</span>
+                      <span>Current: {formatAmountWithCurrency(walletBalance, cc)}</span>
                       <span>{savingsProgressPercentage.toFixed(0)}% of Required</span>
                     </div>
                     <Progress value={savingsProgressPercentage} className="h-3" />
@@ -226,7 +235,7 @@ export function WalletManagement({
                     {!savingsRequirementMet && (
                       <p className="text-xs text-red-600 font-bold mt-2 flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3" />
-                        You need ${(minimumSavingsRequired - savingsWallet).toLocaleString()} more to meet the requirement
+                        You need {formatAmountWithCurrency(Math.max(0, minimumSavingsRequired - walletBalance), cc)} more to meet the requirement
                       </p>
                     )}
                   </div>
@@ -289,10 +298,10 @@ export function WalletManagement({
               </p>
               <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
                 <li>Approved Credit Wallet funds cannot be withdrawn directly</li>
-                <li>Transfer from Approved Credit → Savings Wallet to access funds</li>
-                <li>For Essential & Business Credit: Maintain 20% minimum savings</li>
-                <li>Emergency Credit: No minimum savings requirement</li>
-                <li>Withdrawal restrictions apply if savings requirement not met</li>
+                <li>Transfer from Approved Credit → {walletLabel} to access funds</li>
+                <li>For Essential & Business Credit: Maintain 20% minimum wallet balance</li>
+                <li>Emergency Credit: No minimum wallet balance requirement</li>
+                <li>Withdrawal restrictions apply if the requirement is not met</li>
               </ul>
             </div>
           </div>
@@ -317,7 +326,7 @@ export function WalletManagement({
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="text-2xl font-black text-slate-900 mb-2">
-                Transfer to Savings Wallet
+                Transfer to {walletLabel}
               </h3>
               <p className="text-sm text-slate-600 font-medium mb-6">
                 Move funds from your Approved Credit Wallet to make them withdrawable
@@ -329,7 +338,7 @@ export function WalletManagement({
                     Available in Approved Credit Wallet
                   </label>
                   <div className="text-3xl font-black text-emerald-600">
-                    ${approvedCreditWallet.toLocaleString()}
+                    {formatAmountWithCurrency(approvedCreditWallet, cc)}
                   </div>
                 </div>
 
@@ -338,15 +347,15 @@ export function WalletManagement({
                     Transfer Amount
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-400">
-                      $
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-slate-400 max-w-[4rem] truncate">
+                      {cc === "USD" ? "$" : cc === "ZAR" ? "R" : cc === "ZIG" ? "ZiG" : cc}
                     </span>
                     <input
                       type="number"
                       value={transferAmount}
                       onChange={(e) => setTransferAmount(e.target.value)}
                       placeholder="0.00"
-                      className="w-full h-14 pl-10 pr-4 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-2xl font-black"
+                      className="w-full h-14 pl-16 pr-4 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-2xl font-black"
                       step="0.01"
                       min="0"
                       max={approvedCreditWallet}
@@ -364,7 +373,7 @@ export function WalletManagement({
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
                     <p className="text-xs text-amber-800 font-medium flex items-center gap-2">
                       <Info className="w-4 h-4" />
-                      Remember: You must maintain at least ${minimumSavingsRequired.toLocaleString()} in Savings Wallet
+                      Remember: You must maintain at least {formatAmountWithCurrency(minimumSavingsRequired, cc)} in {walletLabel}
                     </p>
                   </div>
                 )}

@@ -12,7 +12,7 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
   const steps = [
     {
       icon: <PiggyBank className="w-6 h-6 text-green-600" />,
-      title: "Build your Savings",
+      title: "Build your FinCash Wallet",
       description: "Start saving to unlock higher credit limits and better interest rates."
     },
     {

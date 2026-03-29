@@ -1,15 +1,17 @@
-﻿/**
+/**
  * FinEra Backend - Portfolio Service
  * Portfolio calculations derived from transaction history and wallet balances.
  */
 
 import { prisma } from "../../infrastructure/database/index.js";
 import type { CurrencyCode } from "@prisma/client";
+import { getWalletLabel } from "../../shared/wallet-label.js";
 
 export interface PortfolioSummary {
   userId: string;
   currencyCode: CurrencyCode;
-  totalSavings: number;
+  walletLabel: string;
+  totalBalance: number;
   activeCredit: number;
   approvedCredit: number;
   totalDeposited: number;
@@ -33,7 +35,8 @@ export async function getPortfolioSummary(
     return {
       userId,
       currencyCode: currency,
-      totalSavings: 0,
+      walletLabel: getWalletLabel(currency),
+      totalBalance: 0,
       activeCredit: 0,
       approvedCredit: 0,
       totalDeposited: 0,
@@ -76,16 +79,17 @@ export async function getPortfolioSummary(
   const totalDeposited = Number(depositAgg._sum.netAmount ?? 0);
   const totalWithdrawn = Number(withdrawAgg._sum.netAmount ?? 0);
   const totalRepaid = Number(repayAgg._sum.netAmount ?? 0);
-  const savingsBalance = Number(wallet.savingsBalance);
+  const walletBal = Number(wallet.balance);
   const activeLoanBalance = Number(wallet.activeLoanBalance);
 
   const availableForWithdrawal =
-    activeLoanBalance > 0 ? savingsBalance * 0.8 : savingsBalance;
+    activeLoanBalance > 0 ? walletBal * 0.8 : walletBal;
 
   return {
     userId,
     currencyCode: currency,
-    totalSavings: savingsBalance,
+    walletLabel: getWalletLabel(currency),
+    totalBalance: walletBal,
     activeCredit: activeLoanBalance,
     approvedCredit: Number(wallet.approvedCreditBalance),
     totalDeposited,
@@ -118,7 +122,7 @@ export async function recordPortfolioSnapshot(
       userId,
       snapshotDate: dateOnly,
       currencyCode: currency,
-      totalSavings: summary.totalSavings,
+      totalSavings: summary.totalBalance,
       activeCredit: summary.activeCredit,
       approvedCredit: summary.approvedCredit,
       totalDeposited: summary.totalDeposited,
@@ -126,7 +130,7 @@ export async function recordPortfolioSnapshot(
       totalRepaid: summary.totalRepaid,
     },
     update: {
-      totalSavings: summary.totalSavings,
+      totalSavings: summary.totalBalance,
       activeCredit: summary.activeCredit,
       approvedCredit: summary.approvedCredit,
       totalDeposited: summary.totalDeposited,

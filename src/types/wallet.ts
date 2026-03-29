@@ -10,10 +10,34 @@ export interface Wallet {
   countryCode: string;
   provider: string;
   accountNumber: string;
-  savingsBalance: number;
+  /** Primary savings wallet balance for this currency (currency-isolated). */
   balance: number;
+  /** Dynamic label for active dashboard currency, e.g. FinCash USD Wallet */
+  walletLabel?: string;
   approvedCreditBalance: number;
   activeLoanBalance: number;
+}
+
+/** Normalize currency for comparisons (trim + uppercase). */
+export function normalizeCurrencyCode(currency: string): string {
+  return currency.trim().toUpperCase();
+}
+
+/**
+ * Display name for the active-currency wallet (matches backend `walletLabel`).
+ */
+export function getWalletLabel(currency: string): string {
+  const c = normalizeCurrencyCode(currency);
+  switch (c) {
+    case "USD":
+      return "FinCash USD Wallet";
+    case "ZIG":
+      return "FinCash ZiG Wallet";
+    case "ZAR":
+      return "FinCash ZAR Wallet";
+    default:
+      return "FinCash Wallet";
+  }
 }
 
 /** Currency → country code for flag/country mapping */

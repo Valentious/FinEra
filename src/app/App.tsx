@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { SplashScreen } from "@/app/components/SplashScreen";
 import { LoginRegister } from "@/app/components/LoginRegister";
@@ -39,10 +39,12 @@ import {
   CURRENCY_AMOUNT_SYMBOLS,
   currencyAmountPlaceholder,
   formatAmountWithCurrency,
+  getWalletLabel,
 } from "@/types/wallet";
 import { AccountSwitchOverlay } from "@/app/components/AccountSwitchOverlay";
 import { BankLinking } from "@/app/components/BankLinking";
 import { BackendUnavailableBanner } from "@/app/components/BackendUnavailableBanner";
+import { AppErrorBoundary } from "@/app/components/AppErrorBoundary";
 
 type Screen =
   | "splash"
@@ -109,13 +111,25 @@ function generateFinEraAccountNumbers(): FinEraAccountNumbers {
   };
 }
 
+/** Same key as backend/mock: avoids member_User@x vs member_user@x mismatches */
+function normalizeStorageEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 const saveUserData = (data: UserData) => {
-  localStorage.setItem(`member_${data.email}`, JSON.stringify(data));
+  const key = normalizeStorageEmail(data.email);
+  localStorage.setItem(`member_${key}`, JSON.stringify(data));
 };
 
 const loadUserData = (email: string): UserData | null => {
-  const saved = localStorage.getItem(`member_${email}`);
-  return saved ? JSON.parse(saved) : null;
+  const key = normalizeStorageEmail(email);
+  const saved = localStorage.getItem(`member_${key}`);
+  if (!saved) return null;
+  try {
+    return JSON.parse(saved) as UserData;
+  } catch {
+    return null;
+  }
 };
 // ==================== END MOCK DATA HELPERS ====================
 
@@ -139,7 +153,7 @@ export default function App() {
     mobile: "",
     password: "",
     accountType: "student",
-    savingsBalance: 0,
+    walletBalance: 0,
     approvedCreditWallet: 0, // New: Approved Credit Wallet (non-withdrawable)
     activeCredit: 0,
     availableCreditLimit: 200, // Default for students
@@ -153,6 +167,39 @@ export default function App() {
     onTimePayments: 6,
   });
 
+  const handleLogout = useCallback(async () => {
+    try {
+      await apiService.logout();
+    } catch {
+      // Ignore logout API errors
+    }
+    localStorage.removeItem("active_user_email");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    setCurrentScreen("loginRegister");
+  }, []);
+
+  // Restore session from local member cache when token exists (avoids async race with login/splash flow)
+  useEffect(() => {
+    const emailRaw = localStorage.getItem("active_user_email");
+    const token = localStorage.getItem("auth_token") || localStorage.getItem("accessToken");
+    if (!emailRaw || !token) return;
+
+    const fromCache = loadUserData(emailRaw);
+    if (!fromCache?.email) return;
+
+    const now = Date.now();
+    const maxAge = 24 * 60 * 60 * 1000;
+    if (fromCache.lastLogin && now - fromCache.lastLogin > maxAge) {
+      void handleLogout();
+      toast.error("Session expired. Please sign in again.");
+      return;
+    }
+    setUserData((prev) => ({ ...prev, ...fromCache }));
+    setCurrentScreen("dashboard");
+  }, [handleLogout]);
+
   // Session Management Logic
   useEffect(() => {
     const checkSession = () => {
@@ -163,9 +210,9 @@ export default function App() {
       if (saved && saved.lastLogin) {
         const now = Date.now();
         const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
-        
+
         if (now - saved.lastLogin > sessionDuration) {
-          handleLogout();
+          void handleLogout();
           toast.error("Session expired. Please login again.");
           localStorage.removeItem("active_user_email");
         } else {
@@ -183,7 +230,7 @@ export default function App() {
     const interval = setInterval(checkSession, 5 * 60 * 1000); // Every 5 mins
     checkSession(); // Initial check
     return () => clearInterval(interval);
-  }, []);
+  }, [handleLogout]);
 
   const activeWallet = useAccountStore((s) => s.activeWallet);
   const wallets = useAccountStore((s) => s.wallets);
@@ -226,7 +273,8 @@ export default function App() {
     }
     return {
       kind: "ok" as const,
-      savingsBalance: dashboardWallet!.savingsBalance,
+      balance: dashboardWallet!.balance,
+      walletLabel: dashboardWallet!.walletLabel ?? getWalletLabel(selectedCurrency),
       activeLoanBalance: dashboardWallet!.activeLoanBalance,
     };
   }, [walletLoading, wallets.length, dashboardWallet, selectedCurrency]);
@@ -235,7 +283,13 @@ export default function App() {
   const [creditLimitFetchError, setCreditLimitFetchError] = useState(false);
 
   const [currencyTabs, setCurrencyTabs] = useState<CurrencyConfig[]>([]);
-  const [walletForCurrency, setWalletForCurrency] = useState<{ savingsBalance: number; activeCredit: number; approvedCreditBalance: number; accountNumber: string } | null>(null);
+  const [walletForCurrency, setWalletForCurrency] = useState<{
+    balance: number;
+    walletLabel: string;
+    activeCredit: number;
+    approvedCreditBalance: number;
+    accountNumber: string;
+  } | null>(null);
   /** Never fall back to userData.activeCredit for currency tabs — that value is profile-scoped and leaks loans across currencies. */
   const activeCreditForTab = walletForCurrency?.activeCredit ?? 0;
   const [transactionsForCurrency, setTransactionsForCurrency] = useState<Transaction[]>([]);
@@ -379,7 +433,8 @@ export default function App() {
           const w = wallets.find((x) => x.currencyCode === selectedCurrency) ?? wallets[0];
           if (w) {
             setWalletForCurrency({
-              savingsBalance: w.savingsBalance,
+              balance: w.balance,
+              walletLabel: w.walletLabel ?? getWalletLabel(w.currencyCode),
               activeCredit: w.activeLoanBalance,
               approvedCreditBalance: w.approvedCreditBalance,
               accountNumber: w.accountNumber,
@@ -453,17 +508,29 @@ export default function App() {
 
   const handleLogin = async (email: string, password?: string) => {
     try {
-      const { user, token } = await apiService.login({ email, password: password || '' });
+      const { user, token } = await apiService.login({ email, password: password || "" });
       if (user && token) {
-        const updated = { ...user, lastLogin: Date.now() };
+        const normalizedEmail = normalizeStorageEmail(user.email || email);
+        const updated: UserData = {
+          ...user,
+          email: normalizedEmail,
+          lastLogin: Date.now(),
+          availableCreditLimit: user.availableCreditLimit ?? 200,
+          disciplineScore: user.disciplineScore ?? 50,
+          creditScore: user.creditScore ?? 82,
+          loyaltyProgress: user.loyaltyProgress ?? 0,
+          walletBalance: user.walletBalance ?? 0,
+          approvedCreditWallet: user.approvedCreditWallet ?? 0,
+          activeCredit: user.activeCredit ?? 0,
+        };
         if (!updated.finEraAccountNumbers) {
-          (updated as UserData).finEraAccountNumbers = generateFinEraAccountNumbers();
+          updated.finEraAccountNumbers = generateFinEraAccountNumbers();
         }
         setUserData(updated);
         saveUserData(updated);
-        localStorage.setItem("active_user_email", email);
+        localStorage.setItem("active_user_email", normalizedEmail);
         setCurrentScreen("dashboard");
-        toast.success(`Welcome back, ${updated.fullName}!`);
+        toast.success(`Welcome back, ${updated.fullName || "member"}!`);
       } else {
         toast.error("Login failed. Please check your credentials.");
       }
@@ -509,22 +576,9 @@ export default function App() {
   const isAuthScreen = [
     "dashboard", "quickActions", "savingsWallet", "walletManagement", "withdrawFlow", "depositFlow", "applyForCredit",
     "creditDetails", "creditTypeSelection", "collateralDetails", "confirmApplication",
-    "buyBackAgreement", "creditApproved", "walletCredited", "repaymentDashboard", "financialEducation",
+    "buyBackAgreement", "applicationStatus", "creditApproved", "walletCredited", "repaymentDashboard", "financialEducation",
     "profileSettings", "partnerProgram", "adminOverview", "memberAgreement", "makeRepayment", "makePayment"
   ].includes(currentScreen);
-
-  const handleLogout = async () => {
-    try {
-      await apiService.logout();
-    } catch {
-      // Ignore logout API errors
-    }
-    localStorage.removeItem("active_user_email");
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    setCurrentScreen("loginRegister");
-  };
 
   const creditDetails = useMemo(() => {
     if (creditAvailability === null || creditLimitFetchError) return null;
@@ -572,7 +626,8 @@ export default function App() {
           const w = wallets.find((x) => x.currencyCode === selectedCurrency) ?? wallets[0];
           if (w) {
             setWalletForCurrency({
-              savingsBalance: w.savingsBalance,
+              balance: w.balance,
+              walletLabel: w.walletLabel ?? getWalletLabel(w.currencyCode),
               activeCredit: w.activeLoanBalance,
               approvedCreditBalance: w.approvedCreditBalance,
               accountNumber: w.accountNumber,
@@ -609,6 +664,7 @@ export default function App() {
       <AccountSwitchOverlay />
 
       <main className={`${isAuthScreen ? "pt-20 md:pl-64 p-4 md:p-8" : ""}`}>
+        <AppErrorBoundary onReset={() => setCurrentScreen("dashboard")}>
         {currentScreen === "splash" && <SplashScreen onComplete={() => setCurrentScreen("accountType")} />}
         {currentScreen === "accountType" && <AccountTypeSelection onSelectType={handlePreSelectAccountType} onBack={() => setCurrentScreen("splash")} />}
         {currentScreen === "loginRegister" && <LoginRegister accountType={preSelectedAccountType || 'student'} onLogin={handleLogin} onRegister={handleRegister} onBack={() => setCurrentScreen("accountType")} />}
@@ -676,7 +732,8 @@ export default function App() {
         {currentScreen === "dashboard" && (
           <DashboardV2
             userName={userData.fullName || "User"}
-            savingsBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            walletBalance={walletForCurrency?.balance ?? userData.walletBalance}
+            walletLabel={walletForCurrency?.walletLabel ?? getWalletLabel(selectedCurrency)}
             activeCredit={activeCreditForTab}
             availableCreditLimit={userData.availableCreditLimit}
             disciplineScore={userData.disciplineScore}
@@ -715,12 +772,14 @@ export default function App() {
 
         {currentScreen === "savingsWallet" && (
           <SavingsWallet
-            totalSavings={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
-            lockedSavings={activeCreditForTab > 0 ? (walletForCurrency?.savingsBalance ?? userData.savingsBalance) * 0.2 : 0}
-            availableSavings={activeCreditForTab > 0 ? (walletForCurrency?.savingsBalance ?? userData.savingsBalance) * 0.8 : (walletForCurrency?.savingsBalance ?? userData.savingsBalance)}
+            currencyCode={selectedCurrency}
+            walletLabel={walletForCurrency?.walletLabel ?? getWalletLabel(selectedCurrency)}
+            totalSavings={walletForCurrency?.balance ?? userData.walletBalance}
+            lockedSavings={activeCreditForTab > 0 ? (walletForCurrency?.balance ?? userData.walletBalance) * 0.2 : 0}
+            availableSavings={activeCreditForTab > 0 ? (walletForCurrency?.balance ?? userData.walletBalance) * 0.8 : (walletForCurrency?.balance ?? userData.walletBalance)}
             onAddSavings={() => setCurrentScreen("depositFlow")}
             onWithdraw={() => {
-              const bal = walletForCurrency?.savingsBalance ?? userData.savingsBalance;
+              const bal = walletForCurrency?.balance ?? userData.walletBalance;
               if (bal > 0) setCurrentScreen("withdrawFlow");
               else toast.error("Insufficient balance");
             }}
@@ -730,8 +789,10 @@ export default function App() {
 
         {currentScreen === "walletManagement" && (
           <WalletManagement
+            currencyCode={selectedCurrency}
+            walletLabel={walletForCurrency?.walletLabel ?? getWalletLabel(selectedCurrency)}
             approvedCreditWallet={walletForCurrency?.approvedCreditBalance ?? userData.approvedCreditWallet}
-            savingsWallet={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            walletBalance={walletForCurrency?.balance ?? userData.walletBalance}
             activeCredit={activeCreditForTab}
             onTransferToSavings={async (amount) => {
               try {
@@ -743,9 +804,9 @@ export default function App() {
             }}
             onAddSavings={() => setCurrentScreen("depositFlow")}
             onWithdraw={() => {
-              const bal = walletForCurrency?.savingsBalance ?? userData.savingsBalance;
+              const bal = walletForCurrency?.balance ?? userData.walletBalance;
               if (bal > 0) setCurrentScreen("withdrawFlow");
-              else toast.error("Insufficient balance in Savings Wallet");
+              else toast.error(`Insufficient balance in ${walletForCurrency?.walletLabel ?? getWalletLabel(selectedCurrency)}`);
             }}
             onBack={() => setCurrentScreen("dashboard")}
           />
@@ -753,7 +814,7 @@ export default function App() {
 
         {currentScreen === "withdrawFlow" && (
           <WithdrawFlow
-            balance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            balance={walletForCurrency?.balance ?? userData.walletBalance}
             currencyCode={selectedCurrency}
             amountSymbol={CURRENCY_AMOUNT_SYMBOLS[selectedCurrency] ?? selectedCurrency}
             amountPlaceholder={currencyAmountPlaceholder(selectedCurrency)}
@@ -773,7 +834,7 @@ export default function App() {
 
         {currentScreen === "depositFlow" && (
           <DepositFlow
-            currentBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            currentBalance={walletForCurrency?.balance ?? userData.walletBalance}
             currencyCode={selectedCurrency}
             amountSymbol={CURRENCY_AMOUNT_SYMBOLS[selectedCurrency] ?? selectedCurrency}
             amountPlaceholder={currencyAmountPlaceholder(selectedCurrency)}
@@ -796,7 +857,8 @@ export default function App() {
             currencyCode={selectedCurrency}
             isWalletLoading={creditWalletState.kind === "loading"}
             walletError={creditWalletState.kind === "missing" ? creditWalletState.message : null}
-            savingsBalance={creditWalletState.kind === "ok" ? creditWalletState.savingsBalance : 0}
+            walletBalance={creditWalletState.kind === "ok" ? creditWalletState.balance : 0}
+            walletLabel={creditWalletState.kind === "ok" ? creditWalletState.walletLabel : getWalletLabel(selectedCurrency)}
             hasActiveLoan={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance > 0 : false}
             onSelectCreditType={(type) => {
               setCreditApplication({ ...creditApplication, creditType: type });
@@ -809,6 +871,7 @@ export default function App() {
         {currentScreen === "creditDetails" && (
           <CreditDetails
             currencyCode={selectedCurrency}
+            walletLabel={creditWalletState.kind === "ok" ? creditWalletState.walletLabel : getWalletLabel(selectedCurrency)}
             isWalletLoading={creditWalletState.kind === "loading"}
             walletError={creditWalletState.kind === "missing" ? creditWalletState.message : null}
             creditLimitLoading={creditAvailability === null && !creditLimitFetchError}
@@ -818,15 +881,17 @@ export default function App() {
             maxAmount={creditDetails?.maxAmount ?? 0}
             repaymentCycle={creditDetails?.repaymentCycle ?? ""}
             savingsRequirement={(creditDetails?.savingsRequirement ?? 0) * 100}
-            currentSavings={creditWalletState.kind === "ok" ? creditWalletState.savingsBalance : 0}
+            currentSavings={creditWalletState.kind === "ok" ? creditWalletState.balance : 0}
             onContinue={(amount) => {
               if (creditWalletState.kind !== "ok") {
                 toast.error("Wallet not found for selected currency.");
                 return;
               }
-              const savings = creditWalletState.savingsBalance;
+              const savings = creditWalletState.balance;
               if (creditApplication.creditType !== "emergency" && savings < amount * 0.2) {
-                toast.error("Financial Discipline Notification: Savings must be at least 20% of loan amount.");
+                toast.error(
+                  `Financial Discipline Notification: ${creditWalletState.kind === "ok" ? creditWalletState.walletLabel : getWalletLabel(selectedCurrency)} balance must be at least 20% of loan amount.`
+                );
                 return;
               }
               setCreditApplication({ ...creditApplication, amount });
@@ -855,6 +920,18 @@ export default function App() {
           />
         )}
 
+        {currentScreen === "applicationStatus" && (
+          <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-4 text-center">
+            <div
+              className="h-12 w-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"
+              aria-hidden
+            />
+            <p className="text-lg font-black text-slate-900">Processing your application</p>
+            <p className="text-sm text-slate-500 max-w-sm">
+              Securely submitting your credit request. This usually takes a few seconds.
+            </p>
+          </div>
+        )}
         {currentScreen === "confirmApplication" && (
           <ConfirmApplication
             currencyCode={selectedCurrency}
@@ -913,8 +990,13 @@ export default function App() {
             isWalletLoading={creditWalletState.kind === "loading"}
             walletError={creditWalletState.kind === "missing" ? creditWalletState.message : null}
             outstandingBalance={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance : activeCreditForTab}
-            savingsBalance={
-              creditWalletState.kind === "ok" ? creditWalletState.savingsBalance : walletForCurrency?.savingsBalance ?? 0
+            walletBalance={
+              creditWalletState.kind === "ok" ? creditWalletState.balance : walletForCurrency?.balance ?? 0
+            }
+            walletLabel={
+              creditWalletState.kind === "ok"
+                ? creditWalletState.walletLabel
+                : walletForCurrency?.walletLabel ?? getWalletLabel(selectedCurrency)
             }
             onBack={() => setCurrentScreen("repaymentDashboard")}
             onConfirm={async (amount, method) => {
@@ -942,7 +1024,9 @@ export default function App() {
         {currentScreen === "makePayment" && (
           <MakePayment
             countryCode={userData.countryId || "zw"}
-            savingsBalance={walletForCurrency?.savingsBalance ?? userData.savingsBalance}
+            currencyCode={selectedCurrency}
+            walletBalance={walletForCurrency?.balance ?? userData.walletBalance}
+            walletLabel={walletForCurrency?.walletLabel ?? getWalletLabel(selectedCurrency)}
             currencySymbol={{ USD: "$", ZIG: "Z$", ZAR: "R", EUR: "€", GBP: "£" }[selectedCurrency] ?? "$"}
             onBack={() => setCurrentScreen("dashboard")}
             onSuccess={async (payment) => {
@@ -965,6 +1049,7 @@ export default function App() {
         )}
         {currentScreen === "profileSettings" && <ProfileSettings userData={userData} onLogout={handleLogout} onUpdate={(d) => updateAndSave({ ...userData, ...d })} />}
         {currentScreen === "partnerProgram" && <PartnerProgram />}
+        </AppErrorBoundary>
       </main>
     </div>
   );

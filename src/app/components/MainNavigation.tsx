@@ -33,7 +33,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "quickActions", label: "Quick Actions", icon: Zap },
-    { id: "savingsWallet", label: "Savings Wallet", icon: PiggyBank },
+    { id: "savingsWallet", label: "FinCash Wallet", icon: PiggyBank },
     { id: "financialEducation", label: "Learning Hub", icon: GraduationCap },
     { id: "profileSettings", label: "Account Settings", icon: Settings },
     { id: "partnerProgram", label: "Partner Program", icon: Handshake },
