@@ -100,7 +100,7 @@ export function ApplyForCredit({
           </Button>
           <div>
             <h2 className="text-3xl font-black text-slate-900">Apply for Credit</h2>
-            <p className="text-sm font-bold text-slate-500 mt-1">{cc} dashboard — amounts in {cc}</p>
+            <p className="text-sm font-bold text-slate-500 mt-1">{cc} dashboard - amounts in {cc}</p>
           </div>
         </div>
         <div className="bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm text-right max-w-[min(100%,14rem)]">

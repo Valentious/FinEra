@@ -13,7 +13,7 @@ import {
 
 interface CreditDetailsProps {
   currencyCode: string;
-  /** e.g. FinCash USD Wallet — matches active dashboard currency */
+  /** e.g. FinCash USD Wallet - matches active dashboard currency */
   walletLabel: string;
   isWalletLoading: boolean;
   walletError: string | null;

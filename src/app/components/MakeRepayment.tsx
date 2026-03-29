@@ -160,7 +160,7 @@ export function MakeRepayment({
               </Button>
               <div>
                 <h2 className="text-2xl font-black text-slate-900">Make Repayment</h2>
-                <p className="text-sm font-bold text-slate-500">{cc} only — no cross-currency settlement</p>
+                <p className="text-sm font-bold text-slate-500">{cc} only - no cross-currency settlement</p>
               </div>
             </div>
 

@@ -230,6 +230,10 @@ model User {
   institution             String?
   institutionId           String?
   phoneNumber             String?   @unique
+  /// Salutation shown in profile (Mr, Mrs, Ms, Dr, ...)
+  title                   String?
+  /// UI locale: en, es, fr, pt, sw, sn, nd, af (ISO-style codes)
+  preferredLanguage       String    @default("en")
   phoneVerified           Boolean   @default(false)
   emailVerified           Boolean   @default(false)
   /// Bcrypt hash of the current email OTP (never store plaintext).
@@ -297,7 +301,9 @@ model Wallet {
   id                    String      @id @default(uuid())
   userId                String
   currencyCode          CurrencyCode
-  accountNumber         String      @unique // FIN + 12 digits
+  accountNumber         String      @unique // Structured ledger account (digits)
+  /// Public 10-digit peer transfer ID (Binance-style), unique globally per wallet
+  walletNumericId       String?     @unique @map("wallet_numeric_id")
   balance               Decimal     @default(0) @db.Decimal(18, 8)
   availableBalance      Decimal     @default(0) @db.Decimal(18, 8)
   holdBalance           Decimal     @default(0) @db.Decimal(18, 8)

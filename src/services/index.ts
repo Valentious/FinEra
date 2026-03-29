@@ -58,6 +58,8 @@ export const apiService = USE_MOCK_DATA ? {
   getDashboardConfig: async () => ({}),
   getWalletsByCurrency: mockApi.mockGetWalletsByCurrency,
   getTransactionsByCurrency: mockApi.mockGetTransactionsByCurrency,
+  getPeerRecipient: mockApi.mockGetPeerRecipient,
+  peerTransfer: mockApi.mockPeerTransfer,
 
   // Credit Applications
   applyCreditApplication: mockApi.mockApplyCreditApplication,
@@ -118,6 +120,8 @@ export const apiService = USE_MOCK_DATA ? {
   getDashboardConfig: realApi.getDashboardConfig,
   getWalletsByCurrency: realApi.getWalletsByCurrency,
   getTransactionsByCurrency: realApi.getTransactionsByCurrency,
+  getPeerRecipient: realApi.getPeerRecipient,
+  peerTransfer: realApi.peerTransfer,
   applyCreditApplication: realApi.applyCreditApplication,
   getCreditApplicationStatus: realApi.getCreditApplicationStatus,
   getCreditLimits: realApi.getCreditLimits,
@@ -143,6 +147,7 @@ export type {
   CurrencyConfig,
   NotificationItem,
   NotificationListPayload,
+  VirtualDebitCard,
 } from './api';
 export { checkBackendHealth } from './api';
 

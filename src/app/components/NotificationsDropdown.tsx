@@ -1,6 +1,6 @@
 /**
- * FinEra — In-app notification center (admin-curated / system-generated)
- * Slides down from below the top bar — WhatsApp-style green presentation.
+ * FinEra - In-app notification center (admin-curated / system-generated)
+ * Slides down from below the top bar - WhatsApp-style green presentation.
  * API: GET /notifications, PUT /notifications/:id/read, PUT /notifications/read-all
  */
 
@@ -36,7 +36,7 @@ const TYPE_ICONS: Record<NotifVisual, typeof CreditCard> = {
   learning: GraduationCap,
 };
 
-/** Single green family — no blue; accents vary by weight only */
+/** Single green family - no blue; accents vary by weight only */
 const TYPE_COLORS: Record<NotifVisual, string> = {
   transaction: "bg-emerald-100 text-emerald-800",
   repayment: "bg-emerald-200/90 text-emerald-900",
@@ -243,7 +243,7 @@ export function NotificationsDropdown({ onNavigate }: NotificationsDropdownProps
                     Notifications
                   </h3>
                   <p className="text-[11px] font-medium text-emerald-100/95">
-                    Updates approved for your account — wallet, credit &amp; security
+                    Updates approved for your account - wallet, credit &amp; security
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">

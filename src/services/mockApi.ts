@@ -21,6 +21,7 @@ import type {
   CreditApplication,
   NotificationItem,
   NotificationListPayload,
+  PeerTransferRecipient,
 } from './api';
 import { getWalletLabel } from '@/types/wallet';
 
@@ -67,6 +68,84 @@ type MockUserData = UserData & {
   /** Until email OTP is verified (mirrors backend PENDING_VERIFICATION) */
   _pendingVerification?: boolean;
 };
+
+function randomTenDigitId(): string {
+  let s = "";
+  for (let i = 0; i < 10; i++) s += Math.floor(Math.random() * 10).toString();
+  return s;
+}
+
+function allTakenWalletNumericIds(): Set<string> {
+  const set = new Set<string>();
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k?.startsWith("member_")) continue;
+    const raw = localStorage.getItem(k);
+    if (!raw) continue;
+    try {
+      const u = JSON.parse(raw) as MockUserData;
+      const ids = u.walletNumericIds;
+      if (ids && typeof ids === "object") {
+        for (const v of Object.values(ids)) {
+          if (typeof v === "string" && /^\d{10}$/.test(v)) set.add(v);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return set;
+}
+
+/** Ensure each user has unique 10-digit Wallet IDs per USD / ZIG / ZAR (Binance-style). */
+function ensureMockWalletNumericIds(user: MockUserData): void {
+  if (!user.email) return;
+  const taken = allTakenWalletNumericIds();
+  const cur = { ...(user.walletNumericIds ?? {}) };
+  let changed = false;
+  for (const c of ["USD", "ZIG", "ZAR"]) {
+    const ex = cur[c];
+    if (ex && /^\d{10}$/.test(ex)) {
+      taken.add(ex);
+      continue;
+    }
+    let nid: string;
+    do {
+      nid = randomTenDigitId();
+    } while (taken.has(nid));
+    taken.add(nid);
+    cur[c] = nid;
+    changed = true;
+  }
+  if (changed) {
+    user.walletNumericIds = cur;
+    saveUserData(user);
+  }
+}
+
+function findPeerByWalletNumericId(
+  ten: string,
+  selfEmail: string
+): { peer: MockUserData; currencyCode: string } | null {
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k?.startsWith("member_")) continue;
+    const raw = localStorage.getItem(k);
+    if (!raw) continue;
+    try {
+      const u = JSON.parse(raw) as MockUserData;
+      if (!u.email || normalizeEmail(u.email) === normalizeEmail(selfEmail)) continue;
+      const ids = u.walletNumericIds;
+      if (!ids) continue;
+      for (const [cc, nid] of Object.entries(ids)) {
+        if (nid === ten) return { peer: u, currencyCode: cc.toUpperCase() };
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return null;
+}
 
 /** Hash password for mock storage (browser-safe, mirrors backend intent) */
 async function hashPassword(password: string): Promise<string> {
@@ -133,6 +212,22 @@ function loadUserData(email: string): MockUserData | null {
     migrated = true;
   }
   if (migrated) saveUserData(parsed);
+  if (parsed.preferredLanguage === undefined || parsed.preferredLanguage === "") {
+    parsed.preferredLanguage = "en";
+    saveUserData(parsed);
+  }
+  if (!parsed.virtualDebitCards) {
+    parsed.virtualDebitCards = [];
+    saveUserData(parsed);
+  }
+  if (!parsed.userId) {
+    parsed.userId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `00000000-0000-4000-8000-${Date.now().toString(16).slice(-12).padStart(12, "0")}`;
+    saveUserData(parsed);
+  }
+  ensureMockWalletNumericIds(parsed);
   return parsed;
 }
 
@@ -175,7 +270,7 @@ function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/** Per-currency credit limit (mock) — aligns with active loan in that currency only */
+/** Per-currency credit limit (mock) - aligns with active loan in that currency only */
 export async function mockGetCreditLimitForCurrency(currency: string): Promise<{
   creditLimit: number;
   availableCredit: number;
@@ -270,6 +365,10 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
   }
 
   const user: MockUserData = {
+    userId:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `00000000-0000-4000-8000-${Date.now().toString(16).slice(-12).padStart(12, "0")}`,
     memberId: generateMemberId(),
     fullName: data.fullName,
     title: "",
@@ -295,11 +394,13 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     missedPayments: 0,
     onTimePayments: 0,
     walletBalances: { USD: 0, ZIG: 0, ZAR: 0 },
+    virtualDebitCards: [],
     _passwordHash: passwordHash,
     _pendingVerification: true,
   };
 
   saveUserData(user);
+  ensureMockWalletNumericIds(loadUserData(email)!);
 
   return {
     user: toPublicUser(user),
@@ -400,9 +501,93 @@ export async function mockUpdateUserProfile(data: Partial<UserData>): Promise<Pa
   }
 
   const updatedUser = { ...user, ...data };
+  if (data.preferredLanguage != null && data.preferredLanguage !== "")
+    updatedUser.preferredLanguage = data.preferredLanguage;
+  if (data.title !== undefined) updatedUser.title = data.title;
+  if (data.city !== undefined) updatedUser.city = data.city;
   saveUserData(updatedUser);
 
   return updatedUser;
+}
+
+const DEMO_PEER_USER_ID = "00000000-0000-4000-8000-000000000001";
+
+export async function mockGetPeerRecipient(input: string): Promise<PeerTransferRecipient> {
+  await delay(400);
+  const email = localStorage.getItem("active_user_email");
+  if (!email) throw new Error("Not authenticated");
+  const user = loadUserData(email);
+  if (!user) throw new Error("User not found");
+
+  const acc = input.trim();
+  if (!/^\d{10}$/.test(acc)) {
+    throw new Error("Enter the recipient's 10-digit Wallet ID (numbers only).");
+  }
+
+  ensureMockWalletNumericIds(user);
+  const own = user.walletNumericIds ?? {};
+  for (const v of Object.values(own)) {
+    if (v === acc) throw new Error("You cannot transfer to your own wallet");
+  }
+
+  const match = findPeerByWalletNumericId(acc, email);
+  if (!match) {
+    throw new Error("Wallet ID not found. Ask the recipient for their 10-digit Wallet ID.");
+  }
+
+  const parts = (match.peer.fullName || "M").trim().split(/\s+/);
+  const hint =
+    parts.length <= 1
+      ? `${parts[0]?.slice(0, 1) ?? "?"}.`
+      : `${parts[0]!.slice(0, 1)}. ${parts[parts.length - 1]!.slice(0, 3)}***`;
+
+  return {
+    userId: match.peer.userId ?? DEMO_PEER_USER_ID,
+    currencyCode: match.currencyCode,
+    displayNameHint: hint,
+    walletLabel: getWalletLabel(match.currencyCode),
+  };
+}
+
+export async function mockPeerTransfer(params: {
+  toUserId: string;
+  amount: number;
+  currency: string;
+  referenceId?: string;
+}): Promise<{ transactionId: string; reference: string; fromNewBalance: number; currency: string }> {
+  await delay(800);
+  const email = localStorage.getItem("active_user_email");
+  if (!email) throw new Error("Not authenticated");
+  const user = loadUserData(email);
+  if (!user) throw new Error("User not found");
+
+  const currency = (params.currency || "USD").toUpperCase();
+  const bal = getWalletBalance(user, currency);
+  if (params.amount <= 0 || params.amount > bal) {
+    throw new Error("Invalid amount or insufficient balance");
+  }
+
+  const newBal = bal - params.amount;
+  setWalletBalance(user, currency, newBal);
+
+  const txn: Transaction & { currency?: string } = {
+    id: "TXN" + Date.now(),
+    type: "transfer",
+    amount: params.amount,
+    date: new Date().toISOString(),
+    description: `Send to member (${params.referenceId || "peer"})`,
+    status: "completed",
+    currency,
+  };
+  user.transactions = [...(user.transactions || []), txn as Transaction];
+  saveUserData(user);
+
+  return {
+    transactionId: txn.id,
+    reference: `P2P-${Date.now().toString(36).toUpperCase()}`,
+    fromNewBalance: newBal,
+    currency,
+  };
 }
 
 export async function mockDepositFunds(data: DepositRequest): Promise<{ transaction: Transaction; newBalance: number }> {
@@ -418,17 +603,35 @@ export async function mockDepositFunds(data: DepositRequest): Promise<{ transact
     throw new Error('User not found');
   }
 
+  const meta = data.debitCardMeta;
+  if (meta?.kind === "virtual" && meta.virtualCardId) {
+    const cards = user.virtualDebitCards ?? [];
+    const card = cards.find((x) => x.id === meta.virtualCardId);
+    if (!card || card.blocked) throw new Error("Select an active virtual Mastercard.");
+  }
+  if (meta?.kind === "physical" && !user.physicalMastercardLast4?.trim()) {
+    throw new Error("Register your physical Mastercard (last 4 digits) before using it for Cash In.");
+  }
+
   const currency = (data.currency || 'USD').toUpperCase();
   const prevBal = getWalletBalance(user, currency);
   const newBal = prevBal + data.amount;
   setWalletBalance(user, currency, newBal);
+
+  let debitNote = "";
+  if (data.method === "debit_card_virtual" && meta?.virtualCardId) {
+    const card = (user.virtualDebitCards ?? []).find((x) => x.id === meta.virtualCardId);
+    debitNote = card ? ` · ${card.maskedPan}` : " · Virtual Mastercard";
+  } else if (data.method === "debit_card_physical") {
+    debitNote = ` · Physical Mastercard ****${user.physicalMastercardLast4 ?? "????"}`;
+  }
 
   const transaction: Transaction & { currency?: string } = {
     id: 'TXN' + Date.now(),
     type: 'deposit',
     amount: data.amount,
     date: new Date().toISOString(),
-    description: `Deposit via ${data.method} - ${data.purpose}`,
+    description: `Deposit via ${data.method} - ${data.purpose}${debitNote}`,
     status: 'completed',
   };
   (transaction as { currency?: string }).currency = currency;
@@ -454,6 +657,16 @@ export async function mockWithdrawFunds(data: WithdrawalRequest): Promise<{ tran
     throw new Error('User not found');
   }
 
+  const wmeta = data.debitCardMeta;
+  if (wmeta?.kind === "virtual" && wmeta.virtualCardId) {
+    const cards = user.virtualDebitCards ?? [];
+    const card = cards.find((x) => x.id === wmeta.virtualCardId);
+    if (!card || card.blocked) throw new Error("Select an active virtual Mastercard.");
+  }
+  if (wmeta?.kind === "physical" && !user.physicalMastercardLast4?.trim()) {
+    throw new Error("Register your physical Mastercard before Cash Out to card.");
+  }
+
   const currency = (data.currency || 'USD').toUpperCase();
   const currBal = getWalletBalance(user, currency);
   const availableBalance = user.activeCredit > 0 ? currBal * 0.8 : currBal;
@@ -464,12 +677,20 @@ export async function mockWithdrawFunds(data: WithdrawalRequest): Promise<{ tran
   const newBal = currBal - data.amount;
   setWalletBalance(user, currency, newBal);
 
+  let wDebit = "";
+  if (data.method === "debit_card_virtual" && wmeta?.virtualCardId) {
+    const card = (user.virtualDebitCards ?? []).find((x) => x.id === wmeta.virtualCardId);
+    wDebit = card ? ` · ${card.maskedPan}` : " · Virtual Mastercard";
+  } else if (data.method === "debit_card_physical") {
+    wDebit = ` · Physical ****${user.physicalMastercardLast4 ?? "????"}`;
+  }
+
   const transaction: Transaction & { currency?: string } = {
     id: 'TXN' + Date.now(),
     type: 'withdrawal',
     amount: data.amount,
     date: new Date().toISOString(),
-    description: `Withdrawal via ${data.method}`,
+    description: `Withdrawal via ${data.method}${wDebit}`,
     status: 'completed',
   };
   (transaction as { currency?: string }).currency = currency;
@@ -544,6 +765,7 @@ type WalletResponse = {
   id: string;
   currencyCode: string;
   accountNumber: string;
+  walletNumericId: string;
   balance: number;
   walletLabel: string;
   approvedCreditBalance: number;
@@ -559,6 +781,9 @@ export async function mockGetWalletsByCurrency(currency?: string): Promise<Walle
   const fe = (user as UserData).finEraAccountNumbers;
   const baseAccount = user.accountNumber || '';
   const accounts: Record<string, string> = fe ? { usd: fe.usd, zig: fe.zig, zar: fe.zar } : { usd: baseAccount, zig: baseAccount, zar: baseAccount };
+  ensureMockWalletNumericIds(user);
+  const u2 = loadUserData(email) ?? user;
+  const numeric = u2.walletNumericIds ?? {};
   // Scalable: return all supported currencies when no filter (USD, ZiG, ZAR, etc.)
   const currencies = currency ? [currency.toUpperCase()] : ['USD', 'ZIG', 'ZAR'];
   return currencies.map((c) => {
@@ -568,6 +793,7 @@ export async function mockGetWalletsByCurrency(currency?: string): Promise<Walle
       id: `finera-${c.toLowerCase()}`,
       currencyCode: c,
       accountNumber: accounts[key] || `FE-${c}-${baseAccount.slice(-6)}`,
+      walletNumericId: numeric[c] ?? "",
       balance: bal,
       walletLabel: getWalletLabel(c),
       approvedCreditBalance: getApprovedCreditForCurrency(user, c),

@@ -12,7 +12,8 @@ import {
   Banknote,
   Copy,
   Check,
-  Clock
+  Clock,
+  CreditCard,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -22,6 +23,8 @@ import {
   currencyAmountPlaceholder,
   formatAmountWithSymbol,
 } from "@/types/wallet";
+import { DebitCardMethodPanel } from "@/app/components/DebitCardMethodPanel";
+import type { VirtualDebitCard, DepositRequest } from "@/services/api";
 
 interface DepositFlowProps {
   currentBalance: number;
@@ -30,13 +33,23 @@ interface DepositFlowProps {
   /** Display symbol: $, R, ZiG, €, £ */
   amountSymbol?: string;
   amountPlaceholder?: string;
-  onConfirm: (amount: number, method: string, purpose: string) => void | Promise<void>;
+  virtualDebitCards?: VirtualDebitCard[];
+  onVirtualDebitCardsChange?: (cards: VirtualDebitCard[]) => void;
+  physicalMastercardLast4?: string;
+  onPhysicalMastercardChange?: (last4: string) => void;
+  onConfirm: (
+    amount: number,
+    method: string,
+    purpose: string,
+    meta?: { debitCardMeta?: DepositRequest["debitCardMeta"] }
+  ) => void | Promise<void>;
   onBack: () => void;
   onSuccess: () => void;
 }
 
 const METHODS = [
   { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
+  { id: "debit_card", label: "Debit card (Mastercard)", icon: <CreditCard className="w-5 h-5" />, color: "bg-indigo-50 text-indigo-700" },
   { id: "atm", label: "ATM Cardless Cash In", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
   { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
 ];
@@ -55,6 +68,10 @@ export function DepositFlow({
   currencyCode = "USD",
   amountSymbol,
   amountPlaceholder: amountPlaceholderProp,
+  virtualDebitCards = [],
+  onVirtualDebitCardsChange,
+  physicalMastercardLast4,
+  onPhysicalMastercardChange,
   onConfirm,
   onBack,
   onSuccess,
@@ -62,7 +79,9 @@ export function DepositFlow({
   const sym = amountSymbol ?? CURRENCY_AMOUNT_SYMBOLS[currencyCode] ?? currencyCode;
   const amountPlaceholder = amountPlaceholderProp ?? currencyAmountPlaceholder(currencyCode);
   const inputPadClass = sym.length > 2 ? "pl-24" : "pl-10";
-  const [step, setStep] = useState<"details" | "mobileMoney" | "agent" | "atm-code" | "processing" | "success">("details");
+  const [step, setStep] = useState<
+    "details" | "debitPanel" | "mobileMoney" | "agent" | "atm-code" | "processing" | "success"
+  >("details");
   const [amount, setAmount] = useState<string>("");
   const [method, setMethod] = useState<string>("");
   const [purpose, setPurpose] = useState<string>("");
@@ -94,7 +113,9 @@ export function DepositFlow({
       return;
     }
 
-    if (method === 'agent') {
+    if (method === "debit_card") {
+      setStep("debitPanel");
+    } else if (method === 'agent') {
       setStep("agent");
     } else if (method === 'atm') {
       generateATMDepositCode();
@@ -169,6 +190,38 @@ export function DepositFlow({
   return (
     <div className="max-w-md mx-auto space-y-6 animate-in fade-in duration-500">
       <AnimatePresence mode="wait">
+        {step === "debitPanel" && (
+          <motion.div
+            key="debitPanel"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+          >
+            <DebitCardMethodPanel
+              title={`Cash In (${currencyCode})`}
+              virtualDebitCards={virtualDebitCards}
+              onVirtualDebitCardsChange={onVirtualDebitCardsChange ?? (() => {})}
+              physicalMastercardLast4={physicalMastercardLast4}
+              onPhysicalMastercardChange={onPhysicalMastercardChange ?? (() => {})}
+              onBack={() => setStep("details")}
+              onFinalize={async (m, meta) => {
+                setLoading(true);
+                setStep("processing");
+                try {
+                  await Promise.resolve(
+                    onConfirm(parseFloat(amount), m, purpose, { debitCardMeta: meta })
+                  );
+                  setLoading(false);
+                  setStep("success");
+                } catch {
+                  setLoading(false);
+                  setStep("debitPanel");
+                }
+              }}
+            />
+          </motion.div>
+        )}
+
         {step === "details" && (
           <motion.div
             key="details"

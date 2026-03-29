@@ -45,6 +45,9 @@ import { AccountSwitchOverlay } from "@/app/components/AccountSwitchOverlay";
 import { BankLinking } from "@/app/components/BankLinking";
 import { BackendUnavailableBanner } from "@/app/components/BackendUnavailableBanner";
 import { AppErrorBoundary } from "@/app/components/AppErrorBoundary";
+import { PeerTransferFlow } from "@/app/components/PeerTransferFlow";
+import { useI18n } from "@/app/providers/I18nProvider";
+import { isAppLocale } from "@/i18n/locales";
 
 type Screen =
   | "splash"
@@ -77,7 +80,8 @@ type Screen =
   | "adminOverview"
   | "makeRepayment"
   | "makePayment"
-  | "quickActions";
+  | "quickActions"
+  | "peerTransfer";
 
 // NOTE: These limits are now defined in the backend
 // Kept here for UI reference only - backend is the source of truth
@@ -136,6 +140,7 @@ const loadUserData = (email: string): UserData | null => {
 export default function App() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { setLocale } = useI18n();
 
   const [currentScreen, setCurrentScreen] = useState<Screen>("splash");
   const [preSelectedAccountType, setPreSelectedAccountType] = useState<'student' | 'staff' | 'alumni' | null>(null);
@@ -166,6 +171,11 @@ export default function App() {
     missedPayments: 0,
     onTimePayments: 6,
   });
+
+  useEffect(() => {
+    const pl = userData.preferredLanguage;
+    if (pl && isAppLocale(pl)) setLocale(pl);
+  }, [userData.preferredLanguage, setLocale]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -240,7 +250,7 @@ export default function App() {
   const resetToDefault = useAccountStore((s) => s.resetToDefault);
   const storeError = useAccountStore((s) => s.error);
 
-  /** Selected dashboard tab — drives ALL wallet API calls (isolated from stale activeWallet when tab has no wallet row yet). */
+  /** Selected dashboard tab - drives ALL wallet API calls (isolated from stale activeWallet when tab has no wallet row yet). */
   const [dashboardCurrency, setDashboardCurrency] = useState<"USD" | "ZIG" | "ZAR" | "EUR" | "GBP">("USD");
 
   useEffect(() => {
@@ -251,7 +261,7 @@ export default function App() {
 
   const selectedCurrency = dashboardCurrency;
 
-  /** Strict: one wallet row per dashboard currency — no cross-currency fallback */
+  /** Strict: one wallet row per dashboard currency - no cross-currency fallback */
   const dashboardWallet = useMemo(
     () => wallets.find((w) => w.currency === selectedCurrency),
     [wallets, selectedCurrency]
@@ -289,8 +299,9 @@ export default function App() {
     activeCredit: number;
     approvedCreditBalance: number;
     accountNumber: string;
+    walletNumericId?: string;
   } | null>(null);
-  /** Never fall back to userData.activeCredit for currency tabs — that value is profile-scoped and leaks loans across currencies. */
+  /** Never fall back to userData.activeCredit for currency tabs - that value is profile-scoped and leaks loans across currencies. */
   const activeCreditForTab = walletForCurrency?.activeCredit ?? 0;
   const [transactionsForCurrency, setTransactionsForCurrency] = useState<Transaction[]>([]);
   const [backendAvailable, setBackendAvailable] = useState(true);
@@ -438,6 +449,7 @@ export default function App() {
               activeCredit: w.activeLoanBalance,
               approvedCreditBalance: w.approvedCreditBalance,
               accountNumber: w.accountNumber,
+              walletNumericId: w.walletNumericId,
             });
           } else {
             setWalletForCurrency(null);
@@ -505,6 +517,12 @@ export default function App() {
     }
     return userData.accountNumber;
   })();
+
+  /** Binance-style 10-digit Wallet ID for this currency (peer transfer). */
+  const displayWalletNumericId =
+    walletForCurrency?.walletNumericId ||
+    userData.walletNumericIds?.[selectedCurrency] ||
+    "";
 
   const handleLogin = async (email: string, password?: string) => {
     try {
@@ -577,7 +595,8 @@ export default function App() {
     "dashboard", "quickActions", "savingsWallet", "walletManagement", "withdrawFlow", "depositFlow", "applyForCredit",
     "creditDetails", "creditTypeSelection", "collateralDetails", "confirmApplication",
     "buyBackAgreement", "applicationStatus", "creditApproved", "walletCredited", "repaymentDashboard", "financialEducation",
-    "profileSettings", "partnerProgram", "adminOverview", "memberAgreement", "makeRepayment", "makePayment"
+    "profileSettings", "partnerProgram", "adminOverview", "memberAgreement", "makeRepayment", "makePayment",
+    "peerTransfer",
   ].includes(currentScreen);
 
   const creditDetails = useMemo(() => {
@@ -631,6 +650,7 @@ export default function App() {
               activeCredit: w.activeLoanBalance,
               approvedCreditBalance: w.approvedCreditBalance,
               accountNumber: w.accountNumber,
+              walletNumericId: w.walletNumericId,
             });
           }
         } catch {
@@ -645,7 +665,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] font-sans selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 selection:text-primary">
       <Toaster position="top-center" richColors />
       {!USE_MOCK_DATA && !backendAvailable && <BackendUnavailableBanner />}
       
@@ -656,6 +676,7 @@ export default function App() {
           onLogout={handleLogout}
           userName={userData.fullName || "User"}
           accountNumber={displayAccountNumber}
+          walletNumericId={displayWalletNumericId}
           isAdmin={userData.accountType === 'staff'}
           onCreateWallet={() => setCurrentScreen("depositFlow")}
         />
@@ -666,7 +687,7 @@ export default function App() {
       <main
         className={
           isAuthScreen
-            ? // Fixed header is h-16 (4rem). Never use p-* / md:p-* on all sides — it overrides padding-top (~32px on md) and hides content under the bar.
+            ? // Fixed header is h-16 (4rem). Never use p-* / md:p-* on all sides - it overrides padding-top (~32px on md) and hides content under the bar.
               "pt-[max(calc(4rem+1.5rem),calc(env(safe-area-inset-top,0px)+4rem+1rem))] md:pl-64 px-4 pb-6 md:px-8 md:pb-8"
             : ""
         }
@@ -733,7 +754,16 @@ export default function App() {
             onViewRepayment={() => setCurrentScreen("repaymentDashboard")}
             onWithdrawFunds={() => setCurrentScreen("withdrawFlow")}
             onMakePayment={() => setCurrentScreen("makePayment")}
+            onPeerTransfer={() => setCurrentScreen("peerTransfer")}
             onBack={() => setCurrentScreen("dashboard")}
+          />
+        )}
+        {currentScreen === "peerTransfer" && (
+          <PeerTransferFlow
+            currency={selectedCurrency}
+            availableBalance={walletForCurrency?.balance ?? userData.walletBalance ?? 0}
+            onBack={() => setCurrentScreen("quickActions")}
+            onSuccess={refreshUserData}
           />
         )}
         {currentScreen === "dashboard" && (
@@ -752,7 +782,7 @@ export default function App() {
               const w = wallets.find((x) => x.currency === c);
               if (w) setActiveWalletById(w.id);
             }}
-            displayAccountNumber={displayAccountNumber}
+            displayAccountNumber={displayWalletNumericId || displayAccountNumber}
             onApplyForCredit={() => setCurrentScreen("memberAgreement")}
             onAddSavings={() => setCurrentScreen("depositFlow")}
             onViewRepayment={() => setCurrentScreen("repaymentDashboard")}
@@ -820,12 +850,21 @@ export default function App() {
             currencyCode={selectedCurrency}
             amountSymbol={CURRENCY_AMOUNT_SYMBOLS[selectedCurrency] ?? selectedCurrency}
             amountPlaceholder={currencyAmountPlaceholder(selectedCurrency)}
-            onConfirm={async (amount, method) => {
+            virtualDebitCards={userData.virtualDebitCards ?? []}
+            onVirtualDebitCardsChange={(cards) => updateAndSave({ ...userData, virtualDebitCards: cards })}
+            physicalMastercardLast4={userData.physicalMastercardLast4}
+            onPhysicalMastercardChange={(last4) => updateAndSave({ ...userData, physicalMastercardLast4: last4 })}
+            onConfirm={async (amount, method, meta) => {
               try {
                 if (method === "approved_credit") {
                   await apiService.transferCreditToSavings(amount, selectedCurrency);
                 } else {
-                  await apiService.withdrawFunds({ amount, method, currency: selectedCurrency });
+                  await apiService.withdrawFunds({
+                    amount,
+                    method,
+                    currency: selectedCurrency,
+                    debitCardMeta: meta?.debitCardMeta,
+                  });
                 }
                 await refreshUserData();
               } catch (err) {
@@ -844,9 +883,19 @@ export default function App() {
             currencyCode={selectedCurrency}
             amountSymbol={CURRENCY_AMOUNT_SYMBOLS[selectedCurrency] ?? selectedCurrency}
             amountPlaceholder={currencyAmountPlaceholder(selectedCurrency)}
-            onConfirm={async (amount, method, purpose) => {
+            virtualDebitCards={userData.virtualDebitCards ?? []}
+            onVirtualDebitCardsChange={(cards) => updateAndSave({ ...userData, virtualDebitCards: cards })}
+            physicalMastercardLast4={userData.physicalMastercardLast4}
+            onPhysicalMastercardChange={(last4) => updateAndSave({ ...userData, physicalMastercardLast4: last4 })}
+            onConfirm={async (amount, method, purpose, meta) => {
               try {
-                await apiService.depositFunds({ amount, method, purpose, currency: selectedCurrency });
+                await apiService.depositFunds({
+                  amount,
+                  method,
+                  purpose,
+                  currency: selectedCurrency,
+                  debitCardMeta: meta?.debitCardMeta,
+                });
                 await refreshUserData();
               } catch (err) {
                 toast.error(err instanceof Error ? err.message : 'Cash in failed');

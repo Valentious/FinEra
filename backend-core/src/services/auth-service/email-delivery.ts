@@ -1,5 +1,5 @@
 /**
- * Transactional OTP email delivery — Resend, SendGrid, or Amazon SES.
+ * Transactional OTP email delivery - Resend, SendGrid, or Amazon SES.
  * Retries, structured logs, no secrets in log output.
  */
 
@@ -126,7 +126,7 @@ async function sendViaSendGrid(to: string, code: string): Promise<{ providerMess
   if (sandboxEnabled) {
     logger.warn(
       {},
-      "SendGrid sandbox mode is ON — emails will NOT be delivered to real inboxes. Set SENDGRID_SANDBOX_MODE=false for production."
+      "SendGrid sandbox mode is ON - emails will NOT be delivered to real inboxes. Set SENDGRID_SANDBOX_MODE=false for production."
     );
   }
 
@@ -262,7 +262,7 @@ export function logDevOtpFallback(to: string, code: string, reason: string): voi
   if (process.env.EMAIL_DEV_LOG_OTP === "false") return;
   logger.warn(
     { to: maskEmailForLog(to), reason },
-    `[DEV ONLY] OTP email not delivered — use this code to continue testing: ${code}`
+    `[DEV ONLY] OTP email not delivered - use this code to continue testing: ${code}`
   );
 }
 

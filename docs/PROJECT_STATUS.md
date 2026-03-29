@@ -1,4 +1,4 @@
-# FinEra — project status (current)
+# FinEra - project status (current)
 
 **Last updated:** aligned with `main` after onboarding, currency, and documentation refactors.  
 **Canonical remote:** [github.com/Valentious/FinEra](https://github.com/Valentious/FinEra)
@@ -25,11 +25,11 @@
 
 ## Current authentication & onboarding (summary)
 
-1. **`POST /api/v1/auth/register`** — Creates user in **`PENDING_VERIFICATION`**, stores **bcrypt-hashed** email OTP + expiry, sends email (or dev log), returns `{ userId, email }` (no session).
-2. **`POST /api/v1/auth/verify-email`** — `{ email, code }` → verifies OTP, sets **`ACTIVE`** + **`emailVerified`**, returns **JWT access + refresh** (auto sign-in).
-3. **`POST /api/v1/auth/resend-otp`** — Resend with cooldown + hourly cap.
+1. **`POST /api/v1/auth/register`** - Creates user in **`PENDING_VERIFICATION`**, stores **bcrypt-hashed** email OTP + expiry, sends email (or dev log), returns `{ userId, email }` (no session).
+2. **`POST /api/v1/auth/verify-email`** - `{ email, code }` → verifies OTP, sets **`ACTIVE`** + **`emailVerified`**, returns **JWT access + refresh** (auto sign-in).
+3. **`POST /api/v1/auth/resend-otp`** - Resend with cooldown + hourly cap.
 4. **Frontend:** Register tab → **`/verify-email?email=…`** (`VerifyEmailPage`) → on success, session + continue onboarding (e.g. `VerifyAccess`).
-5. **Login** — Blocked until email verified (`PENDING_VERIFICATION` → clear error).
+5. **Login** - Blocked until email verified (`PENDING_VERIFICATION` → clear error).
 
 Supporting files: `backend-core/src/modules/auth/auth.service.ts`, `otp-rate-limit.ts`, `email-delivery.ts`, `auth.routes.ts`, `auth.validation.ts`.
 
@@ -55,10 +55,10 @@ Supporting files: `backend-core/src/modules/auth/auth.service.ts`, `otp-rate-lim
 
 ---
 
-## Frontend — current UI behaviour (short)
+## Frontend - current UI behaviour (short)
 
 - **Registration:** Full form → API register → **email verification route** (no OTP on the same screen as the full form).
-- **Deposits / withdrawals:** Methods as implemented in `DepositFlow` / `WithdrawFlow` (e.g. Ecocash, cardless, agent — see components).
+- **Deposits / withdrawals:** Methods as implemented in `DepositFlow` / `WithdrawFlow` (e.g. Ecocash, cardless, agent - see components).
 - **Dashboard:** Multi-currency tabs driven by **`/currencies`** (no USDT).
 
 ---
@@ -67,18 +67,18 @@ Supporting files: `backend-core/src/modules/auth/auth.service.ts`, `otp-rate-lim
 
 | Phase | Focus | Exit criteria |
 | --- | --- | --- |
-| **1 — Requirements & sourcing** | Environments, compliance, hosting, secrets. | Runbook; vendor alignment where needed. |
-| **2 — Procurement & provisioning** | DB, TLS, monitoring, backups. | Staging API + DB reachable. |
-| **3 — Integration** | Deploy `backend-core`; `VITE_API_URL` → staging; CORS + JWT verified. | [CHECKLIST.md](../CHECKLIST.md) on staging. |
-| **4 — QA & security** | Rate limits, JWT rotation, PII, pen-test backlog. | No criticals; alerts on. |
-| **5 — Production** | Rolling deploy, backups, playbooks. | Health green; rollback tested. |
+| **1 - Requirements & sourcing** | Environments, compliance, hosting, secrets. | Runbook; vendor alignment where needed. |
+| **2 - Procurement & provisioning** | DB, TLS, monitoring, backups. | Staging API + DB reachable. |
+| **3 - Integration** | Deploy `backend-core`; `VITE_API_URL` → staging; CORS + JWT verified. | [CHECKLIST.md](../CHECKLIST.md) on staging. |
+| **4 - QA & security** | Rate limits, JWT rotation, PII, pen-test backlog. | No criticals; alerts on. |
+| **5 - Production** | Rolling deploy, backups, playbooks. | Health green; rollback tested. |
 
 ---
 
 ## What to update when the product changes
 
-1. **This file** — removals, gaps, auth/currency behaviour.  
-2. **[README.md](../README.md)** — stack / quick start if commands or ports change.  
-3. **[CHECKLIST.md](../CHECKLIST.md)** — new endpoints or smoke tests.  
-4. **[BACKEND_API_SPECIFICATION.md](../BACKEND_API_SPECIFICATION.md)** — API contract.  
-5. **`backend-core/README.md`** — auth and currency lists.
+1. **This file** - removals, gaps, auth/currency behaviour.  
+2. **[README.md](../README.md)** - stack / quick start if commands or ports change.  
+3. **[CHECKLIST.md](../CHECKLIST.md)** - new endpoints or smoke tests.  
+4. **[BACKEND_API_SPECIFICATION.md](../BACKEND_API_SPECIFICATION.md)** - API contract.  
+5. **`backend-core/README.md`** - auth and currency lists.

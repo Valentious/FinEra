@@ -18,18 +18,18 @@ Production-grade backend for FinEra Inclusive Credit platform.
 | Layer | Location | Role |
 |--------|----------|------|
 | **Presentation** | Repository root `src/` (React/Vite frontend) | UI, client-side validation, calls HTTP APIs only |
-| **Application** | `backend-core/` — `src/api-gateway/` + `src/services/*` | Business rules, orchestration, credit scoring, ledger flows |
+| **Application** | `backend-core/` - `src/api-gateway/` + `src/services/*` | Business rules, orchestration, credit scoring, ledger flows |
 | **Data** | PostgreSQL + Prisma (`prisma/schema.prisma`, `src/infrastructure/database/`) | Persistent storage; access goes through Prisma in services |
 
 ### Inside the backend: gateway vs services
 
 - **`src/api-gateway/`** (communication layer): HTTP server entry (`server.ts`), Express app (`app.ts`), route mounting, global middleware (CORS, Helmet, rate limits), health/readiness. This is the **only** process entry point for `npm run dev` / `npm start`.
 - **`src/services/*`** (logic tier): Domain behavior grouped by bounded context:
-  - `auth-service/` — authentication, sessions, OTP
-  - `user-service/` — profile, KYC uploads, reference/registration data
-  - `credit-engine/` — scoring, limits, loans, interest; `domain/` holds pure engines
-  - `ledger-service/` — wallets, transactions, currencies, FX, fraud middleware
-  - `admin-service/` — notifications, learning, partner program
+  - `auth-service/` - authentication, sessions, OTP
+  - `user-service/` - profile, KYC uploads, reference/registration data
+  - `credit-engine/` - scoring, limits, loans, interest; `domain/` holds pure engines
+  - `ledger-service/` - wallets, transactions, currencies, FX, fraud middleware
+  - `admin-service/` - notifications, learning, partner program
 
 Shared cross-cutting code stays at `src/` scope: `middlewares/`, `infrastructure/`, `config/`, `core/`, `shared/`, `types/`, `constants/`.
 

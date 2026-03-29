@@ -10,6 +10,8 @@ export interface Wallet {
   countryCode: string;
   provider: string;
   accountNumber: string;
+  /** Public 10-digit peer transfer ID (when provided by API). */
+  walletNumericId?: string;
   /** Primary savings wallet balance for this currency (currency-isolated). */
   balance: number;
   /** Dynamic label for active dashboard currency, e.g. FinCash USD Wallet */

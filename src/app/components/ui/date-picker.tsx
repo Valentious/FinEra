@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Registration / forms — same production DOB UX as DateOfBirthField (native input + calendar).
+ * Registration / forms - same production DOB UX as DateOfBirthField (native input + calendar).
  */
 import { DateOfBirthField } from "@/app/components/ui/date-of-birth-field";
 import { DOB } from "@/lib/dob";

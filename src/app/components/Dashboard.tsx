@@ -30,7 +30,7 @@ interface DashboardProps {
   userName: string;
   /** Primary balance for active currency wallet */
   walletBalance: number;
-  /** USD | ZIG | ZAR — drives FinCash … Wallet label */
+  /** USD | ZIG | ZAR - drives FinCash … Wallet label */
   dashboardCurrency?: string;
   activeCredit: number;
   availableCreditLimit: number;

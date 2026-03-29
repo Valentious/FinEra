@@ -39,6 +39,7 @@ export async function fetchWalletsForStore(): Promise<Wallet[]> {
       id: w.id,
       currencyCode: w.currencyCode,
       accountNumber: w.accountNumber,
+      walletNumericId: w.walletNumericId,
       balance: w.balance,
       walletLabel: w.walletLabel ?? getWalletLabel(w.currencyCode),
       approvedCreditBalance: w.approvedCreditBalance,

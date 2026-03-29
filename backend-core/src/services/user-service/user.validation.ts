@@ -1,5 +1,5 @@
 /**
- * User profile update — server-side validation (FinEra data-integrity rules).
+ * User profile update - server-side validation (FinEra data-integrity rules).
  */
 import { z } from "zod";
 import {
@@ -30,6 +30,8 @@ const optionalPhone = z.preprocess(
   z.union([z.undefined(), phoneNumberSchema])
 );
 
+const LANGUAGE_CODES = ["en", "es", "fr", "pt", "sw", "sn", "nd", "af"] as const;
+
 export const updateProfileSchema = z
   .object({
     fullName: optionalFullName,
@@ -39,6 +41,12 @@ export const updateProfileSchema = z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD")
       .optional(),
+    title: z
+      .string()
+      .max(32)
+      .optional()
+      .transform((s) => (s === "" ? undefined : s)),
+    preferredLanguage: z.enum(LANGUAGE_CODES).optional(),
   })
   .strict()
   .superRefine((data, ctx) => {

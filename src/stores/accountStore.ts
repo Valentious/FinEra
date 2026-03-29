@@ -36,6 +36,7 @@ export function toWallet(apiWallet: {
   id: string;
   currencyCode: string;
   accountNumber: string;
+  walletNumericId?: string;
   walletLabel?: string;
   savingsBalance?: number;
   balance?: number;
@@ -52,6 +53,7 @@ export function toWallet(apiWallet: {
     countryCode: CURRENCY_TO_COUNTRY[currency] ?? "XX",
     provider: CUSTODY_PROVIDER[apiWallet.custodyType as string] ?? "FinCash",
     accountNumber: apiWallet.accountNumber ?? "",
+    walletNumericId: apiWallet.walletNumericId,
     balance: bal,
     walletLabel: apiWallet.walletLabel ?? getWalletLabel(currency),
     approvedCreditBalance: apiWallet.approvedCreditBalance ?? 0,

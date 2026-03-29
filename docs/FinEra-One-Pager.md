@@ -1,4 +1,4 @@
-# FinEra — One Page (Actors, Flows, Trust Boundaries)
+# FinEra - One Page (Actors, Flows, Trust Boundaries)
 
 **Purpose:** Align investors and engineers on *what FinEra is*, *who touches what*, and *where trust and risk live*. Use this to decide **what to build next** (product vs. infrastructure vs. compliance).
 
@@ -6,7 +6,7 @@
 
 ## One-liner
 
-**FinEra** is an inclusive financial ecosystem for students, staff, and alumni: **multi-currency savings (FinCash wallets)**, **credit with discipline rules**, and **repayment / ledger-style money movement**—with the **API + database** as the system of record, not the mobile UI.
+**FinEra** is an inclusive financial ecosystem for students, staff, and alumni: **multi-currency savings (FinCash wallets)**, **credit with discipline rules**, and **repayment / ledger-style money movement**-with the **API + database** as the system of record, not the mobile UI.
 
 ---
 
@@ -42,7 +42,7 @@ flowchart LR
   subgraph client["Client (Browser / App)"]
     UI[UI State]
   end
-  subgraph boundary["Trust boundary — HTTPS + API contract"]
+  subgraph boundary["Trust boundary - HTTPS + API contract"]
     API[FinEra API]
     DB[(Database / Ledger)]
   end
@@ -63,7 +63,7 @@ flowchart LR
 | **API ↔ payment rails** | Orchestration, reconciliation design | Partner SLAs, regulatory licensing per country/rail |
 | **“Truth”** | **Server-side balances and ledger** are authoritative | Client cache is **display only** |
 
-**Engineering implication:** anything that can move money or change credit state must be **idempotent**, **logged**, and **authorized** on the server—not reconstructed from local storage alone.
+**Engineering implication:** anything that can move money or change credit state must be **idempotent**, **logged**, and **authorized** on the server-not reconstructed from local storage alone.
 
 ---
 
@@ -72,7 +72,7 @@ flowchart LR
 **Product:** clearer repayment UX, dispute / support hooks, transparency copy on fees and FX (when added).  
 **Infrastructure:** abuse controls (rate limits, device signals), backup/restore runbooks, secrets rotation.  
 **Assurance:** threat model light review, then pen-test on auth + wallet + credit paths before handling real funds at scale.  
-**Compliance:** map *jurisdiction* (e.g. ZW/ZA/US touchpoints) to licensing and KYC depth—early, even if MVP is narrow.
+**Compliance:** map *jurisdiction* (e.g. ZW/ZA/US touchpoints) to licensing and KYC depth-early, even if MVP is narrow.
 
 ---
 

@@ -53,7 +53,7 @@ export function AccountCreationSuccess({
                 </div>
               </motion.div>
               <CardTitle className="text-3xl font-black mb-2">Account Successfully Created</CardTitle>
-              <p className="text-green-100 text-lg">Welcome to FinEra INCLUSIVE FINANCIAL ECOSYSTEM</p>
+              <p className="text-lg font-medium text-white/95">Welcome to FinEra INCLUSIVE FINANCIAL ECOSYSTEM</p>
             </div>
           </CardHeader>
 

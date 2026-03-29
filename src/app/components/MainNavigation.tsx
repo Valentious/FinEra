@@ -16,33 +16,38 @@ import { FinEraLogoText } from "@/app/components/FinEraLogoText";
 import { NotificationsDropdown } from "@/app/components/NotificationsDropdown";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useI18n } from "@/app/providers/I18nProvider";
 
 interface MainNavigationProps {
   activeScreen: string;
   onNavigate: (screen: string) => void;
   onLogout: () => void;
   userName: string;
+  /** Legacy / internal account reference */
   accountNumber?: string;
+  /** 10-digit public Wallet ID (Binance-style peer transfer) */
+  walletNumericId?: string;
   isAdmin?: boolean;
   onCreateWallet?: () => void;
 }
 
-export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, accountNumber, isAdmin, onCreateWallet }: MainNavigationProps) {
+export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, accountNumber, walletNumericId, isAdmin, onCreateWallet }: MainNavigationProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { t } = useI18n();
 
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "quickActions", label: "Quick Actions", icon: Zap },
-    { id: "savingsWallet", label: "FinCash Wallet", icon: PiggyBank },
-    { id: "financialEducation", label: "Learning Hub", icon: GraduationCap },
-    { id: "profileSettings", label: "Account Settings", icon: Settings },
-    { id: "partnerProgram", label: "Partner Program", icon: Handshake },
+    { id: "dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { id: "quickActions", label: t("nav.quickActions"), icon: Zap },
+    { id: "savingsWallet", label: t("nav.finCashWallet"), icon: PiggyBank },
+    { id: "financialEducation", label: t("nav.learningHub"), icon: GraduationCap },
+    { id: "profileSettings", label: t("nav.accountSettings"), icon: Settings },
+    { id: "partnerProgram", label: t("nav.partnerProgram"), icon: Handshake },
   ];
 
   return (
     <>
       {/* Topbar */}
-      <header className="fixed top-0 left-0 right-0 h-16 border-b border-slate-600/30 z-40 px-4 flex items-center justify-between bg-slate-800">
+      <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-slate-600/30 bg-slate-800 px-4 dark:border-slate-700/50 dark:bg-slate-950">
         <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
@@ -68,7 +73,11 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
             <div className="text-right hidden sm:block">
               <p className="text-sm font-bold leading-none text-white">{userName}</p>
               <p className="text-[10px] text-slate-300 font-semibold tracking-wide">
-                {accountNumber ? `Acc: ${accountNumber}` : 'Verified Member'}
+                {walletNumericId
+                  ? `Wallet ID: ${walletNumericId}`
+                  : accountNumber
+                    ? `Acc: ${accountNumber}`
+                    : "Verified Member"}
               </p>
             </div>
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/30 shadow-sm cursor-pointer hover:bg-white/30" onClick={() => onNavigate("profileSettings")}>
@@ -79,7 +88,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
       </header>
 
       {/* Sidebar Desktop */}
-      <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-slate-100 hidden md:flex flex-col p-4 z-30">
+      <aside className="fixed left-0 top-16 bottom-0 z-30 hidden w-64 flex-col border-r border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-950 md:flex">
         <div className="flex-1 space-y-1">
           {navItems.map((item) => (
             <button
@@ -87,11 +96,11 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
               onClick={() => onNavigate(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                 activeScreen === item.id 
-                  ? "bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100/50" 
-                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100/50 dark:bg-emerald-950/40 dark:text-emerald-400 dark:shadow-none" 
+                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-900 dark:hover:text-white"
               }`}
             >
-              <item.icon className={`w-5 h-5 ${activeScreen === item.id ? "text-emerald-600" : "text-slate-400"}`} />
+              <item.icon className={`w-5 h-5 ${activeScreen === item.id ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-300"}`} />
               <span className="font-medium">{item.label}</span>
               {activeScreen === item.id && (
                 <motion.div layoutId="activeNav" className="ml-auto w-1.5 h-1.5 bg-emerald-600 rounded-full" />
@@ -106,7 +115,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all"
           >
             <LogOut className="w-5 h-5" />
-            <span className="font-medium">Sign Out</span>
+            <span className="font-medium">{t("nav.signOut")}</span>
           </button>
         </div>
       </aside>
@@ -167,7 +176,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
                 className="mt-auto w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-red-500 hover:bg-red-50"
               >
                 <LogOut className="w-6 h-6" />
-                <span className="font-bold text-lg">Logout</span>
+                <span className="font-bold text-lg">{t("nav.signOut")}</span>
               </button>
             </motion.aside>
           </>

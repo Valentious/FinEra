@@ -146,7 +146,7 @@ export function BankLinking({ accountHolderName, onComplete }: BankLinkingProps)
               <Lock className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs text-emerald-800 font-medium leading-relaxed">
-                  <strong className="font-black">Secure Linking:</strong> Your bank details are encrypted and stored securely. This is a simulated linking process—no real API integration is active.
+                  <strong className="font-black">Secure Linking:</strong> Your bank details are encrypted and stored securely. This is a simulated linking process-no real API integration is active.
                 </p>
               </div>
             </div>

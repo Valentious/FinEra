@@ -1,5 +1,5 @@
 /**
- * FinEra — global field rules (types, patterns, normalizers).
+ * FinEra - global field rules (types, patterns, normalizers).
  * Enforced at API boundary before any database write.
  */
 

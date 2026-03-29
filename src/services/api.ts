@@ -53,10 +53,12 @@ export interface BankLinkingData {
 }
 
 export interface UserData {
+  /** Backend user UUID (mock + real) — used for peer transfer resolution */
+  userId?: string;
   memberId: string;
   fullName: string;
   title?: string;
-  /** ISO 8601 calendar date YYYY-MM-DD — sensitive PII */
+  /** ISO 8601 calendar date YYYY-MM-DD - sensitive PII */
   dateOfBirth?: string;
   /** When true, DOB cannot be changed in profile (support/admin only). */
   dateOfBirthLocked?: boolean;
@@ -86,16 +88,36 @@ export interface UserData {
   bankLinkingData?: BankLinkingData;
   /** User's country (from profile) - used for payment options */
   countryId?: string;
+  /** UI language: en, es, fr, pt, sw, sn (Shona), nd (Ndebele), af (Afrikaans) */
+  preferredLanguage?: string;
+  /** City / location when provided by backend profile */
+  city?: string;
+  /** Per-currency 10-digit public Wallet ID for peer transfers (mock + API) */
+  walletNumericIds?: Partial<Record<string, string>>;
+  /** Virtual Mastercard tokens for debit cash-in/out */
+  virtualDebitCards?: VirtualDebitCard[];
+  /** Last 4 digits of registered physical Mastercard */
+  physicalMastercardLast4?: string;
+}
+
+/** User-managed virtual Mastercard (mock + future card API) */
+export interface VirtualDebitCard {
+  id: string;
+  label: string;
+  last4: string;
+  maskedPan: string;
+  blocked: boolean;
+  createdAt: string;
 }
 
 export interface Transaction {
   id: string;
-  type: 'deposit' | 'withdrawal' | 'loan' | 'repayment';
+  type: 'deposit' | 'withdrawal' | 'loan' | 'repayment' | 'transfer';
   amount: number;
   date: string;
   description: string;
   status?: 'pending' | 'completed' | 'failed';
-  /** Ledger currency — required for strict multi-currency isolation */
+  /** Ledger currency - required for strict multi-currency isolation */
   currency?: string;
 }
 
@@ -138,6 +160,8 @@ export interface DepositRequest {
   method: string;
   purpose: string;
   currency?: string;
+  /** Debit card: virtual vs physical + optional virtual card id */
+  debitCardMeta?: { kind: "virtual" | "physical"; virtualCardId?: string };
 }
 
 export interface WithdrawalRequest {
@@ -145,6 +169,7 @@ export interface WithdrawalRequest {
   method: string;
   destination?: string;
   currency?: string;
+  debitCardMeta?: { kind: "virtual" | "physical"; virtualCardId?: string };
 }
 
 export interface RepaymentRequest {
@@ -270,7 +295,7 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
 }
 
 /**
- * POST /auth/verify-email — verifies registration OTP and returns JWTs (auto sign-in).
+ * POST /auth/verify-email - verifies registration OTP and returns JWTs (auto sign-in).
  */
 export async function verifyRegistrationEmail(
   email: string,
@@ -322,7 +347,7 @@ export async function login(data: LoginRequest): Promise<{ user: UserData; token
 }
 
 /**
- * POST /auth/verify-otp (legacy name — prefer verifyRegistrationEmail)
+ * POST /auth/verify-otp (legacy name - prefer verifyRegistrationEmail)
  */
 export async function verifyOTP(data: OTPVerificationRequest): Promise<{ success: boolean; message: string }> {
   await verifyRegistrationEmail(data.email, data.otp);
@@ -330,7 +355,7 @@ export async function verifyOTP(data: OTPVerificationRequest): Promise<{ success
 }
 
 /**
- * POST /auth/resend-otp — resend registration verification code
+ * POST /auth/resend-otp - resend registration verification code
  */
 export async function resendOTP(email: string): Promise<{ success: boolean; message: string }> {
   const res = await apiCall<{ success: boolean; message?: string }>("/auth/resend-otp", {
@@ -527,6 +552,7 @@ function normalizeWalletRow(w: WalletApiRow): {
     id: w.id,
     currencyCode: cc,
     accountNumber: w.accountNumber,
+    walletNumericId: (w as { walletNumericId?: string }).walletNumericId,
     balance: bal,
     walletLabel: w.walletLabel ?? getWalletLabel(cc),
     approvedCreditBalance: num(la?.approvedCreditBalance ?? w.approvedCreditBalance),
@@ -540,6 +566,7 @@ export async function getWalletsByCurrency(currency?: string): Promise<
     id: string;
     currencyCode: string;
     accountNumber: string;
+    walletNumericId?: string;
     balance: number;
     walletLabel: string;
     approvedCreditBalance: number;
@@ -631,7 +658,9 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
   return {
     memberId: (p.id as string) || '',
     fullName: (p.fullName as string) || '',
-    title: '',
+    title: (p.title as string) || '',
+    preferredLanguage: (p.preferredLanguage as string) || 'en',
+    city: (p.city as string) || undefined,
     dateOfBirth: dobStr,
     dateOfBirthLocked: Boolean(p.dateOfBirthLocked),
     phoneNumber: (p.phoneNumber as string) || '',
@@ -662,13 +691,16 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
 }
 
 /**
- * PUT /user/profile — partial update (fullName, phoneNumber, dateOfBirth as ISO YYYY-MM-DD).
+ * PUT /user/profile - partial update (fullName, phoneNumber, dateOfBirth, title, preferredLanguage, city).
  */
 export async function updateUserProfile(data: Partial<UserData>): Promise<Partial<UserData>> {
   const body: Record<string, string> = {};
   if (data.fullName != null && data.fullName !== "") body.fullName = data.fullName;
   if (data.phoneNumber != null && data.phoneNumber !== "") body.phoneNumber = data.phoneNumber;
   if (data.dateOfBirth != null && data.dateOfBirth !== "") body.dateOfBirth = data.dateOfBirth;
+  if (data.title != null && data.title !== "") body.title = data.title;
+  if (data.preferredLanguage != null && data.preferredLanguage !== "") body.preferredLanguage = data.preferredLanguage;
+  if (data.city != null && data.city !== "") body.city = data.city;
 
   const res = await apiCall<{ success: boolean; data: Record<string, unknown> }>("/user/profile", {
     method: "PUT",
@@ -686,11 +718,64 @@ export async function updateUserProfile(data: Partial<UserData>): Promise<Partia
   return {
     memberId: (p.id as string) || undefined,
     fullName: (p.fullName as string) || undefined,
+    title: (p.title as string) || undefined,
+    preferredLanguage: (p.preferredLanguage as string) || undefined,
+    city: (p.city as string) || undefined,
     dateOfBirth: dobStr,
     dateOfBirthLocked: p.dateOfBirthLocked !== undefined ? Boolean(p.dateOfBirthLocked) : undefined,
     phoneNumber: phone,
     mobile: phone,
     email: (p.email as string) || undefined,
+  };
+}
+
+export interface PeerTransferRecipient {
+  userId: string;
+  currencyCode: string;
+  displayNameHint: string;
+  walletLabel: string;
+}
+
+export async function getPeerRecipient(walletIdOrLegacyAccount: string): Promise<PeerTransferRecipient> {
+  const t = walletIdOrLegacyAccount.trim();
+  const q = new URLSearchParams();
+  if (/^\d{10}$/.test(t)) q.set("walletId", t);
+  else q.set("accountNumber", t);
+  const res = await apiCall<{ success: boolean; data: PeerTransferRecipient }>(`/wallet/recipient?${q.toString()}`);
+  if (!res.data?.userId) throw new Error("Invalid recipient response");
+  return res.data;
+}
+
+export async function peerTransfer(params: {
+  toUserId: string;
+  amount: number;
+  currency: string;
+  referenceId?: string;
+}): Promise<{
+  transactionId: string;
+  reference: string;
+  fromNewBalance: number;
+  currency: string;
+}> {
+  const res = await apiCall<{
+    success: boolean;
+    data: { transactionId: string; reference: string; fromNewBalance: number; currency: string };
+  }>("/wallet/transfer", {
+    method: "POST",
+    body: JSON.stringify({
+      toUserId: params.toUserId,
+      amount: params.amount,
+      currency: params.currency,
+      referenceId: params.referenceId,
+    }),
+  });
+  const d = res.data;
+  if (!d) throw new Error("Transfer failed");
+  return {
+    transactionId: d.transactionId,
+    reference: d.reference,
+    fromNewBalance: d.fromNewBalance,
+    currency: d.currency,
   };
 }
 
@@ -757,6 +842,7 @@ export async function withdrawFunds(data: WithdrawalRequest): Promise<{ transact
       method: data.method,
       destination: data.destination,
       currency,
+      debitCardMeta: data.debitCardMeta,
     }),
   });
   if (res?.data) return res.data;

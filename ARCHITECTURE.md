@@ -39,7 +39,7 @@ Strict full-stack architecture where:
 - `ensureWallet()`, `getWalletOrThrow()`, `validateSufficientBalance()`
 
 ### Transaction Service (`backend-core/src/modules/wallet/transaction.service.ts`)
-- **All updates use `prisma.$transaction()`** — atomic, auto-ROLLBACK on failure
+- **All updates use `prisma.$transaction()`** - atomic, auto-ROLLBACK on failure
 - `processDeposit()`, `processWithdrawal()`, `processTransferCreditToSavings()`
 - `processLoanDisbursement()`, `processLoanRepayment()`
 - `listTransactions()` with pagination
@@ -95,11 +95,11 @@ Starts: `postgres` (5432), `backend` (4000), `frontend` (5173→80)
 ```bash
 npm run health
 ```
-Calls `http://localhost:4000/health` — exit 0 if OK, 1 if down
+Calls `http://localhost:4000/health` - exit 0 if OK, 1 if down
 
 ### Backend Endpoints
-- `/health` — liveness
-- `/ready` — DB connected (SELECT 1)
+- `/health` - liveness
+- `/ready` - DB connected (SELECT 1)
 
 ---
 
@@ -112,8 +112,8 @@ Calls `http://localhost:4000/health` — exit 0 if OK, 1 if down
 
 ### Frontend
 - `apiCall()` retries 3x on network failure
-- `checkBackendHealth()` — shows `BackendUnavailableBanner` when backend down
-- `USE_MOCK_DATA=true` — fallback to mock data when backend unavailable
+- `checkBackendHealth()` - shows `BackendUnavailableBanner` when backend down
+- `USE_MOCK_DATA=true` - fallback to mock data when backend unavailable
 
 ---
 
@@ -125,7 +125,7 @@ Calls `http://localhost:4000/health` — exit 0 if OK, 1 if down
 3. Start backend: `cd backend-core && npm run dev` or use `npm run dev`
 
 ### Mock Mode (Development without Backend)
-- `USE_MOCK_DATA = true` — uses `mockApi` (local state)
+- `USE_MOCK_DATA = true` - uses `mockApi` (local state)
 - Logs: `[FinEra] Using mock data (USE_MOCK_DATA=true)`
 
 ---

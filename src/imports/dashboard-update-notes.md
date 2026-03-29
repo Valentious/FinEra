@@ -1,4 +1,4 @@
-1️⃣ DASHBOARD EXTENSION — FINANCIAL IDENTITY PANEL
+1️⃣ DASHBOARD EXTENSION - FINANCIAL IDENTITY PANEL
 
 Place this section directly under:
 
@@ -187,7 +187,7 @@ Updates dashboard countdown timer
 
 No complexity. Just automated split.
 
-5️⃣ WITHDRAWAL METHODS — ADD ATM (CARDLESS INNOVATION)
+5️⃣ WITHDRAWAL METHODS - ADD ATM (CARDLESS INNOVATION)
 
 Add to withdrawal list:
 

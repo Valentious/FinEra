@@ -1,5 +1,5 @@
 /**
- * Date of birth — KYC / GDPR-sensitive. Store and transmit as ISO 8601 calendar date only (YYYY-MM-DD).
+ * Date of birth - KYC / GDPR-sensitive. Store and transmit as ISO 8601 calendar date only (YYYY-MM-DD).
  * Age checks use local calendar semantics (no UTC midnight shifts) via noon anchor.
  */
 

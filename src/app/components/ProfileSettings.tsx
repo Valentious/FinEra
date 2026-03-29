@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -45,6 +46,8 @@ import { toast } from "sonner";
 import { DateOfBirthField } from "@/app/components/ui/date-of-birth-field";
 import { validateDobIso, dobErrorMessage } from "@/lib/dob";
 import { apiService } from "@/services/index";
+import { useI18n } from "@/app/providers/I18nProvider";
+import { isAppLocale } from "@/i18n/locales";
 
 interface ProfileSettingsProps {
   userData: any;
@@ -61,14 +64,17 @@ type SettingsTab =
 
 export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSettingsProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { t, setLocale } = useI18n();
+  const [themeReady, setThemeReady] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState(userData.preferredLanguage || "en");
 
   const [profileTitle, setProfileTitle] = useState(userData.title || "Mr");
   const [profileFullName, setProfileFullName] = useState(userData.fullName || "");
   const [profileEmail, setProfileEmail] = useState(userData.email || "");
   const [profilePhone, setProfilePhone] = useState(userData.phoneNumber || userData.mobile || "");
+  const [profileCity, setProfileCity] = useState(userData.city || "");
   const [profileDob, setProfileDob] = useState(userData.dateOfBirth || "");
   const [dobError, setDobError] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
@@ -78,9 +84,21 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
     setProfileFullName(userData.fullName || "");
     setProfileEmail(userData.email || "");
     setProfilePhone(userData.phoneNumber || userData.mobile || "");
+    setProfileCity(userData.city || "");
     setProfileDob(userData.dateOfBirth || "");
+    const pl = userData.preferredLanguage;
+    if (pl && isAppLocale(pl)) {
+      setLanguage(pl);
+      setLocale(pl);
+    }
     setDobError("");
-  }, [userData.memberId, userData.email, userData.dateOfBirth, userData.phoneNumber, userData.fullName]);
+  }, [userData.memberId, userData.email, userData.dateOfBirth, userData.phoneNumber, userData.fullName, userData.city, userData.preferredLanguage, userData.title, setLocale]);
+
+  useEffect(() => {
+    setThemeReady(true);
+  }, []);
+
+  const isDarkTheme = (resolvedTheme ?? theme) === "dark";
 
   const handleSaveProfile = async () => {
     setDobError("");
@@ -96,9 +114,13 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
         fullName: profileFullName.trim(),
         phoneNumber: profilePhone.trim(),
         dateOfBirth: dobCheck.iso,
+        title: profileTitle.trim(),
+        preferredLanguage: language,
+        city: profileCity.trim(),
       });
-      onUpdate({ ...userData, ...patch, title: profileTitle });
-      toast.success("Profile updated successfully");
+      if (isAppLocale(language)) setLocale(language);
+      onUpdate({ ...userData, ...patch, title: profileTitle.trim(), preferredLanguage: language, city: profileCity.trim() });
+      toast.success(t("profile.updated"));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Update failed";
       toast.error(msg);
@@ -112,22 +134,30 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-12 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-6xl mx-auto space-y-6 pb-12 animate-in slide-in-from-bottom-4 duration-500 text-foreground">
       {/* Header */}
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-black text-slate-900">Account Settings</h1>
-          <p className="text-slate-500 font-medium">Manage your account preferences and security</p>
+          <h1 className="text-3xl font-black text-foreground">{t("profile.title")}</h1>
+          <p className="text-muted-foreground font-medium">{t("profile.subtitle")}</p>
         </div>
-        <div className="flex items-center gap-3">
-          {/* Dark Mode Toggle */}
-          <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-slate-100 shadow-sm">
-            <Sun className="w-4 h-4 text-amber-500" />
-            <Switch 
-              checked={darkMode} 
-              onCheckedChange={setDarkMode}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Theme: Light / Dark (persisted via next-themes → html.dark) */}
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 shadow-sm">
+            <Sun className="h-4 w-4" aria-hidden />
+            <Switch
+              checked={themeReady && isDarkTheme}
+              onCheckedChange={(checked) => {
+                setTheme(checked ? "dark" : "light");
+                toast.success(checked ? "Dark theme enabled" : "Light theme enabled");
+              }}
+              disabled={!themeReady}
+              aria-label={isDarkTheme ? "Dark theme on" : "Light theme on"}
             />
-            <Moon className="w-4 h-4 text-emerald-600" />
+            <Moon className="h-4 w-4" aria-hidden />
+            <span className="hidden text-xs font-bold text-muted-foreground sm:inline">
+              {themeReady ? (isDarkTheme ? "Dark" : "Light") : "…"}
+            </span>
           </div>
           <Button 
             variant="ghost" 
@@ -136,7 +166,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
             onClick={onLogout}
           >
             <LogOut className="w-4 h-4 mr-2" />
-            Log out
+            {t("nav.signOut")}
           </Button>
         </div>
       </div>
@@ -145,18 +175,18 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar Navigation */}
         <aside className="lg:w-72 space-y-2">
-          <nav className="bg-white rounded-2xl shadow-sm border border-slate-100 p-3 space-y-1">
+          <nav className="rounded-2xl border border-border bg-card p-3 shadow-sm space-y-1">
             <button
               onClick={() => setActiveTab('profile')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                 activeTab === 'profile' 
-                  ? 'bg-emerald-50 text-emerald-600 font-bold' 
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400' 
+                  : 'text-muted-foreground hover:bg-muted/60'
               }`}
             >
               <div className="flex items-center gap-3">
                 <User className="w-4 h-4" />
-                <span className="text-sm">Profile</span>
+                <span className="text-sm">{t("profile.tabProfile")}</span>
               </div>
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -165,13 +195,13 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               onClick={() => setActiveTab('verification')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                 activeTab === 'verification' 
-                  ? 'bg-emerald-50 text-emerald-600 font-bold' 
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400' 
+                  : 'text-muted-foreground hover:bg-muted/60'
               }`}
             >
               <div className="flex items-center gap-3">
                 <FileCheck className="w-4 h-4" />
-                <span className="text-sm">Verification</span>
+                <span className="text-sm">{t("profile.tabVerification")}</span>
               </div>
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -180,13 +210,13 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               onClick={() => setActiveTab('security')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                 activeTab === 'security' 
-                  ? 'bg-emerald-50 text-emerald-600 font-bold' 
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400' 
+                  : 'text-muted-foreground hover:bg-muted/60'
               }`}
             >
               <div className="flex items-center gap-3">
                 <Shield className="w-4 h-4" />
-                <span className="text-sm">Security & Safety</span>
+                <span className="text-sm">{t("profile.tabSecurity")}</span>
               </div>
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -195,8 +225,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               onClick={() => setActiveTab('cashier')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                 activeTab === 'cashier' 
-                  ? 'bg-emerald-50 text-emerald-600 font-bold' 
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400' 
+                  : 'text-muted-foreground hover:bg-muted/60'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -210,8 +240,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               onClick={() => setActiveTab('help')}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                 activeTab === 'help' 
-                  ? 'bg-emerald-50 text-emerald-600 font-bold' 
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400' 
+                  : 'text-muted-foreground hover:bg-muted/60'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -233,8 +263,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               className="space-y-6"
             >
               {/* Personal Details */}
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <User className="w-5 h-5 text-emerald-600" />
@@ -266,7 +296,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   {/* Form Fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">Title</Label>
+                      <Label className="text-xs font-bold text-slate-600">{t("profile.fieldTitle")}</Label>
                       <Input
                         value={profileTitle}
                         onChange={(e) => setProfileTitle(e.target.value)}
@@ -274,7 +304,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">Full Name</Label>
+                      <Label className="text-xs font-bold text-slate-600">{t("profile.fieldFullName")}</Label>
                       <Input
                         value={profileFullName}
                         onChange={(e) => setProfileFullName(e.target.value)}
@@ -282,18 +312,28 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">Email Address</Label>
+                      <Label className="text-xs font-bold text-slate-600">{t("profile.fieldEmail")}</Label>
                       <Input value={profileEmail} readOnly disabled className="h-11 rounded-xl bg-slate-50 text-slate-600" />
-                      <p className="text-[10px] text-slate-500">Email changes require support for security.</p>
+                      <p className="text-[10px] text-slate-500">{t("profile.emailLocked")}</p>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">Phone Number</Label>
+                      <Label className="text-xs font-bold text-slate-600">{t("profile.fieldPhone")}</Label>
                       <Input
                         value={profilePhone}
                         onChange={(e) => setProfilePhone(e.target.value)}
                         className="h-11 rounded-xl"
                         inputMode="tel"
                         autoComplete="tel"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-slate-600">{t("profile.fieldCity")}</Label>
+                      <Input
+                        value={profileCity}
+                        onChange={(e) => setProfileCity(e.target.value)}
+                        className="h-11 rounded-xl"
+                        placeholder="e.g. Harare"
+                        autoComplete="address-level2"
                       />
                     </div>
                     <div className="md:col-span-2">
@@ -327,52 +367,65 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-50 flex justify-end">
+                  <div className="pt-4 border-t border-border/60 flex justify-end">
                     <Button
                       onClick={handleSaveProfile}
                       disabled={savingProfile}
                       className="bg-emerald-600 hover:bg-emerald-700 rounded-xl px-8 font-bold"
                     >
-                      {savingProfile ? "Saving…" : "Save Changes"}
+                      {savingProfile ? t("profile.saving") : t("profile.save")}
                     </Button>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Languages */}
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <Globe className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Languages</CardTitle>
-                      <CardDescription>Choose your preferred language</CardDescription>
+                      <CardTitle className="text-lg">{t("profile.languagesTitle")}</CardTitle>
+                      <CardDescription>{t("profile.languagesDesc")}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-600">Display Language</Label>
+                    <Label className="text-xs font-bold text-slate-600">{t("profile.displayLanguage")}</Label>
                     <select 
                       value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
+                      onChange={async (e) => {
+                        const lang = e.target.value;
+                        setLanguage(lang);
+                        if (isAppLocale(lang)) setLocale(lang);
+                        try {
+                          const patch = await apiService.updateUserProfile({ preferredLanguage: lang });
+                          onUpdate({ ...userData, ...patch, preferredLanguage: lang });
+                        } catch (err) {
+                          toast.error(err instanceof Error ? err.message : "Could not save language");
+                        }
+                      }}
                       className="w-full h-11 rounded-xl border-slate-200 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 px-3"
                     >
                       <option value="en">English</option>
-                      <option value="es">Spanish</option>
-                      <option value="fr">French</option>
-                      <option value="pt">Portuguese</option>
-                      <option value="sw">Swahili</option>
+                      <option value="es">Español</option>
+                      <option value="fr">Français</option>
+                      <option value="pt">Português</option>
+                      <option value="sw">Kiswahili</option>
+                      <option value="sn">ChiShona</option>
+                      <option value="nd">isiNdebele</option>
+                      <option value="af">Afrikaans</option>
                     </select>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Help Centre & Live Chat */}
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <HelpCircle className="w-5 h-5 text-emerald-600" />
@@ -430,8 +483,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <FileCheck className="w-5 h-5 text-emerald-600" />
@@ -531,8 +584,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               className="space-y-6"
             >
               {/* Email and Password */}
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <Lock className="w-5 h-5 text-emerald-600" />
@@ -557,8 +610,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               </Card>
 
               {/* Passkeys */}
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <Key className="w-5 h-5 text-emerald-600" />
@@ -587,8 +640,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               </Card>
 
               {/* Two-Factor Authentication */}
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <ShieldCheck className="w-5 h-5 text-emerald-600" />
@@ -620,8 +673,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               </Card>
 
               {/* Account Limits */}
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <Gauge className="w-5 h-5 text-emerald-600" />
@@ -645,8 +698,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               </Card>
 
               {/* Login History */}
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <History className="w-5 h-5 text-emerald-600" />
@@ -678,8 +731,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               </Card>
 
               {/* API Token */}
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <Code className="w-5 h-5 text-emerald-600" />
@@ -701,8 +754,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               </Card>
 
               {/* Connected Apps */}
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <Link2 className="w-5 h-5 text-emerald-600" />
@@ -777,8 +830,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <Wallet className="w-5 h-5 text-emerald-600" />
@@ -840,8 +893,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <Card className="border-slate-100 shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-slate-50">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-50 rounded-lg">
                       <HelpCircle className="w-5 h-5 text-emerald-600" />

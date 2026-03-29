@@ -26,6 +26,9 @@ import {
   formatAmountWithSymbol,
   getWalletLabel,
 } from "@/types/wallet";
+import { DebitCardMethodPanel } from "@/app/components/DebitCardMethodPanel";
+import type { VirtualDebitCard } from "@/services/api";
+import type { WithdrawalRequest } from "@/services/api";
 
 /** Same rate as backend `processTransferCreditToWallet` (Approved Credit → FinCash). */
 export const APPROVED_CREDIT_TO_WALLET_FEE_RATE = 0.015;
@@ -37,7 +40,15 @@ interface WithdrawFlowProps {
   currencyCode?: string;
   amountSymbol?: string;
   amountPlaceholder?: string;
-  onConfirm: (amount: number, method: string) => void | Promise<void>;
+  virtualDebitCards?: VirtualDebitCard[];
+  onVirtualDebitCardsChange?: (cards: VirtualDebitCard[]) => void;
+  physicalMastercardLast4?: string;
+  onPhysicalMastercardChange?: (last4: string) => void;
+  onConfirm: (
+    amount: number,
+    method: string,
+    meta?: { debitCardMeta?: WithdrawalRequest["debitCardMeta"] }
+  ) => void | Promise<void>;
   onBack: () => void;
   onSuccess: () => void;
 }
@@ -50,6 +61,7 @@ const METHODS = [
     color: "bg-violet-50 text-violet-700",
   },
   { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
+  { id: "debit_card", label: "Debit card (Mastercard)", icon: <CreditCard className="w-5 h-5" />, color: "bg-indigo-50 text-indigo-700" },
   { id: "atm", label: "ATM Cardless Cash Out", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
   { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
 ];
@@ -60,6 +72,10 @@ export function WithdrawFlow({
   currencyCode = "USD",
   amountSymbol,
   amountPlaceholder: amountPlaceholderProp,
+  virtualDebitCards = [],
+  onVirtualDebitCardsChange,
+  physicalMastercardLast4,
+  onPhysicalMastercardChange,
   onConfirm,
   onBack,
   onSuccess,
@@ -71,6 +87,7 @@ export function WithdrawFlow({
     | "method"
     | "approvedCreditAmount"
     | "amount"
+    | "debitPanel"
     | "recipient"
     | "confirmCode"
     | "agent"
@@ -127,7 +144,7 @@ export function WithdrawFlow({
     setStep("processing");
     const run = async () => {
       try {
-        await Promise.resolve(onConfirm(numAmount, "approved_credit"));
+        await Promise.resolve(onConfirm(numAmount, "approved_credit", undefined));
         setStep("success");
       } catch {
         setStep("approvedCreditAmount");
@@ -149,7 +166,9 @@ export function WithdrawFlow({
       return;
     }
 
-    if (selectedMethod === 'agent') {
+    if (selectedMethod === "debit_card") {
+      setStep("debitPanel");
+    } else if (selectedMethod === 'agent') {
       setStep("agent");
     } else if (selectedMethod === 'atm') {
       generateATMCode();
@@ -159,7 +178,7 @@ export function WithdrawFlow({
       setStep("processing");
       const run = async () => {
         try {
-          await Promise.resolve(onConfirm(numAmount, selectedMethod));
+          await Promise.resolve(onConfirm(numAmount, selectedMethod, undefined));
           setStep("success");
         } catch {
           setStep("amount");
@@ -188,7 +207,7 @@ export function WithdrawFlow({
     setStep("processing");
     const run = async () => {
       try {
-        await Promise.resolve(onConfirm(parseFloat(amount), selectedMethod));
+        await Promise.resolve(onConfirm(parseFloat(amount), selectedMethod, undefined));
         setStep("success");
       } catch {
         setStep("confirmCode");
@@ -233,7 +252,7 @@ export function WithdrawFlow({
 
   const completeATMWithdrawal = async () => {
     try {
-      await Promise.resolve(onConfirm(parseFloat(amount), "atm"));
+      await Promise.resolve(onConfirm(parseFloat(amount), "atm", undefined));
       setStep("success");
     } catch {
       setStep("atm-code");
@@ -294,7 +313,7 @@ export function WithdrawFlow({
                         </span>
                         {method.id === "approved_credit" && (
                           <span className="text-xs text-slate-500 font-medium">
-                            Move to {getWalletLabel(currencyCode)} — 1.5% commission
+                            Move to {getWalletLabel(currencyCode)} - 1.5% commission
                           </span>
                         )}
                       </div>
@@ -406,6 +425,35 @@ export function WithdrawFlow({
                 Confirm move to FinCash
               </Button>
             </div>
+          </motion.div>
+        )}
+
+        {step === "debitPanel" && (
+          <motion.div
+            key="debitPanel"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+          >
+            <DebitCardMethodPanel
+              title={`Cash Out (${currencyCode})`}
+              virtualDebitCards={virtualDebitCards}
+              onVirtualDebitCardsChange={onVirtualDebitCardsChange ?? (() => {})}
+              physicalMastercardLast4={physicalMastercardLast4}
+              onPhysicalMastercardChange={onPhysicalMastercardChange ?? (() => {})}
+              onBack={() => setStep("amount")}
+              onFinalize={async (m, meta) => {
+                setStep("processing");
+                try {
+                  await Promise.resolve(
+                    onConfirm(parseFloat(amount), m, { debitCardMeta: meta })
+                  );
+                  setStep("success");
+                } catch {
+                  setStep("debitPanel");
+                }
+              }}
+            />
           </motion.div>
         )}
 
@@ -534,7 +582,7 @@ export function WithdrawFlow({
               amount={parseFloat(amount)} 
               onSuccess={async (txnId) => {
                 try {
-                  await Promise.resolve(onConfirm(parseFloat(amount), "agent"));
+                  await Promise.resolve(onConfirm(parseFloat(amount), "agent", undefined));
                   setStep("success");
                 } catch {
                   setStep("amount");

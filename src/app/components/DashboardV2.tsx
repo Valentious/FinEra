@@ -20,7 +20,8 @@ import {
   Zap,
   Award,
   ChevronRight,
-  Coins
+  Coins,
+  Send
 } from "lucide-react";
 import { PerformancePortfolioChart } from "@/app/components/PerformancePortfolioChart";
 import { motion } from "motion/react";
@@ -74,7 +75,7 @@ export interface CurrencyTab {
 interface DashboardV2Props {
   userName: string;
   walletBalance: number;
-  /** e.g. FinCash USD Wallet — must match active dashboard currency */
+  /** e.g. FinCash USD Wallet - must match active dashboard currency */
   walletLabel: string;
   activeCredit: number;
   availableCreditLimit: number;
@@ -207,15 +208,19 @@ export function DashboardV2({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-12">
-      {/* Greeting + dashboard currency — same row (global pattern: locale/currency next to identity) */}
+      {/* Greeting + dashboard currency - same row (global pattern: locale/currency next to identity) */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <h1 className="text-3xl font-black text-slate-900">Welcome, {userName}</h1>
-          <p className="mt-0.5 text-sm font-medium text-slate-500">
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Welcome, {userName}</h1>
+          <p className="mt-0.5 text-sm font-medium text-slate-500 dark:text-white/90">
             Empowering your financial literacy journey.
           </p>
           {displayAccountNumber ? (
-            <p className="mt-2 text-xs font-medium text-slate-400">Account · {displayAccountNumber}</p>
+            <p className="mt-2 text-xs font-medium text-slate-400 dark:text-white/85">
+              {/^\d{10}$/.test(String(displayAccountNumber).replace(/\s/g, ""))
+                ? `Wallet ID · ${displayAccountNumber}`
+                : `Account · ${displayAccountNumber}`}
+            </p>
           ) : null}
         </div>
 
@@ -223,7 +228,7 @@ export function DashboardV2({
           <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:min-w-[min(100%,280px)] sm:items-end">
             <span
               id="dashboard-currency-label"
-              className="text-[10px] font-black uppercase tracking-widest text-slate-500 sm:text-right"
+              className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/80 sm:text-right"
             >
               Dashboard currency
             </span>
@@ -233,23 +238,23 @@ export function DashboardV2({
             >
               <SelectTrigger
                 aria-labelledby="dashboard-currency-label"
-                className="h-11 w-full border-emerald-200 bg-white font-bold text-slate-900 shadow-sm hover:bg-emerald-50/90 focus:ring-emerald-500/25 sm:min-w-[260px]"
+                className="h-11 w-full border-emerald-200 bg-white font-bold text-slate-900 shadow-sm hover:bg-emerald-50/90 focus:ring-emerald-500/25 dark:border-emerald-800 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800 sm:min-w-[260px]"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <Coins className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                  <Coins className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
                   <SelectValue placeholder="Select currency" />
                 </div>
               </SelectTrigger>
               <SelectContent align="end" className="border-emerald-100">
                 {tabs.map((tab) => (
                   <SelectItem key={tab.currencyCode} value={tab.currencyCode}>
-                    {tab.currencyCode} — {tab.displayName} ({tab.symbol})
+                    {tab.currencyCode} - {tab.displayName} ({tab.symbol})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {custodyLabel ? (
-              <p className="text-[10px] font-medium text-slate-400 sm:text-right">{custodyLabel}</p>
+              <p className="text-[10px] font-medium text-slate-400 dark:text-white/75 sm:text-right">{custodyLabel}</p>
             ) : null}
           </div>
         ) : null}
@@ -314,26 +319,26 @@ export function DashboardV2({
 
         {/* 3️⃣ Active Loan */}
         <motion.div whileHover={{ y: -4 }} className="order-3">
-          <Card className="p-6 bg-white border-slate-100 shadow-xl shadow-slate-200/50 h-full flex flex-col justify-between">
+          <Card className="p-6 bg-white border-slate-100 shadow-xl shadow-slate-200/50 dark:bg-slate-900 dark:border-slate-800 dark:shadow-none h-full flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-red-50 rounded-2xl">
-                  <CreditCard className="w-6 h-6 text-red-600" />
+                <div className="p-3 bg-red-50 rounded-2xl dark:bg-red-950/50">
+                  <CreditCard className="w-6 h-6 text-red-600 dark:text-red-400" />
                 </div>
-                <div className="px-2 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded-full uppercase">Current Debt</div>
+                <div className="px-2 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded-full uppercase dark:bg-red-950/50 dark:text-red-300">Current Debt</div>
               </div>
-              <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Active Loan</p>
-              <h3 className="text-3xl font-black mt-1 text-slate-900">{symbol}{safeActiveCredit.toLocaleString()}</h3>
+              <p className="text-slate-400 dark:text-white/80 text-xs font-black uppercase tracking-widest">Active Loan</p>
+              <h3 className="text-3xl font-black mt-1 text-slate-900 dark:text-white">{symbol}{safeActiveCredit.toLocaleString()}</h3>
             </div>
             <div className="mt-6">
-              <div className="flex justify-between text-[10px] font-black mb-1 text-slate-400 uppercase">
+              <div className="flex justify-between text-[10px] font-black mb-1 text-slate-400 dark:text-white/75 uppercase">
                 <span>REPAYMENT CYCLE</span>
                 <span>MONTH 2/12</span>
               </div>
-              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div className="h-full bg-emerald-600 w-[16%]" />
               </div>
-              <Button variant="ghost" className="w-full mt-2 h-8 text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:bg-emerald-50" onClick={onViewRepayment}>
+              <Button variant="ghost" className="w-full mt-2 h-8 text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40" onClick={onViewRepayment}>
                 View Repayment Plan
               </Button>
             </div>
@@ -343,8 +348,8 @@ export function DashboardV2({
 
       {/* 4️⃣ YOUR FINANCIAL IDENTITY SECTION */}
       <div>
-        <h2 className="text-2xl font-black text-slate-900 mb-4 flex items-center gap-2">
-          <ShieldCheck className="w-6 h-6 text-emerald-600" />
+        <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <ShieldCheck className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
           Your Financial Identity
         </h2>
         
@@ -409,13 +414,13 @@ export function DashboardV2({
             </Card>
           </motion.div>
 
-          {/* B. Performance Portfolio Chart — ledger for active currency wallet */}
+          {/* B. Performance Portfolio Chart - ledger for active currency wallet */}
           <motion.div whileHover={{ y: -4 }}>
-            <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden h-full">
+            <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 dark:bg-slate-900 dark:border-slate-800 dark:shadow-none overflow-hidden h-full">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-black text-slate-900">Performance Portfolio ({selectedCurrency})</h3>
-                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase">
-                  <ShieldCheck className="w-3 h-3 text-green-500" />
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">Performance Portfolio ({selectedCurrency})</h3>
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-white/80 uppercase">
+                  <ShieldCheck className="w-3 h-3 text-green-500 dark:text-emerald-400" />
                   {walletLabel}
                 </div>
               </div>
@@ -433,8 +438,8 @@ export function DashboardV2({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* C. Loyalty Progress Card™ (10-Cycle Engine) */}
         <motion.div whileHover={{ y: -4 }}>
-          <Card className={`p-6 border-slate-200 shadow-xl shadow-slate-200/50 h-full ${safeLoyaltyProgress === 10 ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white border-none' : ''}`}>
-            <h3 className={`text-lg font-black mb-6 ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-slate-900'}`}>
+          <Card className={`p-6 border-slate-200 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:shadow-none h-full ${safeLoyaltyProgress === 10 ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white border-none' : 'dark:bg-slate-900'}`}>
+            <h3 className={`text-lg font-black mb-6 ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
               Loyalty Reward Progress
             </h3>
             
@@ -446,17 +451,17 @@ export function DashboardV2({
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${
                       cycle <= safeLoyaltyProgress 
                         ? (safeLoyaltyProgress === 10 ? 'bg-white text-amber-600' : 'bg-green-500 text-white') 
-                        : 'bg-slate-200 text-slate-400'
+                        : 'bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-white/85'
                     }`}>
                       {cycle <= safeLoyaltyProgress ? '✓' : cycle}
                     </div>
-                    <div className={`text-[8px] mt-1 font-bold ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-slate-400'}`}>
+                    <div className={`text-[8px] mt-1 font-bold ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-slate-400 dark:text-white/75'}`}>
                       {cycle}
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="relative h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div className="relative h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div 
                   className={`h-full ${safeLoyaltyProgress === 10 ? 'bg-white' : 'bg-green-500'} transition-all duration-500`}
                   style={{ width: `${(safeLoyaltyProgress / 10) * 100}%` }}
@@ -464,15 +469,15 @@ export function DashboardV2({
               </div>
             </div>
 
-            <p className={`text-sm mb-4 font-medium ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-slate-600'}`}>
+            <p className={`text-sm mb-4 font-medium ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-slate-600 dark:text-white/90'}`}>
               {safeLoyaltyProgress === 10 
                 ? "12% Interest Discount Activated On Next Loan." 
                 : "Complete 10 loans with zero repayment default to unlock one-time complete interest discount"}
             </p>
 
             {safeLoyaltyProgress === 9 && (
-              <div className="px-4 py-3 bg-amber-50 border-2 border-amber-400 rounded-xl mb-4">
-                <p className="text-amber-900 font-black text-sm text-center">
+              <div className="px-4 py-3 bg-amber-50 border-2 border-amber-400 rounded-xl mb-4 dark:bg-amber-950/60 dark:border-amber-600">
+                <p className="text-amber-900 dark:text-amber-100 font-black text-sm text-center">
                   🎉 1 Loan Away From 12% Discount!
                 </p>
               </div>
@@ -488,7 +493,7 @@ export function DashboardV2({
 
             {safeLoyaltyProgress < 9 && (
               <div className="text-center">
-                <p className={`text-xs font-bold ${safeLoyaltyProgress === 10 ? 'text-white/80' : 'text-slate-500'}`}>
+                <p className={`text-xs font-bold ${safeLoyaltyProgress === 10 ? 'text-white/80' : 'text-slate-500 dark:text-white/85'}`}>
                   {10 - safeLoyaltyProgress} more successful {10 - safeLoyaltyProgress === 1 ? 'cycle' : 'cycles'} to go
                 </p>
               </div>
@@ -497,13 +502,13 @@ export function DashboardV2({
         </motion.div>
 
         {/* Recent Transactions - currency-scoped ledger */}
-        <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col">
+        <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 dark:bg-slate-900 dark:border-slate-800 dark:shadow-none flex flex-col">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-black text-slate-900">Ledger Activity ({selectedCurrency})</h3>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">Ledger Activity ({selectedCurrency})</h3>
             <Button
               variant="ghost"
               size="sm"
-              className="text-emerald-600 font-black uppercase text-[10px] tracking-widest"
+              className="text-emerald-600 font-black uppercase text-[10px] tracking-widest dark:text-emerald-400"
               onClick={() => exportLedgerToCsv(ledgerTxns, symbol, selectedCurrency ?? 'USD')}
             >
               Export Logs
@@ -511,24 +516,25 @@ export function DashboardV2({
           </div>
           <div className="space-y-4 flex-1">
             {ledgerTxns.length > 0 ? ledgerTxns.slice(-4).reverse().map((txn) => (
-              <div key={txn.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-transparent hover:border-slate-200 transition-all group">
+              <div key={txn.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-transparent hover:border-slate-200 dark:bg-slate-800/70 dark:hover:border-slate-600 transition-all group">
                 <div className="flex items-center gap-4">
                   <div className={`p-2 rounded-xl group-hover:scale-110 transition-transform ${
-                    txn.type === 'deposit' ? 'bg-green-100 text-green-600' : 
-                    txn.type === 'withdrawal' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
+                    txn.type === 'deposit' ? 'bg-green-100 text-green-600 dark:bg-green-950/50 dark:text-green-400' : 
+                    txn.type === 'withdrawal' || txn.type === 'transfer' ? 'bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
                   }`}>
                     {txn.type === 'deposit' ? <ArrowUpRight className="w-5 h-5" /> : 
-                     txn.type === 'withdrawal' ? <ArrowDownLeft className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
+                     txn.type === 'withdrawal' ? <ArrowDownLeft className="w-5 h-5" /> : 
+                     txn.type === 'transfer' ? <Send className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
                   </div>
                   <div>
-                    <p className="text-sm font-black text-slate-900">{txn.description}</p>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{new Date(txn.date).toLocaleDateString()}</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-white">{txn.description}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-white/75 font-bold uppercase tracking-tight">{new Date(txn.date).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-black ${
-                    txn.type === 'deposit' ? 'text-green-600' : 
-                    txn.type === 'withdrawal' ? 'text-red-600' : 'text-slate-900'
+                    txn.type === 'deposit' ? 'text-green-600 dark:text-green-400' : 
+                    txn.type === 'withdrawal' || txn.type === 'transfer' ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'
                   }`}>
                     {txn.type === "deposit" ? "+" : "-"}
                     {formatAmountWithSymbol(symbol, txn.amount)}
@@ -537,14 +543,14 @@ export function DashboardV2({
               </div>
             )) : (
               <div className="flex flex-col items-center justify-center py-10 text-center">
-                <div className="p-4 bg-slate-50 rounded-full mb-4">
-                  <Info className="w-8 h-8 text-slate-300" />
+                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-full mb-4">
+                  <Info className="w-8 h-8 text-slate-300 dark:text-white/70" />
                 </div>
-                <p className="text-slate-500 font-medium">No {selectedCurrency} ledger activity yet. Use Cash In to add funds and see transactions.</p>
+                <p className="text-slate-500 dark:text-white/90 font-medium">No {selectedCurrency} ledger activity yet. Use Cash In to add funds and see transactions.</p>
                 {onMakePayment ? (
-                  <Button variant="link" onClick={onMakePayment} className="text-emerald-600 font-bold">Make Payment</Button>
+                  <Button variant="link" onClick={onMakePayment} className="text-emerald-600 dark:text-emerald-400 font-bold">Make Payment</Button>
                 ) : (
-                  <Button variant="link" onClick={onAddSavings} className="text-emerald-600 font-bold">Start with Cash In</Button>
+                  <Button variant="link" onClick={onAddSavings} className="text-emerald-600 dark:text-emerald-400 font-bold">Start with Cash In</Button>
                 )}
               </div>
             )}

@@ -21,6 +21,7 @@ import {
   updateLedgerBalance as ledgerUpdateBalance,
 } from "./ledger.service.js";
 import { validateCurrencyActive } from "./currency.config.js";
+import { allocateWalletNumericId } from "../../infrastructure/ledger/wallet-numeric-id.js";
 
 type TxClient = Omit<
   typeof prisma,
@@ -86,11 +87,15 @@ async function ensureWallet(
   });
   if (!wallet) {
     const accountNumber = `FIN${Date.now().toString().slice(-9)}${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`;
+    const walletNumericId = await allocateWalletNumericId(
+      tx as Parameters<typeof allocateWalletNumericId>[0]
+    );
     wallet = await tx.wallet.create({
       data: {
         userId,
         currencyCode: currency,
         accountNumber,
+        walletNumericId,
         balance: 0,
         availableBalance: 0,
         savingsBalance: 0,

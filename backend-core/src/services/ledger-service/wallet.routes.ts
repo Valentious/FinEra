@@ -26,7 +26,9 @@ import { convertCurrency } from "./fx.service.js";
 import { freezeWallet, unfreezeWallet } from "./wallet.service.js";
 import { verifyLedgerConsistency, verifyAllLedgers, initializeAllLedgers } from "./ledger.service.js";
 import { getPortfolioSummary } from "./portfolio.service.js";
-import { validationError } from "../../middlewares/errorHandler.js";
+import { validationError, notFoundError } from "../../middlewares/errorHandler.js";
+import { prisma } from "../../infrastructure/database/index.js";
+import { allocateWalletNumericId } from "../../infrastructure/ledger/wallet-numeric-id.js";
 import type { Transaction as PrismaTransaction } from "@prisma/client";
 import { getWalletLabel, normalizeCurrencyCode } from "../../shared/wallet-label.js";
 
@@ -250,6 +252,49 @@ const repaySchema = z
     currency: b.currency,
     deductFromWallet: b.deductFromWallet ?? b.deductFromSavings ?? false,
   }));
+
+/**
+ * GET /wallet/recipient?walletId=1234567890 (preferred) or ?accountNumber=...
+ * Resolve peer transfer recipient: 10-digit wallet ID (Binance-style) or legacy account number.
+ */
+router.get("/recipient", async (req, res, next) => {
+  try {
+    const walletId = String(req.query.walletId ?? "").trim();
+    const accountNumber = String(req.query.accountNumber ?? "").trim();
+    const raw = walletId || accountNumber;
+    if (!raw) throw validationError("walletId or accountNumber is required");
+
+    const isTenDigit = /^\d{10}$/.test(raw);
+    const wallet = await prisma.wallet.findFirst({
+      where: isTenDigit
+        ? { walletNumericId: raw, isActive: true }
+        : { accountNumber: raw, isActive: true },
+      include: { user: { select: { id: true, fullName: true } } },
+    });
+    if (!wallet) throw notFoundError("No active wallet found for this account number");
+    if (wallet.userId === req.user!.id) {
+      throw validationError("You cannot transfer to your own wallet");
+    }
+
+    const parts = wallet.user.fullName.trim().split(/\s+/);
+    const hint =
+      parts.length <= 1
+        ? `${parts[0]?.slice(0, 1) ?? "?"}.`
+        : `${parts[0]!.slice(0, 1)}. ${parts[parts.length - 1]!.slice(0, 3)}***`;
+
+    res.json({
+      success: true,
+      data: {
+        userId: wallet.userId,
+        currencyCode: wallet.currencyCode,
+        displayNameHint: hint,
+        walletLabel: getWalletLabel(wallet.currencyCode),
+      },
+    });
+  } catch (e) {
+    next(e);
+  }
+});
 
 /**
  * POST /wallet/transfer

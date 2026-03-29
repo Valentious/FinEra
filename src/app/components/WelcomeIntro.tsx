@@ -39,8 +39,8 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
           <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl">
             <CheckCircle2 className="w-12 h-12 text-emerald-600" />
           </div>
-          <h1 className="text-3xl font-black mb-2">Welcome, {userName}!</h1>
-          <p className="text-emerald-100 text-lg opacity-90">Your academic financial journey starts now.</p>
+          <h1 className="text-3xl font-black mb-2 text-white drop-shadow-sm">Welcome, {userName}!</h1>
+          <p className="text-lg font-medium text-white">Your academic financial journey starts now.</p>
         </motion.div>
 
         <div className="space-y-4">
@@ -51,13 +51,13 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.3 + index * 0.1 }}
             >
-              <Card className="p-5 flex gap-4 border-none shadow-xl bg-white/95 backdrop-blur-sm rounded-2xl">
-                <div className="flex-shrink-0 w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center">
+              <Card className="p-5 flex gap-4 border-none shadow-xl bg-white/95 text-slate-900 backdrop-blur-sm rounded-2xl dark:bg-white/98 dark:text-slate-900">
+                <div className="flex-shrink-0 w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center dark:bg-slate-100">
                   {step.icon}
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900">{step.title}</h3>
-                  <p className="text-sm text-slate-500 leading-tight mt-1">{step.description}</p>
+                  <p className="text-sm text-slate-600 leading-tight mt-1 dark:text-slate-700">{step.description}</p>
                 </div>
               </Card>
             </motion.div>

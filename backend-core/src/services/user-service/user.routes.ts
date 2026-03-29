@@ -16,6 +16,7 @@ import { updateProfileSchema } from "./user.validation.js";
 import { logger } from "../../core/utils/logger.js";
 import { zodErrorToFieldErrors } from "../../shared/validation/zod-format.js";
 import { getWalletLabel } from "../../shared/wallet-label.js";
+import { allocateWalletNumericId } from "../../infrastructure/ledger/wallet-numeric-id.js";
 
 const router = Router();
 
@@ -25,6 +26,8 @@ const profileSelect = {
   id: true,
   email: true,
   fullName: true,
+  title: true,
+  preferredLanguage: true,
   dateOfBirth: true,
   dateOfBirthLocked: true,
   phoneNumber: true,
@@ -90,6 +93,8 @@ router.put("/profile", async (req, res, next) => {
 
     const data: Prisma.UserUpdateInput = {};
     if (body.fullName !== undefined) data.fullName = body.fullName;
+    if (body.title !== undefined) data.title = body.title;
+    if (body.preferredLanguage !== undefined) data.preferredLanguage = body.preferredLanguage;
     if (body.city !== undefined) data.city = body.city;
     if (body.phoneNumber !== undefined && body.phoneNumber !== existing.phoneNumber) {
       const taken = await prisma.user.findFirst({
@@ -171,6 +176,7 @@ router.get("/wallets", async (req, res, next) => {
           id: true,
           currencyCode: true,
           accountNumber: true,
+          walletNumericId: true,
           balance: true,
           availableBalance: true,
           approvedCreditBalance: true,
@@ -186,7 +192,20 @@ router.get("/wallets", async (req, res, next) => {
     const outstandingByWalletId = Object.fromEntries(
       loanOutstandingByWallet.map((g) => [g.walletId, Number(g._sum.remainingBalance ?? 0)])
     );
-    const data = wallets.map((w) => {
+    const withNumericIds = await Promise.all(
+      wallets.map(async (w) => {
+        if (w.walletNumericId) return w;
+        const nid = await prisma.$transaction(async (tx) => {
+          const cur = await tx.wallet.findUnique({ where: { id: w.id }, select: { walletNumericId: true } });
+          if (cur?.walletNumericId) return cur.walletNumericId;
+          const allocated = await allocateWalletNumericId(tx);
+          await tx.wallet.update({ where: { id: w.id }, data: { walletNumericId: allocated } });
+          return allocated;
+        });
+        return { ...w, walletNumericId: nid };
+      })
+    );
+    const data = withNumericIds.map((w) => {
       const activeLoanBalance = outstandingByWalletId[w.id] ?? 0;
       const wb = Number(w.balance);
       return {
@@ -195,6 +214,7 @@ router.get("/wallets", async (req, res, next) => {
         currencyCode: w.currencyCode,
         walletLabel: getWalletLabel(w.currencyCode),
         accountNumber: w.accountNumber,
+        walletNumericId: w.walletNumericId ?? "",
         balance: wb,
         availableBalance: Number(w.availableBalance),
         approvedCreditBalance: Number(w.approvedCreditBalance),

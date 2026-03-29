@@ -4,7 +4,7 @@ FinEra sends registration OTPs via **Resend**, **SendGrid**, or **Amazon SES**. 
 
 ## Quick setup
 
-### Option A — Resend (simple)
+### Option A - Resend (simple)
 
 1. Create an account at [resend.com](https://resend.com), add and verify your **domain** (not only `onboarding@resend.dev`).
 2. Create an API key.
@@ -18,7 +18,7 @@ EMAIL_FROM="FinEra <noreply@yourdomain.com>"
 
 `EMAIL_FROM` must use an address on a **verified domain** in Resend.
 
-### Option B — SendGrid
+### Option B - SendGrid
 
 1. Create an API key with **Mail Send** permission.
 2. Complete **Sender Authentication** (single sender or domain).
@@ -34,7 +34,7 @@ SENDGRID_SANDBOX_MODE=false
 
 If `SENDGRID_SANDBOX_MODE=true`, SendGrid **accepts** requests but **does not deliver** mail to real inboxes (common pitfall).
 
-### Option C — Amazon SES
+### Option C - Amazon SES
 
 1. Verify your domain or email in SES; move out of **sandbox** for production sends.
 2. Set:
@@ -65,15 +65,15 @@ Each provider shows exact DNS records in their dashboard. **Do not** use random 
 
 Structured logs (Pino):
 
-- `OTP generated; attempting email delivery` — code created (OTP value never logged in production).
-- `OTP email accepted by provider` — includes `provider`, `providerMessageId` when available.
-- `OTP email delivery failed after retries` — includes error message (no API keys in logs).
+- `OTP generated; attempting email delivery` - code created (OTP value never logged in production).
+- `OTP email accepted by provider` - includes `provider`, `providerMessageId` when available.
+- `OTP email delivery failed after retries` - includes error message (no API keys in logs).
 
 ## Development
 
 If no provider is configured or sending fails:
 
-- `NODE_ENV=development` — OTP is logged once with `[DEV ONLY]` (disable with `EMAIL_DEV_FALLBACK_LOG=false`).
+- `NODE_ENV=development` - OTP is logged once with `[DEV ONLY]` (disable with `EMAIL_DEV_FALLBACK_LOG=false`).
 - Never enable dev OTP logging in production.
 
 ## Rate limits (backend)

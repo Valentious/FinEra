@@ -124,7 +124,7 @@ export function PerformancePortfolioChart({
       chart = createChart(chartRef.current, {
         layout: {
           background: { type: ColorType.Solid, color: "#0f172a" },
-          textColor: "#94a3b8",
+          textColor: "#e2e8f0",
         },
         localization: {
           priceFormatter: (price: number) =>
@@ -203,8 +203,8 @@ export function PerformancePortfolioChart({
   if (timeline.length === 0) {
     return (
       <div className="rounded-2xl bg-slate-900 p-8 text-center">
-        <p className="text-slate-400 font-medium">No portfolio data yet.</p>
-        <p className="text-slate-500 text-sm mt-2">Cash in and cash out will populate the chart.</p>
+        <p className="text-slate-200 font-medium">No portfolio data yet.</p>
+        <p className="text-slate-300 text-sm mt-2">Cash in and cash out will populate the chart.</p>
       </div>
     );
   }
@@ -222,8 +222,8 @@ export function PerformancePortfolioChart({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-slate-500" />
-          <span className="text-slate-400 text-sm">Net cash in</span>
+          <DollarSign className="w-4 h-4 text-slate-300" />
+          <span className="text-slate-200 text-sm">Net cash in</span>
           <span className={`font-black ${metrics.netDeposits >= 0 ? "text-emerald-400" : "text-red-400"}`}>
             {metrics.netDeposits >= 0 ? "+" : ""}
             {currencySymbol}

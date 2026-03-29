@@ -78,7 +78,7 @@ export function DateOfBirthField({
         </Label>
         {locked && (
           <p className="text-xs text-slate-500 mt-0.5 mb-2">
-            Locked — contact support to change.
+            Locked - contact support to change.
           </p>
         )}
 

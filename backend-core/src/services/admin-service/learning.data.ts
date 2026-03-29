@@ -64,7 +64,7 @@ export const FINANCIAL_TERMS: FinancialTermSeed[] = [
   {
     term: "Financial Discipline Score",
     slug: "financial-discipline-score",
-    simpleDefinition: "FinEra's measure of how well you manage money—savings, repayments, and spending habits.",
+    simpleDefinition: "FinEra's measure of how well you manage money-savings, repayments, and spending habits.",
     advancedDefinition: "A proprietary metric combining repayment reliability, savings consistency, transaction health, and account longevity to assess financial behavior.",
     example: "Higher scores unlock better credit limits and premium learning content.",
     relatedTerms: ["credit score", "repayment", "savings"],
