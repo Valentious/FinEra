@@ -97,17 +97,60 @@ interface DashboardV2Props {
   dashboardConfig?: Record<string, unknown>;
 }
 
-// Helper function to get discipline score color
+/** TrustScore / discipline bands (0–100): matches card gradient + ring colors. */
+const TRUST_SCORE_BANDS = [
+  {
+    min: 80,
+    max: 100,
+    label: "Excellent",
+    short: "Deep green",
+    description: "Strong repayment history and consistent wallet behaviour. Best access to credit terms.",
+    swatchClass: "bg-emerald-600",
+  },
+  {
+    min: 65,
+    max: 79,
+    label: "Strong",
+    short: "Green",
+    description: "Good discipline. Keep funding your wallet and paying on time to move into Excellent.",
+    swatchClass: "bg-emerald-500",
+  },
+  {
+    min: 50,
+    max: 64,
+    label: "Fair",
+    short: "Amber",
+    description: "Room to improve. Focus on on-time repayments and fewer missed cycles.",
+    swatchClass: "bg-amber-500",
+  },
+  {
+    min: 0,
+    max: 49,
+    label: "Building",
+    short: "Red",
+    description: "Higher risk band. Improve with regular deposits and clearing arrears.",
+    swatchClass: "bg-red-500",
+  },
+] as const;
+
+function trustScoreBandIndex(score: number): number {
+  if (score >= 80) return 0;
+  if (score >= 65) return 1;
+  if (score >= 50) return 2;
+  return 3;
+}
+
+// Helper function to get discipline score color (card background gradient)
 function getDisciplineScoreColor(score: number): string {
-  if (score >= 80) return "from-emerald-500 to-emerald-600";
-  if (score >= 65) return "from-emerald-500 to-emerald-600";
+  if (score >= 80) return "from-emerald-600 to-emerald-800";
+  if (score >= 65) return "from-emerald-500 to-emerald-700";
   if (score >= 50) return "from-amber-500 to-amber-600";
-  return "from-red-400 to-red-500";
+  return "from-red-400 to-red-600";
 }
 
 function getDisciplineScoreRingColor(score: number): string {
-  if (score >= 80) return "#10b981"; // emerald-500
-  if (score >= 65) return "#22C55E"; // emerald-500
+  if (score >= 80) return "#059669"; // emerald-600
+  if (score >= 65) return "#10b981"; // emerald-500
   if (score >= 50) return "#f59e0b"; // amber-500
   return "#ef4444"; // red-500
 }
@@ -199,6 +242,7 @@ export function DashboardV2({
 
   const disciplineColor = getDisciplineScoreColor(safeDisciplineScore);
   const disciplineRingColor = getDisciplineScoreRingColor(safeDisciplineScore);
+  const activeTrustBandIdx = trustScoreBandIndex(safeDisciplineScore);
   const creditTier = getCreditScoreTier(safeCreditScore);
   const sfisTier = getSFISEligibilityTier(safeCreditScore);
 
@@ -378,7 +422,7 @@ export function DashboardV2({
                         cx="80"
                         cy="80"
                         r="70"
-                        stroke="white"
+                        stroke={disciplineRingColor}
                         strokeWidth="12"
                         fill="none"
                         strokeDasharray={circumference}
@@ -407,9 +451,64 @@ export function DashboardV2({
                   variant="outline" 
                   className="w-full bg-white/10 hover:bg-white/20 text-white border-white/30 h-11 rounded-xl font-black backdrop-blur-md"
                   onClick={() => setShowDisciplineDetails(!showDisciplineDetails)}
+                  aria-expanded={showDisciplineDetails}
                 >
-                  View Details
+                  {showDisciplineDetails ? "Hide colour guide" : "View Details"}
                 </Button>
+
+                {showDisciplineDetails && (
+                  <div
+                    className="mt-4 rounded-xl border border-white/25 bg-black/25 p-4 text-left shadow-inner backdrop-blur-md"
+                    role="region"
+                    aria-label="TrustScore colour bands"
+                  >
+                    <div className="flex items-start gap-2 mb-3">
+                      <Info className="w-4 h-4 text-white/90 shrink-0 mt-0.5" aria-hidden />
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-wide text-white/95">What the colours mean</p>
+                        <p className="text-[11px] text-white/75 mt-1 leading-relaxed">
+                          TrustScore runs from 0–100. The card and ring use the same bands below.
+                        </p>
+                      </div>
+                    </div>
+                    <ul className="space-y-2.5">
+                      {TRUST_SCORE_BANDS.map((band, idx) => {
+                        const isActive = idx === activeTrustBandIdx;
+                        return (
+                          <li
+                            key={`${band.min}-${band.max}`}
+                            className={`rounded-lg px-3 py-2.5 flex gap-3 transition-colors ${
+                              isActive ? "bg-white/20 ring-1 ring-white/40" : "bg-white/5"
+                            }`}
+                          >
+                            <span
+                              className={`mt-0.5 h-9 w-3 shrink-0 rounded-full ${band.swatchClass}`}
+                              title={`${band.short}`}
+                              aria-hidden
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
+                                <span className="text-sm font-black text-white">{band.label}</span>
+                                <span className="text-[10px] font-bold text-white/60 uppercase tracking-wider">
+                                  {band.min}–{band.max} · {band.short}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-white/80 leading-snug mt-1">{band.description}</p>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <p className="mt-3 pt-3 border-t border-white/15 text-[11px] text-white/90 font-medium leading-relaxed">
+                      <span className="font-black text-white">Your score ({safeDisciplineScore}):</span>{" "}
+                      You are in the{" "}
+                      <span className="font-black underline decoration-white/40 underline-offset-2">
+                        {TRUST_SCORE_BANDS[activeTrustBandIdx].label}
+                      </span>{" "}
+                      band ({TRUST_SCORE_BANDS[activeTrustBandIdx].short}).
+                    </p>
+                  </div>
+                )}
               </div>
             </Card>
           </motion.div>
