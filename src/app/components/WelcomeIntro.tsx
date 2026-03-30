@@ -18,7 +18,7 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
     {
       icon: <CreditCard className="w-6 h-6 text-emerald-600" />,
       title: "Access FinEra INCLUSIVE CREDIT",
-      description: "Apply for student-friendly loans with flexible repayment terms."
+      description: "Get student-friendly loans with flexible repayment terms."
     },
     {
       icon: <GraduationCap className="w-6 h-6 text-purple-600" />,

@@ -272,7 +272,7 @@ export default function App() {
     if (wallets.length > 0 && !dashboardWallet) {
       return {
         kind: "missing" as const,
-        message: `No wallet found for ${selectedCurrency}. You cannot apply for credit in this currency.`,
+        message: `No wallet found for ${selectedCurrency}. You cannot get a loan in this currency.`,
       };
     }
     if (!walletLoading && wallets.length === 0) {

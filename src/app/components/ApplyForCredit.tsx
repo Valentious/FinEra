@@ -81,7 +81,7 @@ export function ApplyForCredit({
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <Card className="p-8 border-red-200 bg-red-50 rounded-3xl">
-          <h2 className="text-xl font-black text-red-900 mb-2">Cannot apply in {cc}</h2>
+          <h2 className="text-xl font-black text-red-900 mb-2">Cannot get a loan in {cc}</h2>
           <p className="text-red-800 font-medium">{walletError}</p>
           <Button className="mt-6" onClick={onBack}>
             Back to dashboard
@@ -99,7 +99,7 @@ export function ApplyForCredit({
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h2 className="text-3xl font-black text-slate-900">Apply for Credit</h2>
+            <h2 className="text-3xl font-black text-slate-900">GET LOAN</h2>
             <p className="text-sm font-bold text-slate-500 mt-1">{cc} dashboard - amounts in {cc}</p>
           </div>
         </div>
@@ -120,7 +120,7 @@ export function ApplyForCredit({
             <div>
               <h4 className="font-black text-red-900 text-lg">Active Credit Block ({cc})</h4>
               <p className="text-red-700 text-sm font-medium mt-1 leading-relaxed">
-                You have an active loan in this currency. Repay it before applying for new credit in {cc}.
+                You have an active loan in this currency. Repay it before getting a new loan in {cc}.
               </p>
             </div>
           </div>

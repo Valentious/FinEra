@@ -76,7 +76,7 @@ export function useActiveApi() {
     [currency]
   );
 
-  /** Apply for credit - always uses active currency */
+  /** Get loan / credit application - always uses active currency */
   const applyCreditApplication = useCallback(
     (data: { creditType: string; amount: number; withCollateral?: boolean }) => {
       return apiService.applyCreditApplication({

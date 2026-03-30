@@ -79,7 +79,7 @@ export function Dashboard({
 
       {/* Psychological Prioritization: APPLY FIRST */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* PRIMARY ACTION: Apply for Credit */}
+        {/* PRIMARY ACTION: GET LOAN */}
         <motion.div whileHover={{ y: -4 }} className="md:col-span-1 order-1">
           <Card className="p-6 bg-slate-900 text-white border-none shadow-2xl relative overflow-hidden h-full flex flex-col justify-between">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 blur-3xl rounded-full -mr-16 -mt-16" />
@@ -89,7 +89,7 @@ export function Dashboard({
                   <Zap className="w-6 h-6 text-amber-400" />
                 </div>
                 <div className="px-2 py-1 bg-green-500/20 text-green-400 text-[10px] font-black rounded-full backdrop-blur-md uppercase tracking-widest border border-green-500/30">
-                  Ready to Apply
+                  Ready for loan
                 </div>
               </div>
               <p className="text-emerald-100/60 text-xs font-black uppercase tracking-widest">Available Credit</p>
@@ -100,7 +100,7 @@ export function Dashboard({
                 onClick={onApplyForCredit}
                 className="w-full bg-emerald-600 text-white hover:bg-emerald-700 h-14 rounded-2xl font-black text-lg gap-2 shadow-xl shadow-emerald-900/30 active:scale-[0.98] transition-all"
               >
-                Apply for Credit <ArrowRight className="w-5 h-5" />
+                GET LOAN <ArrowRight className="w-5 h-5" />
               </Button>
             </div>
           </Card>

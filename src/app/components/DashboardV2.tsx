@@ -316,7 +316,7 @@ export function DashboardV2({
                   <Zap className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div className="px-2 py-1 bg-emerald-600/15 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[10px] font-black rounded-full uppercase tracking-widest border border-emerald-600/25 dark:border-emerald-500/30">
-                  Ready to Apply
+                  Ready for loan
                 </div>
               </div>
               <p className="text-slate-600 dark:text-slate-300 text-xs font-black uppercase tracking-widest">Potential Credit Limit</p>
@@ -328,7 +328,7 @@ export function DashboardV2({
                 onClick={onApplyForCredit}
                 className="w-full bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 h-14 rounded-xl font-black text-lg gap-2 shadow-md shadow-emerald-600/25 active:scale-[0.98] transition-all"
               >
-                Apply for Credit <ChevronRight className="w-5 h-5" />
+                GET LOAN <ChevronRight className="w-5 h-5" />
               </Button>
             </div>
           </Card>
