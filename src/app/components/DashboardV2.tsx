@@ -230,7 +230,7 @@ export function DashboardV2({
               id="dashboard-currency-label"
               className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/80 sm:text-right"
             >
-              Dashboard currency
+              CHANGE Dashboard currency
             </span>
             <Select
               value={selectedCurrency}
