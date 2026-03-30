@@ -98,7 +98,7 @@ export function Dashboard({
             <div className="relative z-10 mt-8">
               <Button 
                 onClick={onApplyForCredit}
-                className="w-full bg-white text-slate-900 hover:bg-slate-100 h-14 rounded-2xl font-black text-lg gap-2 shadow-xl active:scale-[0.98] transition-all"
+                className="w-full bg-emerald-600 text-white hover:bg-emerald-700 h-14 rounded-2xl font-black text-lg gap-2 shadow-xl shadow-emerald-900/30 active:scale-[0.98] transition-all"
               >
                 Apply for Credit <ArrowRight className="w-5 h-5" />
               </Button>

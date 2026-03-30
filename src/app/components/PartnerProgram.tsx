@@ -24,13 +24,6 @@ import {
 import { getPartnerProgram, applyPartnerProgram, type PartnerProgramApplication } from "@/services/api";
 import { toast } from "sonner";
 
-const ONBOARDING_STEPS = [
-  { step: 1, title: "KYC Verification", desc: "Upload business license or student ID for vetting." },
-  { step: 2, title: "Training Workshop", desc: "Complete 3 essential modules on secure cash handling." },
-  { step: 3, title: "Float Setup", desc: "Initialize your agent wallet with minimum required capital." },
-  { step: 4, title: "Go Live", desc: "Start appearing on the platform's nearby agent map." },
-];
-
 const SERVICE_OPTIONS = ["Cash In", "Cash Out", "Loan Support", "Payment Assistance"];
 
 export function PartnerProgram() {
@@ -58,7 +51,11 @@ export function PartnerProgram() {
         setApplicationData(res.data.applicationData ?? null);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load partner program");
+      const raw = e instanceof Error ? e.message : "Failed to load partner program";
+      const msg = /invalid|expired.*token|unauthorized|401/i.test(raw)
+        ? "Please refresh the page or sign in again to continue."
+        : raw;
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -328,41 +325,21 @@ export function PartnerProgram() {
         </Card>
       )}
 
-      {/* Onboarding Flow */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <h3 className="text-2xl font-black text-slate-900">Agent Onboarding Flow</h3>
-          <div className="space-y-4">
-            {ONBOARDING_STEPS.map((s, i) => (
-              <div key={i} className="flex gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black shrink-0">
-                  {s.step}
-                </div>
-                <div>
-                  <h4 className="font-black text-slate-900">{s.title}</h4>
-                  <p className="text-slate-500 text-xs font-medium">{s.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <Card className="p-8 border-slate-100 bg-slate-50 flex flex-col items-center justify-center text-center">
-          <UserPlus className="w-16 h-16 text-emerald-600 mb-4" />
-          <h3 className="text-2xl font-black text-slate-900 mb-2">Join 450+ Campus Agents</h3>
-          <p className="text-slate-500 font-medium mb-6 max-w-xs">
-            Facilitate academic financial inclusion and earn a steady income while you study or work.
+      {status === "NOT_APPLIED" && !showForm && (
+        <Card className="p-8 border border-slate-200 bg-slate-50 dark:bg-slate-900 dark:border-slate-800 flex flex-col items-center justify-center text-center max-w-xl mx-auto">
+          <UserPlus className="w-14 h-14 text-emerald-600 mb-4" />
+          <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Join campus agents</h3>
+          <p className="text-slate-600 dark:text-slate-400 font-medium mb-6 max-w-sm text-sm">
+            Facilitate financial inclusion and earn commissions. Start your application above.
           </p>
-          {status === "NOT_APPLIED" && !showForm && (
-            <Button
-              onClick={() => setShowForm(true)}
-              className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-black shadow-xl shadow-emerald-100"
-            >
-              Join Partner Network
-            </Button>
-          )}
+          <Button
+            onClick={() => setShowForm(true)}
+            className="h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black px-8"
+          >
+            Join Partner Network
+          </Button>
         </Card>
-      </div>
+      )}
     </div>
   );
 }

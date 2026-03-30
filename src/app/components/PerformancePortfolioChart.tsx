@@ -125,6 +125,8 @@ export function PerformancePortfolioChart({
         layout: {
           background: { type: ColorType.Solid, color: "#0f172a" },
           textColor: "#e2e8f0",
+          /** Hide TradingView / lightweight-charts corner logo (attribution can be satisfied via NOTICE + site link per license). */
+          attributionLogo: false,
         },
         localization: {
           priceFormatter: (price: number) =>

@@ -17,8 +17,6 @@ import {
   Globe,
   FileCheck,
   FileText,
-  Home,
-  Briefcase,
   DollarSign,
   Lock,
   Key,
@@ -37,7 +35,6 @@ import {
   MessageCircle,
   MessageSquare,
   ChevronRight,
-  AlertCircle,
   CheckCircle2,
   Upload
 } from "lucide-react";
@@ -513,43 +510,6 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                           Upload
                         </Button>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Proof of Address */}
-                  <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-emerald-300 transition-all">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Home className="w-5 h-5 text-slate-600" />
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">Proof of Address</p>
-                          <p className="text-xs text-slate-500">Utility bill or bank statement (within 3 months)</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <AlertCircle className="w-5 h-5 text-amber-500" />
-                        <Button size="sm" variant="outline" className="rounded-lg">
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Proof of Ownership */}
-                  <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-emerald-300 transition-all">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Briefcase className="w-5 h-5 text-slate-600" />
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">Proof of Ownership</p>
-                          <p className="text-xs text-slate-500">Asset ownership documents (optional)</p>
-                        </div>
-                      </div>
-                      <Button size="sm" variant="outline" className="rounded-lg">
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload
-                      </Button>
                     </div>
                   </div>
 

@@ -1,6 +1,6 @@
 # FinEra Inclusive Credit
 
-Inclusive financial ecosystem for students, staff, and alumni: registration, multi-currency wallets, savings, credit flows, learning hub, and backend APIs.
+Inclusive credit for students, staff, and alumni: registration, multi-currency wallets, savings, credit flows, learning hub, and backend APIs.
 
 **Upstream repository:** [github.com/Valentious/FinEra](https://github.com/Valentious/FinEra)
 

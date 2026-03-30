@@ -3,7 +3,7 @@ import { forwardRef, useId } from "react";
 interface FinEraLogoProps {
   /** Logo size: "sm" | "md" | "lg" | "xl" */
   size?: "sm" | "md" | "lg" | "xl";
-  /** Show tagline "INCLUSIVE FINANCIAL ECOSYSTEM" */
+  /** Show tagline "INCLUSIVE CREDIT" */
   showTagline?: boolean;
   /** "dark" = Fin white (on dark bg), "light" = Fin dark (on light bg) */
   variant?: "dark" | "light";
@@ -70,7 +70,7 @@ export const FinEraLogo = forwardRef<SVGSVGElement, FinEraLogoProps>(
             fontWeight="600"
             letterSpacing="0.18em"
           >
-            INCLUSIVE FINANCIAL ECOSYSTEM
+            INCLUSIVE CREDIT
           </text>
         )}
       </svg>

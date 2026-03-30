@@ -2,6 +2,14 @@
  * FinEra Backend - Transaction Service
  * Delegates deposit/withdrawal to Transaction Engine (strict currency isolation).
  * Loan flows remain for credit/repayment.
+ *
+ * Approved Credit Wallet ↔ Loan Disbursement Ledger (single source of truth):
+ * - `processLoanDisbursement` posts `LOAN_DISBURSEMENT` and increments `wallet.approvedCreditBalance`
+ *   (and loan principal / repayable on the loan row). This is the disbursement ledger entry.
+ * - `processTransferCreditToWallet` moves funds from approved credit into FinCash (`wallet.balance`),
+ *   with fee, and records a deposit-style movement for the member. UI “Cash out” from approved
+ *   credit uses this path before external withdrawal.
+ * Both operations are transactional and appear in `listTransactions` / portfolio APIs.
  */
 
 import { prisma } from "../../infrastructure/database/index.js";

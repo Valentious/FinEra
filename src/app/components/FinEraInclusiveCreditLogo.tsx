@@ -36,7 +36,7 @@ const sizeConfig = {
 };
 
 /**
- * FinEra INCLUSIVE FINANCIAL ECOSYSTEM Logo
+ * FinEra INCLUSIVE CREDIT Logo
  * Clean, corporate, fintech-grade design
  * Vertical layout: logo above FinEra text
  */
@@ -74,7 +74,7 @@ export const FinEraInclusiveCreditLogo = forwardRef<
             ${dark ? "text-slate-300" : "text-slate-600"}
           `}
         >
-          INCLUSIVE FINANCIAL ECOSYSTEM
+          INCLUSIVE CREDIT
         </p>
         <p
           className={`

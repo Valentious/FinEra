@@ -6,7 +6,7 @@
 
 ## One-liner
 
-**FinEra** is an inclusive financial ecosystem for students, staff, and alumni: **multi-currency savings (FinCash wallets)**, **credit with discipline rules**, and **repayment / ledger-style money movement**-with the **API + database** as the system of record, not the mobile UI.
+**FinEra** is an inclusive credit platform for students, staff, and alumni: **multi-currency savings (FinCash wallets)**, **credit with discipline rules**, and **repayment / ledger-style money movement**-with the **API + database** as the system of record, not the mobile UI.
 
 ---
 

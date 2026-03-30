@@ -58,7 +58,7 @@ const METHODS = [
     id: "approved_credit",
     label: "From Approved Credit Wallet",
     icon: <CreditCard className="w-5 h-5" />,
-    color: "bg-violet-50 text-violet-700",
+    color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300",
   },
   { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
   { id: "debit_card", label: "Debit card (Mastercard)", icon: <CreditCard className="w-5 h-5" />, color: "bg-indigo-50 text-indigo-700" },
@@ -363,10 +363,10 @@ export function WithdrawFlow({
             </div>
 
             <div className="space-y-4">
-              <div className="p-6 bg-violet-600 rounded-3xl text-white">
-                <p className="text-violet-100 text-sm font-medium">Amount to move (gross)</p>
+              <div className="p-6 bg-emerald-600 rounded-3xl text-white shadow-lg shadow-emerald-900/20">
+                <p className="text-emerald-100 text-sm font-medium">Amount to move (gross)</p>
                 <div className="relative mt-4">
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl sm:text-4xl font-black text-violet-200 max-w-[5rem] leading-none">
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl sm:text-4xl font-black text-emerald-200/90 max-w-[5rem] leading-none">
                     {sym}
                   </span>
                   <input
@@ -374,16 +374,16 @@ export function WithdrawFlow({
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder={amountPlaceholder}
-                    className={`w-full bg-transparent border-none text-white text-5xl font-black focus:ring-0 placeholder:text-violet-300 ${inputPadClass}`}
+                    className={`w-full bg-transparent border-none text-white text-5xl font-black focus:ring-0 focus:outline-none placeholder:text-emerald-300/70 ${inputPadClass}`}
                     autoFocus
                   />
                 </div>
-                <div className="mt-6 flex justify-between items-center pt-6 border-t border-white/10">
-                  <p className="text-xs font-bold text-violet-200">MAX: {formatAmountWithSymbol(sym, approvedCreditBalance)}</p>
+                <div className="mt-6 flex justify-between items-center pt-6 border-t border-white/15">
+                  <p className="text-xs font-bold text-emerald-100">MAX: {formatAmountWithSymbol(sym, approvedCreditBalance)}</p>
                   <button
                     type="button"
                     onClick={() => setAmount(approvedCreditBalance.toString())}
-                    className="text-xs font-black bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full"
+                    className="text-xs font-black bg-white/15 hover:bg-white/25 px-3 py-1 rounded-full"
                   >
                     MAX
                   </button>
@@ -420,7 +420,7 @@ export function WithdrawFlow({
               <Button
                 type="button"
                 onClick={handleApprovedCreditTransfer}
-                className="w-full h-14 bg-violet-700 hover:bg-violet-800 text-white rounded-2xl text-lg font-bold"
+                className="w-full h-14 bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl text-lg font-bold"
               >
                 Confirm move to FinCash
               </Button>

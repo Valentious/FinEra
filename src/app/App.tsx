@@ -703,15 +703,15 @@ export default function App() {
             accountType={userData.accountType} 
             onComplete={async (profileData) => { 
               try {
-                await apiService.completeProfile(profileData);
-                const updatedUser = { ...userData, ...profileData };
+                const res = await apiService.completeProfile(profileData);
+                const updatedUser = { ...userData, ...profileData, ...(res?.user ?? {}) };
                 setUserData(updatedUser);
                 saveUserData(updatedUser);
                 // Staff & Alumni: redirect to bank linking first
                 if (userData.accountType === "staff" || userData.accountType === "alumni") {
                   setCurrentScreen("bankLinking");
                 } else {
-                  // Student: generate FinEra accounts and go to success
+                  // Student: legacy FE-USD/ZIG/ZAR labels (optional); Wallet ID comes from profile / mock wallets
                   const finEra = generateFinEraAccountNumbers();
                   const withAccounts = { ...updatedUser, finEraAccountNumbers: finEra };
                   setUserData(withAccounts);
@@ -744,7 +744,7 @@ export default function App() {
           <AccountCreationSuccess
             fullName={userData.fullName}
             phoneNumber={userData.phoneNumber}
-            finEraAccountNumbers={userData.finEraAccountNumbers}
+            walletNumericIds={userData.walletNumericIds}
             onContinue={() => setCurrentScreen("dashboard")}
           />
         )}

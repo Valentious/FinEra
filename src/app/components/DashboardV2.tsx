@@ -262,27 +262,27 @@ export function DashboardV2({
 
       {/* 2️⃣ Primary Financial Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* 1️⃣ Available Credit (Professional Charcoal Black) */}
+        {/* 1️⃣ Potential Credit — Telegram-style light grey panel */}
         <motion.div whileHover={{ y: -4 }} whileTap={{ scale: 0.98 }} className="order-1">
-          <Card className="p-6 bg-[#1F2937] text-white border-none shadow-lg hover:bg-[#374151] transition-all duration-300 relative overflow-hidden h-full flex flex-col justify-between cursor-pointer">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl rounded-full -mr-16 -mt-16" />
+          <Card className="p-6 bg-[#e8e8e8] dark:bg-[#2f2f2f] text-slate-900 dark:text-white border border-slate-300/80 dark:border-slate-600 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden h-full flex flex-col justify-between cursor-pointer">
+            <div className="absolute top-0 right-0 w-28 h-28 bg-white/40 dark:bg-white/5 blur-2xl rounded-full -mr-10 -mt-10" />
             <div className="relative z-10">
               <div className="flex justify-between items-start mb-6">
-                <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md">
-                  <Zap className="w-6 h-6 text-amber-300" />
+                <div className="p-3 bg-white/70 dark:bg-white/10 rounded-2xl border border-slate-200/80 dark:border-slate-600">
+                  <Zap className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <div className="px-2 py-1 bg-green-500/20 text-green-300 text-[10px] font-black rounded-full backdrop-blur-md uppercase tracking-widest border border-green-500/30">
+                <div className="px-2 py-1 bg-emerald-600/15 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[10px] font-black rounded-full uppercase tracking-widest border border-emerald-600/25 dark:border-emerald-500/30">
                   Ready to Apply
                 </div>
               </div>
-              <p className="text-gray-300 text-xs font-black uppercase tracking-widest">Potential Credit Limit</p>
-              <h3 className="text-4xl font-black mt-1">{selectedCurrency} {symbol}{safeAvailableCreditLimit.toLocaleString()}</h3>
-              <p className="text-gray-400 text-xs mt-2 font-medium">Increase TrustScore, Unlock More Credit</p>
+              <p className="text-slate-600 dark:text-slate-300 text-xs font-black uppercase tracking-widest">Potential Credit Limit</p>
+              <h3 className="text-4xl font-black mt-1 text-slate-900 dark:text-white">{selectedCurrency} {symbol}{safeAvailableCreditLimit.toLocaleString()}</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-xs mt-2 font-medium">Increase TrustScore, Unlock More Credit</p>
             </div>
             <div className="relative z-10 mt-8">
               <Button 
                 onClick={onApplyForCredit}
-                className="w-full bg-white text-[#1F2937] hover:bg-gray-100 h-14 rounded-xl font-black text-lg gap-2 shadow-xl active:scale-[0.98] transition-all"
+                className="w-full bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 h-14 rounded-xl font-black text-lg gap-2 shadow-md shadow-emerald-600/25 active:scale-[0.98] transition-all"
               >
                 Apply for Credit <ChevronRight className="w-5 h-5" />
               </Button>

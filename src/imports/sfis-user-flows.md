@@ -4,7 +4,7 @@ Screen Title:
 Create Your SFIS Account
 
 Description:
-Register to access your FinEra INCLUSIVE FINANCIAL ECOSYSTEM Account, receive allowances, build savings, and manage financial support within the SFIS ecosystem.
+Register to access your FinEra INCLUSIVE CREDIT Account, receive allowances, build savings, and manage financial support within the SFIS ecosystem.
 
 Registration Fields:
 
@@ -17,7 +17,7 @@ Create Password
 Confirm Password
 
 Note:
-Your phone number will be securely linked to your SFIS FinEra INCLUSIVE FINANCIAL ECOSYSTEM Account and will be used for receiving allowances, transfers, and account verification.
+Your phone number will be securely linked to your SFIS FinEra INCLUSIVE CREDIT Account and will be used for receiving allowances, transfers, and account verification.
 
 Button:
 Create Account
@@ -28,7 +28,7 @@ Screen Title:
 Account Successfully Created
 
 Message:
-Welcome to SFIS. Your FinEra INCLUSIVE FINANCIAL ECOSYSTEM Account has been successfully created.
+Welcome to SFIS. Your FinEra INCLUSIVE CREDIT Account has been successfully created.
 
 Your Account Details
 
@@ -48,7 +48,7 @@ Screen Title:
 Receive Allowances
 
 Description:
-Your SFIS FinEra INCLUSIVE FINANCIAL ECOSYSTEM Account allows you to receive student allowances from parents or sponsors through multiple payment channels.
+Your SFIS FinEra INCLUSIVE CREDIT Account allows you to receive student allowances from parents or sponsors through multiple payment channels.
 
 Supported Channels
 
@@ -83,7 +83,7 @@ Credit Limit
 Definition (Display Tooltip):
 
 Credit Limit
-The maximum amount of credit you are eligible to access within the SFIS FinEra INCLUSIVE FINANCIAL ECOSYSTEM. Your credit limit is determined by your Financial Discipline Score, savings behavior, and institutional eligibility.
+The maximum amount of credit you are eligible to access within the SFIS FinEra INCLUSIVE CREDIT. Your credit limit is determined by your Financial Discipline Score, savings behavior, and institutional eligibility.
 
 5️⃣ INTERNAL MONEY TRANSFER (ECOSYSTEM ONLY)
 
@@ -91,7 +91,7 @@ Screen Title:
 Send Money
 
 Description:
-Transfer funds from your Savings Balance Wallet to another SFIS FinEra INCLUSIVE FINANCIAL ECOSYSTEM Account within the same ecosystem.
+Transfer funds from your Savings Balance Wallet to another SFIS FinEra INCLUSIVE CREDIT Account within the same ecosystem.
 
 Transfer Fields
 
@@ -104,7 +104,7 @@ Amount to Send
 Reference (Optional)
 
 Important Notice:
-Transfers are only supported between SFIS FinEra INCLUSIVE FINANCIAL ECOSYSTEM Accounts. External bank transfers are not supported.
+Transfers are only supported between SFIS FinEra INCLUSIVE CREDIT Accounts. External bank transfers are not supported.
 
 Security Note:
 The system verifies the recipient phone number before completing the transaction.

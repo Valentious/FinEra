@@ -250,7 +250,7 @@ export function WalletManagement({
                       value={transferAmount}
                       onChange={(e) => setTransferAmount(e.target.value)}
                       placeholder="0.00"
-                      className="w-full h-14 pl-16 pr-4 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-2xl font-black"
+                      className="w-full h-14 pl-16 pr-4 rounded-xl border-2 border-emerald-300 bg-emerald-50/60 text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200/80 outline-none text-2xl font-black dark:bg-emerald-950/40 dark:border-emerald-700 dark:text-white"
                       step="0.01"
                       min="0"
                       max={approvedCreditWallet}
