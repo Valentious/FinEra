@@ -28,6 +28,8 @@ import {
   processTransfer as engineTransfer,
 } from "./transaction-engine.service.js";
 import { validationError } from "../../middlewares/errorHandler.js";
+import { postLoanDisbursementLedger, postLoanRepaymentLedger } from "./loan-ledger.service.js";
+import { publishDomainEvent } from "../../infrastructure/messaging/event-bus.js";
 
 /**
  * Deposit: Uses engine. ONLY affects specified currency wallet + ledger.
@@ -236,7 +238,7 @@ export async function processTransferCreditToWallet(
 export const processTransferCreditToSavings = processTransferCreditToWallet;
 
 /**
- * Loan disbursement - atomic: create loan record, update wallet, create transaction.
+ * Loan disbursement — wallet updated first, then sealed double-entry journal (no balance-only path).
  */
 export async function processLoanDisbursement(
   userId: string,
@@ -254,7 +256,7 @@ export async function processLoanDisbursement(
   activeLoanBalance: number;
   transaction: { id: string; type: string; amount: number; date: string; description: string };
 }> {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const wallet = await tx.wallet.findFirst({
       where: { userId, currencyCode: params.currency, isActive: true },
     });
@@ -263,7 +265,6 @@ export async function processLoanDisbursement(
     }
 
     const loanNumber = `LN-${new Date().toISOString().slice(0, 7).replace(/-/, "")}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const reference = generateReference();
 
     const loan = await tx.loan.create({
       data: {
@@ -285,32 +286,27 @@ export async function processLoanDisbursement(
       },
     });
 
-    const [txn] = await Promise.all([
-      tx.transaction.create({
-        data: {
-          userId,
-          walletId: wallet.id,
-          reference,
-          transactionType: "LOAN_DISBURSEMENT",
-          amount: new Decimal(params.principal),
-          fee: new Decimal(0),
-          netAmount: new Decimal(params.principal),
-          currency: params.currency,
-          status: "COMPLETED",
-          completedAt: new Date(),
-          metadata: { loanId: loan.id, creditType: params.creditType } as object,
-        },
-      }),
-      tx.wallet.update({
-        where: { id: wallet.id },
-        data: {
-          approvedCreditBalance: { increment: params.principal },
-          activeLoanBalance: { increment: params.totalRepayable },
-          totalLoanAmount: { increment: params.totalRepayable },
-          lastTransactionAt: new Date(),
-        },
-      }),
-    ]);
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: {
+        approvedCreditBalance: { increment: params.principal },
+        activeLoanBalance: { increment: params.totalRepayable },
+        totalLoanAmount: { increment: params.totalRepayable },
+        lastTransactionAt: new Date(),
+      },
+    });
+
+    const reference = generateReference();
+    const { transactionId } = await postLoanDisbursementLedger(tx, {
+      userId,
+      walletId: wallet.id,
+      currency: params.currency,
+      principal: params.principal,
+      totalRepayable: params.totalRepayable,
+      reference,
+      loanId: loan.id,
+      creditType: params.creditType,
+    });
 
     const updated = await tx.wallet.findUnique({
       where: { id: wallet.id },
@@ -322,18 +318,28 @@ export async function processLoanDisbursement(
       approvedCreditBalance: Number(updated?.approvedCreditBalance ?? 0),
       activeLoanBalance: Number(updated?.activeLoanBalance ?? 0),
       transaction: {
-        id: txn.id,
+        id: transactionId,
         type: "loan",
         amount: params.principal,
-        date: txn.completedAt?.toISOString() ?? new Date().toISOString(),
+        date: new Date().toISOString(),
         description: `${params.creditType ?? "Loan"} approved - disbursed`,
       },
     };
   });
+
+  await publishDomainEvent("LOAN_APPROVED", {
+    userId,
+    loanId: result.loanId,
+    currency: params.currency,
+    principal: params.principal,
+    totalRepayable: params.totalRepayable,
+  });
+
+  return result;
 }
 
 /**
- * Loan repayment - atomic: create transaction, update wallet and loan.
+ * Loan repayment — sealed journal first, then wallet update (amounts match computed post-state).
  */
 export async function processLoanRepayment(
   userId: string,
@@ -350,7 +356,7 @@ export async function processLoanRepayment(
   newBalance: number;
   loanFullyPaid: boolean;
 }> {
-  return prisma.$transaction(async (tx) => {
+  const repaymentResult = await prisma.$transaction(async (tx) => {
     const wallet = await tx.wallet.findFirst({
       where: { userId, currencyCode: params.currency, isActive: true },
     });
@@ -375,46 +381,42 @@ export async function processLoanRepayment(
     }
 
     const reference = generateReference();
-    const repaymentAmount = Math.min(params.amount, activeLoan);
-    const newActiveLoan = activeLoan - repaymentAmount;
+    const R = Math.min(params.amount, activeLoan);
+    const newActiveLoan = activeLoan - R;
     const loanFullyPaid = newActiveLoan <= 0;
+    const savingsAfter = deductFromWallet ? Number(wallet.savingsBalance) - R : undefined;
+
+    const { transactionId } = await postLoanRepaymentLedger(tx, {
+      userId,
+      walletId: wallet.id,
+      currency: params.currency,
+      amount: R,
+      reference,
+      deductFromWallet,
+      method: params.method,
+      walletActiveLoanAfter: newActiveLoan,
+      walletSavingsAfter: deductFromWallet ? savingsAfter : undefined,
+    });
 
     const walletUpdate = deductFromWallet
       ? {
-          activeLoanBalance: { decrement: repaymentAmount },
-          totalRepaidAmount: { increment: repaymentAmount },
-          savingsBalance: { decrement: repaymentAmount },
-          balance: { decrement: repaymentAmount },
-          availableBalance: { decrement: repaymentAmount },
+          activeLoanBalance: { decrement: R },
+          totalRepaidAmount: { increment: R },
+          savingsBalance: { decrement: R },
+          balance: { decrement: R },
+          availableBalance: { decrement: R },
           lastTransactionAt: new Date(),
         }
       : {
-          activeLoanBalance: { decrement: repaymentAmount },
-          totalRepaidAmount: { increment: repaymentAmount },
+          activeLoanBalance: { decrement: R },
+          totalRepaidAmount: { increment: R },
           lastTransactionAt: new Date(),
         };
 
-    const [txn] = await Promise.all([
-      tx.transaction.create({
-        data: {
-          userId,
-          walletId: wallet.id,
-          reference,
-          transactionType: "LOAN_REPAYMENT",
-          amount: new Decimal(repaymentAmount),
-          fee: new Decimal(0),
-          netAmount: new Decimal(repaymentAmount),
-          currency: params.currency,
-          status: "COMPLETED",
-          completedAt: new Date(),
-          metadata: { method: params.method } as object,
-        },
-      }),
-      tx.wallet.update({
-        where: { id: wallet.id },
-        data: walletUpdate,
-      }),
-    ]);
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: walletUpdate,
+    });
 
     const updated = await tx.wallet.findUnique({
       where: { id: wallet.id },
@@ -422,12 +424,30 @@ export async function processLoanRepayment(
     });
 
     return {
-      transactionId: txn.id,
+      transactionId,
       remainingBalance: newActiveLoan,
       newBalance: Number(updated?.balance ?? wallet.balance),
       loanFullyPaid,
+      repayAmount: R,
+      walletId: wallet.id,
     };
   });
+
+  await publishDomainEvent("REPAYMENT_RECEIVED", {
+    userId,
+    walletId: repaymentResult.walletId,
+    currency: params.currency,
+    amount: repaymentResult.repayAmount,
+    method: params.method,
+    transactionId: repaymentResult.transactionId,
+  });
+
+  return {
+    transactionId: repaymentResult.transactionId,
+    remainingBalance: repaymentResult.remainingBalance,
+    newBalance: repaymentResult.newBalance,
+    loanFullyPaid: repaymentResult.loanFullyPaid,
+  };
 }
 
 /**

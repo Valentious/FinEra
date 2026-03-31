@@ -207,6 +207,13 @@ enum FraudAction {
   BLOCK
 }
 
+/// Staff roles for admin dashboard (RBAC)
+enum AdminRole {
+  ADMIN
+  RISK_OFFICER
+  AUDITOR
+}
+
 // ==================== MODELS ====================
 //
 // NORMALIZATION: Identity vs Credentials
@@ -362,6 +369,8 @@ model LedgerEntry {
   transactionId String
   currencyCode  CurrencyCode  // MUST match ledger.currencyCode
   entryType     String   // DEBIT | CREDIT
+  /// Chart-of-accounts code, e.g. ASSET:CUSTODY:USD, LIABILITY:WALLET:{walletId}
+  accountCode   String   @default("LEGACY:UNSPECIFIED")
   amount        Decimal  @db.Decimal(18, 8)
   balanceAfter  Decimal  @db.Decimal(18, 8)
   description   String?
@@ -372,6 +381,7 @@ model LedgerEntry {
   @@index([ledgerId, createdAt(sort: Desc)])
   @@index([transactionId])
   @@index([currencyCode])
+  @@index([accountCode])
 }
 
 // transaction.currency_code MUST match wallet.currency_code.
@@ -399,6 +409,13 @@ model Transaction {
   reversalReason   String?
   approvedBy       String?
   approvalNote     String?
+  /// Tamper-evident hash chain (per currency ledger). Previous journal hash or GENESIS.
+  ledgerPreviousHash String?         @map("ledger_previous_hash")
+  /// SHA-256 of canonical payload including previous hash (see hash-chain service).
+  ledgerEntryHash    String?         @unique @map("ledger_entry_hash")
+  /// Primary journal pair for reporting (double-entry legs use accountCode on LedgerEntry).
+  ledgerDebitAccount  String?        @map("ledger_debit_account")
+  ledgerCreditAccount String?        @map("ledger_credit_account")
   completedAt      DateTime?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -414,6 +431,50 @@ model Transaction {
   @@index([reference])
   @@index([status, createdAt])
   @@index([walletId, transactionType])
+  @@index([ledgerId, createdAt(sort: Desc)])
+}
+
+/// Staff users (separate from end-user `User`). JWT `kind: admin`.
+model AdminUser {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  fullName       String
+  passwordHash   String
+  role           AdminRole @default(ADMIN)
+  faceIdEnabled  Boolean   @default(false)
+  phone          String?
+  address        String?
+  isActive       Boolean   @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  auditLogs AdminAuditLog[]
+
+  @@index([email])
+  @@index([role, isActive])
+}
+
+/// Immutable admin action trail (court-grade; duplicates structured fields in AuditLog for admin scope).
+model AdminAuditLog {
+  id          String   @id @default(uuid())
+  adminId     String
+  action      String
+  entityType  String
+  entityId    String
+  currency    CurrencyCode?
+  oldValues   Json?
+  newValues   Json?
+  ipAddress   String?
+  userAgent   String?
+  requestId   String?
+  timestamp   DateTime @default(now())
+
+  admin AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId, timestamp(sort: Desc)])
+  @@index([entityType, entityId])
+  @@index([timestamp])
 }
 
 model Loan {
@@ -622,6 +683,18 @@ model AuditLog {
   @@index([userId, timestamp(sort: Desc)])
   @@index([entityType, entityId])
   @@index([timestamp])
+}
+
+/// Persisted domain events (outbox / audit feed; RabbitMQ carries async delivery).
+model DomainEvent {
+  id        String   @id @default(uuid())
+  name      String
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([name, createdAt(sort: Desc)])
+  @@map("domain_events")
 }
 
 // ==================== LEARNING HUB MODELS ====================

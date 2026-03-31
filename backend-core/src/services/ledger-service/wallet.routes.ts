@@ -28,7 +28,6 @@ import { verifyLedgerConsistency, verifyAllLedgers, initializeAllLedgers } from 
 import { getPortfolioSummary } from "./portfolio.service.js";
 import { validationError, notFoundError } from "../../middlewares/errorHandler.js";
 import { prisma } from "../../infrastructure/database/index.js";
-import { allocateWalletNumericId } from "../../infrastructure/ledger/wallet-numeric-id.js";
 import type { Transaction as PrismaTransaction } from "@prisma/client";
 import { getWalletLabel, normalizeCurrencyCode } from "../../shared/wallet-label.js";
 

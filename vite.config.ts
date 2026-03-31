@@ -10,6 +10,12 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      "/api": { target: "http://localhost:4000", changeOrigin: true },
+      "/ws": { target: "ws://localhost:4000", ws: true },
+    },
+  },
   resolve: {
     alias: {
       // Alias @ to the src directory

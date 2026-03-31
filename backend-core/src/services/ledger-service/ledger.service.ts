@@ -52,6 +52,7 @@ export async function recordEntry(
     entryType: "DEBIT" | "CREDIT";
     amount: number;
     balanceAfter: number;
+    accountCode: string;
     description?: string;
   }
 ): Promise<void> {
@@ -61,6 +62,7 @@ export async function recordEntry(
       transactionId: params.transactionId,
       currencyCode: params.currencyCode,
       entryType: params.entryType,
+      accountCode: params.accountCode,
       amount: new Decimal(params.amount),
       balanceAfter: new Decimal(params.balanceAfter),
       description: params.description ?? null,

@@ -34,12 +34,12 @@ export function AccountTypeSelection({ onSelectType, onBack }: AccountTypeSelect
             <div className="hero-header flex flex-col items-center justify-center text-center">
               <FinEraLogoText variant="light" size="lg" className="font-black" />
               <p className="inclusive-text text-sm font-semibold text-slate-600 tracking-[0.2em] uppercase mt-2 mb-0">INCLUSIVE CREDIT</p>
-              <p className="text-sm text-slate-600 font-medium mt-1 mb-0">For Formal Institutions</p>
+              <p className="text-sm text-slate-600 font-medium mt-1 mb-0">Formal Institutions Hub</p>
             </div>
           </div>
         </div>
 
-        <h2 className="text-center text-4xl font-black text-slate-900">Choose Your Account Type</h2>
+        <h2 className="text-center text-3xl font-black text-slate-900">Choose Your Account Type</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card 

@@ -17,8 +17,26 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U finera"]
       interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: finera-rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: finera
+      RABBITMQ_DEFAULT_PASS: finera_rabbit_secure
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
       timeout: 5s
       retries: 5
 
@@ -29,12 +47,15 @@ services:
     container_name: finera-backend
     environment:
       DATABASE_URL: postgresql://finera:finera_secure@postgres:5432/finera_db
+      RABBITMQ_URL: amqp://finera:finera_rabbit_secure@rabbitmq:5672
       NODE_ENV: production
       PORT: 4000
     ports:
       - "4000:4000"
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
@@ -57,3 +78,4 @@ services:
 
 volumes:
   postgres_data:
+  rabbitmq_data:

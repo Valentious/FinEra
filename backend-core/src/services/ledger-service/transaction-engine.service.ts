@@ -22,6 +22,8 @@ import {
 } from "./ledger.service.js";
 import { validateCurrencyActive } from "./currency.config.js";
 import { allocateWalletNumericId } from "../../infrastructure/ledger/wallet-numeric-id.js";
+import { assertTransactionLedgerBalanced } from "../../infrastructure/ledger/double-entry.js";
+import { sealTransactionLedgerChain } from "./ledger-hash.service.js";
 
 type TxClient = Omit<
   typeof prisma,
@@ -115,6 +117,7 @@ async function postLedgerEntry(
     entryType: "DEBIT" | "CREDIT";
     amount: number;
     balanceAfter: number;
+    accountCode: string;
     description: string;
   }
 ): Promise<void> {
@@ -125,6 +128,7 @@ async function postLedgerEntry(
     entryType: params.entryType,
     amount: params.amount,
     balanceAfter: params.balanceAfter,
+    accountCode: params.accountCode,
     description: params.description,
   });
 }
@@ -221,6 +225,23 @@ export async function processDeposit(params: DepositParams): Promise<DepositResu
       },
     });
 
+    const ledgerRow = await tx.ledger.findUnique({
+      where: { id: ledger.id },
+      select: { systemBalance: true },
+    });
+    const sysBefore = Number(ledgerRow?.systemBalance ?? 0);
+    const sysAfter = sysBefore + netAmount;
+
+    await postLedgerEntry(tx, {
+      ledgerId: ledger.id,
+      transactionId: txn.id,
+      currency: params.currency,
+      entryType: "DEBIT",
+      amount: netAmount,
+      balanceAfter: sysAfter,
+      accountCode: `ASSET:CUSTODY:${params.currency}`,
+      description: `Deposit custody ${params.currency}`,
+    });
     await postLedgerEntry(tx, {
       ledgerId: ledger.id,
       transactionId: txn.id,
@@ -228,9 +249,12 @@ export async function processDeposit(params: DepositParams): Promise<DepositResu
       entryType: "CREDIT",
       amount: netAmount,
       balanceAfter: newBalance,
-      description: `Deposit ${params.amount} ${params.currency}`,
+      accountCode: `LIABILITY:WALLET:${locked.id}`,
+      description: `Deposit user liability ${params.currency}`,
     });
     await updateLedgerBalance(tx, ledger.id, netAmount);
+    await assertTransactionLedgerBalanced(tx, txn.id);
+    await sealTransactionLedgerChain(tx, txn.id, ledger.id);
 
     return { transactionId: txn.id, reference, newBalance };
   });
@@ -306,6 +330,13 @@ export async function processWithdrawal(params: WithdrawParams): Promise<Withdra
       },
     });
 
+    const wLedgerRow = await tx.ledger.findUnique({
+      where: { id: ledger.id },
+      select: { systemBalance: true },
+    });
+    const wSysBefore = Number(wLedgerRow?.systemBalance ?? 0);
+    const wSysAfter = wSysBefore - totalDeduct;
+
     await postLedgerEntry(tx, {
       ledgerId: ledger.id,
       transactionId: txn.id,
@@ -313,9 +344,22 @@ export async function processWithdrawal(params: WithdrawParams): Promise<Withdra
       entryType: "DEBIT",
       amount: totalDeduct,
       balanceAfter: newBalance,
-      description: `Withdrawal ${params.amount} ${params.currency}`,
+      accountCode: `LIABILITY:WALLET:${locked.id}`,
+      description: `Withdrawal user liability ${params.currency}`,
+    });
+    await postLedgerEntry(tx, {
+      ledgerId: ledger.id,
+      transactionId: txn.id,
+      currency: params.currency,
+      entryType: "CREDIT",
+      amount: totalDeduct,
+      balanceAfter: wSysAfter,
+      accountCode: `ASSET:CUSTODY:${params.currency}`,
+      description: `Withdrawal custody release ${params.currency}`,
     });
     await updateLedgerBalance(tx, ledger.id, -totalDeduct);
+    await assertTransactionLedgerBalanced(tx, txn.id);
+    await sealTransactionLedgerChain(tx, txn.id, ledger.id);
 
     return { transactionId: txn.id, reference, newBalance };
   });
@@ -459,25 +503,53 @@ export async function processTransfer(params: TransferParams): Promise<TransferR
       },
     });
 
+    const grossOut = params.amount + fee;
     await postLedgerEntry(tx, {
       ledgerId: ledger.id,
       transactionId: txn.id,
       currency: params.currency,
       entryType: "DEBIT",
-      amount: params.amount + fee,
+      amount: grossOut,
       balanceAfter: fromNewBalance,
-      description: `Transfer to user ${params.toUserId}`,
+      accountCode: `LIABILITY:WALLET:${fromWallet.id}`,
+      description: `Transfer out to user ${params.toUserId}`,
     });
-    await postLedgerEntry(tx, {
-      ledgerId: ledger.id,
-      transactionId: txn.id,
-      currency: params.currency,
-      entryType: "CREDIT",
-      amount: netAmount,
-      balanceAfter: toNewBalance,
-      description: `Transfer from user ${params.fromUserId}`,
-    });
-    // Net custody change = 0 (money moved between wallets)
+    if (fee > 0) {
+      const feeToPlatform = 2 * fee;
+      await postLedgerEntry(tx, {
+        ledgerId: ledger.id,
+        transactionId: txn.id,
+        currency: params.currency,
+        entryType: "CREDIT",
+        amount: netAmount,
+        balanceAfter: toNewBalance,
+        accountCode: `LIABILITY:WALLET:${toWallet.id}`,
+        description: `Transfer in from user ${params.fromUserId}`,
+      });
+      await postLedgerEntry(tx, {
+        ledgerId: ledger.id,
+        transactionId: txn.id,
+        currency: params.currency,
+        entryType: "CREDIT",
+        amount: feeToPlatform,
+        balanceAfter: feeToPlatform,
+        accountCode: `INCOME:FEE_TRANSFER:${params.currency}`,
+        description: `Internal transfer fee allocation`,
+      });
+    } else {
+      await postLedgerEntry(tx, {
+        ledgerId: ledger.id,
+        transactionId: txn.id,
+        currency: params.currency,
+        entryType: "CREDIT",
+        amount: netAmount,
+        balanceAfter: toNewBalance,
+        accountCode: `LIABILITY:WALLET:${toWallet.id}`,
+        description: `Transfer in from user ${params.fromUserId}`,
+      });
+    }
+    await assertTransactionLedgerBalanced(tx, txn.id);
+    await sealTransactionLedgerChain(tx, txn.id, ledger.id);
 
     return {
       transactionId: txn.id,

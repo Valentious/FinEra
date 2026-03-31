@@ -75,6 +75,19 @@ async function seedLearningHub() {
 }
 
 async function main() {
+  const adminHash = await bcrypt.hash("FinEraAdmin#2026!", 12);
+  await prisma.adminUser.upsert({
+    where: { email: "admin@finera.local" },
+    update: { passwordHash: adminHash },
+    create: {
+      email: "admin@finera.local",
+      fullName: "FinEra Super Admin",
+      passwordHash: adminHash,
+      role: "ADMIN",
+    },
+  });
+  console.log("Admin login: admin@finera.local / FinEraAdmin#2026!");
+
   const hash = await bcrypt.hash("TestPassword123!", 12);
 
   const user = await prisma.user.upsert({

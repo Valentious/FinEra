@@ -19,6 +19,16 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url().default("http://localhost:5175"),
   RATE_LIMIT_AUTH: z.coerce.number().default(5),
   RATE_LIMIT_GENERAL: z.coerce.number().default(100),
+  RATE_LIMIT_WALLET: z.coerce.number().default(60),
+  RATE_LIMIT_CREDIT: z.coerce.number().default(40),
+  RATE_LIMIT_LEDGER: z.coerce.number().default(60),
+  RATE_LIMIT_ADMIN: z.coerce.number().default(120),
+  /** amqp://user:pass@host:5672/vhost — when set, domain events use RabbitMQ (durable + DLQ). */
+  RABBITMQ_URL: z.string().url().optional(),
+  /** Consumer attempts before DLQ (attempt 0 … max-1, then poison). */
+  RABBITMQ_RETRY_MAX: z.coerce.number().min(1).max(20).default(3),
+  /** Retry queue TTL (ms) before message is dead-lettered back to `replay`. */
+  RABBITMQ_RETRY_DELAY_MS: z.coerce.number().min(1000).max(600_000).default(30_000),
 });
 
 export type Config = z.infer<typeof envSchema>;

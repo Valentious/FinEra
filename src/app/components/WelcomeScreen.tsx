@@ -17,7 +17,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
           <div className="flex flex-col items-center gap-2">
             <FinEraLogoText variant="light" size="xl" />
             <p className="inclusive-text text-lg font-semibold text-slate-600 tracking-[0.25em] uppercase mt-2 mb-0">INCLUSIVE CREDIT</p>
-            <p className="text-base text-slate-600 font-medium mt-1 mb-0">for Formal Institutions</p>
+            <p className="text-base text-slate-600 font-medium mt-1 mb-0">Formal Institutions Hub</p>
           </div>
         </div>
         <div className="space-y-4">

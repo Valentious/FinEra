@@ -1,17 +1,20 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { FinEraLogo } from "./FinEraLogo";
-import { ZimbabweFlag } from "./ZimbabweFlag";
+import { FinEraShieldIcon } from "./FinEraShieldIcon";
 
 interface SplashScreenProps {
   onComplete: () => void;
 }
 
+/** Total time splash is shown before advancing (ms). */
+const SPLASH_DURATION_MS = 10_000;
+
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onComplete();
-    }, 6000); // Changed to 6 seconds
+    }, SPLASH_DURATION_MS);
     return () => clearTimeout(timer);
   }, [onComplete]);
 
@@ -27,51 +30,49 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
+          transition={{ delay: 0.15, duration: 0.5 }}
+          className="mb-5"
+        >
+          <FinEraShieldIcon size={80} className="mx-auto" />
+        </motion.div>
+
+        <motion.div
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.25, duration: 0.5 }}
           className="mb-8"
         >
-          <FinEraLogo size="xl" showTagline={true} />
+          <FinEraLogo size="lg" showTagline={true} />
         </motion.div>
         
         <motion.p
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
-          className="text-slate-300 text-lg font-medium mb-8"
+          className="text-slate-300 text-lg font-medium mb-8 text-center max-w-[20rem] sm:max-w-md px-4 leading-snug"
         >
-          Your Financial Lifeline
-        </motion.p>
-
-        <motion.p
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.7, duration: 0.5 }}
-          className="text-white/60 text-xs font-semibold tracking-[0.2em] uppercase"
-        >
-          Powered by NUST AND SPC Microfinance
+          Financial Assistant Made Just For You.
         </motion.p>
         </motion.div>
       </div>
 
-      {/* Footer tagline: Proudly Zimbabwean */}
+      {/* Footer: partner attribution */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1, duration: 0.5 }}
-        className="flex items-center justify-center gap-3 shrink-0 z-10 w-full"
+        className="flex items-center justify-center shrink-0 z-10 w-full text-center px-2"
         style={{ paddingBottom: "20px", paddingLeft: "24px", paddingRight: "24px" }}
       >
         <span
-          className="font-medium tracking-wide"
+          className="font-medium tracking-[0.12em] uppercase max-w-[min(100%,22rem)]"
           style={{
             color: "#E5E7EB",
             fontSize: "0.875rem",
-            letterSpacing: "0.05em",
           }}
         >
-          Proudly Zimbabwean
+          Powered by NUST AND SPC Microfinance
         </span>
-        <ZimbabweFlag height={14} className="shrink-0" />
       </motion.div>
 
       {/* Background Animated Orbs */}
@@ -95,7 +96,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       <motion.div 
         initial={{ width: 0 }}
         animate={{ width: "200px" }}
-        transition={{ duration: 5.5, ease: "easeInOut" }}
+        transition={{ duration: SPLASH_DURATION_MS / 1000, ease: "easeInOut" }}
         className="absolute bottom-20 h-1 bg-white/20 rounded-full overflow-hidden"
       >
         <div className="h-full bg-white w-full animate-progress" />

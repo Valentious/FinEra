@@ -26,6 +26,7 @@ import { logger } from "../../core/utils/logger.js";
 import { assertHourlyOtpLimit, recordOtpSend } from "./otp-rate-limit.js";
 import type { RegisterInput } from "./auth.validation.js";
 import { createUserCurrencyAccountStack } from "../ledger-service/account-stack.service.js";
+import { publishDomainEvent } from "../../infrastructure/messaging/event-bus.js";
 
 const SALT_ROUNDS = 12;
 const OTP_BCRYPT_ROUNDS = 10;
@@ -142,6 +143,7 @@ export async function register(data: RegisterInput): Promise<{ userId: string; e
   const otpHash = await hashEmailOtp(plainOtp);
   const now = new Date();
   const expiry = new Date(now.getTime() + OTP_TTL_MS);
+  const walletCurrencies = ["USD", "ZIG", "ZAR"] as const;
 
   const user = await prisma.$transaction(async (tx) => {
     const u = await tx.user.create({
@@ -164,8 +166,7 @@ export async function register(data: RegisterInput): Promise<{ userId: string; e
     await tx.userAuth.create({
       data: { userId: u.id, passwordHash },
     });
-    const currencies = ["USD", "ZIG", "ZAR"] as const;
-    for (const c of currencies) {
+    for (const c of walletCurrencies) {
       await createUserCurrencyAccountStack(tx, u.id, c);
     }
     return u;
@@ -174,6 +175,11 @@ export async function register(data: RegisterInput): Promise<{ userId: string; e
   recordOtpSend(email);
 
   await deliverRegistrationOtp(email, plainOtp);
+
+  await publishDomainEvent("USER_REGISTERED", { userId: user.id, email: user.email });
+  for (const c of walletCurrencies) {
+    await publishDomainEvent("WALLET_CREATED", { userId: user.id, currency: c });
+  }
 
   return { userId: user.id, email: user.email };
 }

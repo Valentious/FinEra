@@ -10,6 +10,9 @@ export interface JwtPayload {
   sub: string;
   email: string;
   type: "access" | "refresh";
+  /** Staff tokens set `admin`; member tokens omit or use `user`. */
+  kind?: "user" | "admin";
+  role?: string;
   iat?: number;
   exp?: number;
 }

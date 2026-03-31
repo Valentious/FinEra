@@ -83,7 +83,7 @@ export const FinEraInclusiveCreditLogo = forwardRef<
             ${dark ? "text-slate-400" : "text-slate-500"}
           `}
         >
-          For Formal Institutions
+          Formal Institutions Hub
         </p>
       </div>
     </div>
