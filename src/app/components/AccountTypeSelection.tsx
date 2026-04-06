@@ -52,7 +52,7 @@ export function AccountTypeSelection({
 
         <Card className="mx-auto max-w-2xl border-emerald-200/80 bg-white/90 p-5 shadow-sm backdrop-blur-sm">
           <p className="text-center text-sm font-semibold leading-relaxed text-black">
-            Start in a demo environment to learn deposits, credit flows, and repayments with simulated balances-then
+            Start in a demo environment to learn wallets, credit flows, and repayments with simulated balances-then
             switch to a real account when you are ready for live operations and institutional settlement. Same
             journeys, zero financial exposure while you practice.
           </p>
