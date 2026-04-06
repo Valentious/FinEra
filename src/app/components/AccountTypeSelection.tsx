@@ -50,14 +50,6 @@ export function AccountTypeSelection({
           </div>
         </div>
 
-        <Card className="mx-auto max-w-2xl border-emerald-200/80 bg-white/90 p-5 shadow-sm backdrop-blur-sm">
-          <p className="text-center text-sm font-semibold leading-relaxed text-black">
-            Start in a demo environment to learn wallets, credit flows, and repayments with simulated balances-then
-            switch to a real account when you are ready for live operations and institutional settlement. Same
-            journeys, zero financial exposure while you practice.
-          </p>
-        </Card>
-
         <div className="flex flex-col items-center gap-3">
           <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">Operating mode</p>
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
