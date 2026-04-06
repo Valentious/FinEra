@@ -45,7 +45,6 @@ export function AccountTypeSelection({
               <p className="inclusive-text text-sm font-semibold text-slate-600 tracking-[0.2em] uppercase mt-2 mb-0">
                 INCLUSIVE CREDIT
               </p>
-              <p className="text-sm text-slate-600 font-medium mt-1 mb-0">Formal Institutions Hub</p>
             </div>
           </div>
         </div>
@@ -75,12 +74,12 @@ export function AccountTypeSelection({
               </ToggleGroupItem>
               <ToggleGroupItem
                 value="demo"
-                aria-label="Demo account"
+                aria-label="Explore account"
                 className="rounded-lg px-5 py-2.5 text-sm font-black data-[state=on]:border-violet-600 data-[state=on]:bg-violet-600 data-[state=on]:text-white"
               >
                 <span className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 shrink-0" />
-                  Demo
+                  Explore
                 </span>
               </ToggleGroupItem>
             </ToggleGroup>
@@ -88,7 +87,7 @@ export function AccountTypeSelection({
           </div>
           <p className="max-w-md text-center text-xs font-medium text-slate-500">
             {accountMode === "demo"
-              ? "Demo: no real money movement or binding credit obligations."
+              ? "Explore: no real money movement or binding credit obligations."
               : "Real: standard member account with live wallets and enforceable credit policies."}
           </p>
         </div>

@@ -41,7 +41,7 @@ export function DashboardTrustRibbon({
           ].join(" ")}
         >
           {isDemo
-            ? "Demo account - balances and credit events are simulated for practice only. Open a real account for live funds and obligations."
+            ? "Explore account - balances and credit events are simulated for practice only. Open a real account for live funds and obligations."
             : "Financial services facilitated in cooperation with SPC Microfinance"}
         </p>
       </div>

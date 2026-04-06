@@ -104,7 +104,7 @@ export interface UserData {
   /** Last 4 digits of registered physical Mastercard */
   physicalMastercardLast4?: string;
   /**
-   * Operating mode chosen at onboarding (Deriv-style): demo = simulated workflows only; real = live operations.
+   * Operating mode chosen at onboarding (Deriv-style): explore (stored as `demo`) = simulated workflows only; real = live operations.
    */
   accountMode?: "real" | "demo";
 }
@@ -157,7 +157,7 @@ export interface RegisterRequest {
   city?: string;
   /** Institution name - from reference data */
   institution?: string;
-  /** Practice vs live account (stored in user metadata on the backend) */
+  /** Explore (practice) vs live account; API value `demo` = explore (stored in user metadata on the backend) */
   accountMode?: "real" | "demo";
 }
 

@@ -22,7 +22,7 @@ interface LoginRegisterProps {
   onBack?: () => void;
   /** Pre-selected account type from AccountTypeSelection - affects email label & validation */
   accountType?: 'student' | 'staff' | 'alumni';
-  /** Practice (demo) vs live account - chosen on account type screen */
+  /** Practice (explore) vs live account - chosen on account type screen */
   accountMode?: 'real' | 'demo';
 }
 
@@ -195,7 +195,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
         {accountMode === "demo" && (
           <div className="mb-6 rounded-2xl border border-violet-200 bg-violet-50/90 px-4 py-3 text-center shadow-sm">
             <p className="text-sm font-semibold leading-snug text-violet-950">
-              Demo account - explore the full digital journey with simulated balances. Upgrade to a real account when you are ready for live wallets and credit.
+              Explore account - use the full digital journey with simulated balances. Upgrade to a real account when you are ready for live wallets and credit.
             </p>
           </div>
         )}
