@@ -15,15 +15,20 @@
 import { fetchWithRetry } from "@/utils/fetchWithRetry";
 import { getWalletLabel } from "@/types/wallet";
 
-/** API base URL - use full URL in dev (backend on different port than frontend) */
+/**
+ * API base URL.
+ * - Local dev (default): `http://localhost:4000/api/v1`
+ * - Docker single-port build: set `VITE_API_URL=/api/v1` so requests go through nginx on the same origin.
+ */
 export const API_BASE_URL =
   (import.meta.env?.VITE_API_URL as string) || "http://localhost:4000/api/v1";
 
 const BASE_URL = API_BASE_URL;
 
-/** Base URL for health checks (without /api/v1) */
-export const HEALTH_URL =
-  (BASE_URL.replace(/\/api\/v1\/?$/, "") || "http://localhost:4000") + "/health";
+/** Health check URL (backend `/health`). Relative `/health` when API is same-origin (Docker gateway). */
+export const HEALTH_URL = BASE_URL.startsWith("/")
+  ? "/health"
+  : `${BASE_URL.replace(/\/api\/v1\/?$/, "") || "http://localhost:4000"}/health`;
 
 /**
  * Check if backend is available. Uses retry for resilience.
@@ -53,7 +58,7 @@ export interface BankLinkingData {
 }
 
 export interface UserData {
-  /** Backend user UUID (mock + real) — used for peer transfer resolution */
+  /** Backend user UUID (mock + real) - used for peer transfer resolution */
   userId?: string;
   memberId: string;
   fullName: string;
@@ -84,7 +89,7 @@ export interface UserData {
   onTimePayments: number;
   /** Multi-currency FinEra account numbers (FE-USD-xxx, FE-ZIG-xxx, FE-ZAR-xxx) */
   finEraAccountNumbers?: FinEraAccountNumbers;
-  /** Bank linking data (Staff & Alumni only) */
+  /** Bank linking data (Staff & Employer/Alumni only) */
   bankLinkingData?: BankLinkingData;
   /** User's country (from profile) - used for payment options */
   countryId?: string;
@@ -98,6 +103,10 @@ export interface UserData {
   virtualDebitCards?: VirtualDebitCard[];
   /** Last 4 digits of registered physical Mastercard */
   physicalMastercardLast4?: string;
+  /**
+   * Operating mode chosen at onboarding (Deriv-style): demo = simulated workflows only; real = live operations.
+   */
+  accountMode?: "real" | "demo";
 }
 
 /** User-managed virtual Mastercard (mock + future card API) */
@@ -148,6 +157,8 @@ export interface RegisterRequest {
   city?: string;
   /** Institution name - from reference data */
   institution?: string;
+  /** Practice vs live account (stored in user metadata on the backend) */
+  accountMode?: "real" | "demo";
 }
 
 export interface OTPVerificationRequest {
@@ -263,8 +274,10 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
       institution: data.institution || '',
       dateOfBirth: data.dateOfBirth,
       phoneNumber: data.phoneNumber,
+      ...(data.accountMode ? { accountMode: data.accountMode } : {}),
     }),
   });
+  const mode = data.accountMode === "demo" ? "demo" : "real";
   return {
     user: {
       memberId: res.data?.userId || '',
@@ -289,6 +302,7 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
       loyaltyProgress: 0,
       missedPayments: 0,
       onTimePayments: 0,
+      accountMode: mode,
     },
     message: res.message || 'Account created. Check your email for a verification code.',
   };
@@ -655,6 +669,9 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
       : typeof dobRaw === 'string'
         ? dobRaw.slice(0, 10)
         : new Date(dobRaw as Date).toISOString().slice(0, 10);
+  const rawMode = p.accountMode as string | undefined;
+  const accountMode: "real" | "demo" | undefined =
+    rawMode === "demo" ? "demo" : rawMode === "real" ? "real" : undefined;
   return {
     memberId: (p.id as string) || '',
     fullName: (p.fullName as string) || '',
@@ -687,6 +704,7 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
       zig: zigWallet?.accountNumber || '',
       zar: zarWallet?.accountNumber || '',
     },
+    ...(accountMode ? { accountMode } : {}),
   };
 }
 

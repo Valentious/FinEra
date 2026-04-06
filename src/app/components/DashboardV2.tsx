@@ -306,7 +306,7 @@ export function DashboardV2({
 
       {/* 2️⃣ Primary Financial Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* 1️⃣ Potential Credit — Telegram-style light grey panel */}
+        {/* 1️⃣ Potential Credit - Telegram-style light grey panel */}
         <motion.div whileHover={{ y: -4 }} whileTap={{ scale: 0.98 }} className="order-1">
           <Card className="p-6 bg-[#e8e8e8] dark:bg-[#2f2f2f] text-slate-900 dark:text-white border border-slate-300/80 dark:border-slate-600 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden h-full flex flex-col justify-between cursor-pointer">
             <div className="absolute top-0 right-0 w-28 h-28 bg-white/40 dark:bg-white/5 blur-2xl rounded-full -mr-10 -mt-10" />

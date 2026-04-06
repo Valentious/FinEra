@@ -8,7 +8,7 @@ interface SplashScreenProps {
 }
 
 /** Total time splash is shown before advancing (ms). */
-const SPLASH_DURATION_MS = 10_000;
+const SPLASH_DURATION_MS = 5_000;
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
@@ -51,7 +51,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="text-slate-300 text-lg font-medium mb-8 text-center max-w-[20rem] sm:max-w-md px-4 leading-snug"
         >
-          Financial Assistant Made Just For You.
+          Financial Assistant, Made Just For You.
         </motion.p>
         </motion.div>
       </div>

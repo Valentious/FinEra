@@ -69,7 +69,7 @@ export function useI18n(): I18nContextValue {
   return ctx;
 }
 
-/** Safe for optional i18n (e.g. tests) — returns key if no provider */
+/** Safe for optional i18n (e.g. tests) - returns key if no provider */
 export function useOptionalI18n(): I18nContextValue | null {
   return useContext(I18nContext);
 }

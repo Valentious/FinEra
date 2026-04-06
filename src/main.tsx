@@ -13,6 +13,7 @@ createRoot(document.getElementById("root")!).render(
     <ThemeProvider>
       <Routes>
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        {/* `/admin` and nested paths - must stay above `/*` so the member app does not mount for /admin* */}
         <Route path="/admin/*" element={<AdminApp />} />
         <Route path="/*" element={<App />} />
       </Routes>

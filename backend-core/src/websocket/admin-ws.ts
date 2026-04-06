@@ -1,5 +1,5 @@
 /**
- * Admin WebSocket — prefers HTTP-only cookie `finera_admin_access`; optional `?token=` for tooling.
+ * Admin WebSocket - prefers HTTP-only cookie `finera_admin_access`; optional `?token=` for tooling.
  */
 
 import { WebSocketServer } from "ws";

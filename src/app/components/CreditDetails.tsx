@@ -56,6 +56,15 @@ export function CreditDetails({
 
   const savingsCheckApplies = creditType === "essential" || creditType === "business";
 
+  const creditTypeLabel =
+    creditType === "emergency"
+      ? "Delayed Allowed Coverage"
+      : creditType === "essential"
+        ? "Essential Credit"
+        : creditType === "business"
+          ? "Business Credit"
+          : creditType;
+
   const savingsMet = !savingsCheckApplies || currentSavings >= requiredSavings;
   const amountExceedsLimit = savingsCheckApplies && requestedAmount > maxAllowedLoan;
   const canProceed =
@@ -132,7 +141,7 @@ export function CreditDetails({
           <div className="space-y-4 mb-6">
             <div className="flex justify-between items-center pb-3 border-b">
               <span className="text-slate-600 font-medium">Credit Type</span>
-              <span className="font-black capitalize">{creditType}</span>
+              <span className="font-black">{creditTypeLabel}</span>
             </div>
 
             <div className="flex justify-between items-center pb-3 border-b">
@@ -284,7 +293,7 @@ export function CreditDetails({
                 <div className="flex items-center gap-3">
                   <CheckCircle className="w-5 h-5 text-green-600" />
                   <div>
-                    <p className="text-sm text-green-800 font-bold">No minimum wallet balance rule for Emergency Credit</p>
+                    <p className="text-sm text-green-800 font-bold">No minimum wallet balance rule for Delayed Allowed Coverage</p>
                   </div>
                 </div>
               </Card>

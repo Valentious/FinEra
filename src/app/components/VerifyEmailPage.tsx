@@ -10,7 +10,19 @@ import { toast } from "sonner";
 import { apiService } from "@/services";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 import { FinEraLogoText } from "@/app/components/FinEraLogoText";
+import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
+
 const RESEND_COOLDOWN_SEC = 30;
+
+function trustRibbonAccountMode(): "real" | "demo" {
+  try {
+    const s = sessionStorage.getItem("finera_pre_account_mode");
+    if (s === "demo" || s === "real") return s;
+  } catch {
+    /* ignore */
+  }
+  return "real";
+}
 
 export function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -77,7 +89,7 @@ export function VerifyEmailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]">
       <div className="w-full max-w-md">
         <div className="flex justify-start mb-4">
           <Button variant="ghost" onClick={() => navigate("/")} className="gap-2 text-slate-600">
@@ -189,6 +201,7 @@ export function VerifyEmailPage() {
           </CardContent>
         </Card>
       </div>
+      <DashboardTrustRibbon accountMode={trustRibbonAccountMode()} insetForSidebar={false} />
     </div>
   );
 }

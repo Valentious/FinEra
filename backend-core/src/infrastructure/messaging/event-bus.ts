@@ -28,7 +28,7 @@ export async function publishDomainEvent(name: DomainEventName, payload: DomainE
     const { publishEnvelope } = await import("./rabbitmq-publisher.js");
     await publishEnvelope({ name, payload, at, attempt: 0 });
   } catch (e) {
-    logger.error(e, "RabbitMQ publish failed — synchronous handler dispatch fallback");
+    logger.error(e, "RabbitMQ publish failed - synchronous handler dispatch fallback");
     await dispatchToHandlers(name, payload);
   }
 }
@@ -45,7 +45,7 @@ export async function getRecentDomainEvents(limit = 50) {
 export async function startRabbitConsumer(): Promise<void> {
   const config = getConfig();
   if (!config.RABBITMQ_URL) {
-    logger.warn("RABBITMQ_URL not set — domain events use synchronous dispatch on publish only");
+    logger.warn("RABBITMQ_URL not set - domain events use synchronous dispatch on publish only");
     return;
   }
   const { startConsumer } = await import("./rabbitmq-consumer.js");

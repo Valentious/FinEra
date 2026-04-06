@@ -55,7 +55,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
     }
     
     if (!studentStaffId.trim()) {
-      const idType = accountType === 'student' ? 'Student ID' : accountType === 'staff' ? 'Staff ID' : 'Alumni ID';
+      const idType = accountType === 'student' ? 'Student ID' : accountType === 'staff' ? 'Staff ID' : 'Employer/Alumni ID';
       toast.error(`${idType} is required`);
       return;
     }
@@ -75,7 +75,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
       return;
     }
 
-    // Validate salary range for staff and alumni
+    // Validate salary range for staff and employer/alumni
     if ((accountType === 'staff' || accountType === 'alumni') && !salaryRange) {
       toast.error("Salary range is required");
       return;
@@ -126,7 +126,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
       case 'staff':
         return 'Staff ID Number';
       case 'alumni':
-        return 'Alumni ID Number';
+        return 'Employer/Alumni ID Number';
     }
   };
 
@@ -333,7 +333,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
             </p>
           </div>
 
-          {/* Student/Staff/Alumni ID */}
+          {/* Student / Staff / Employer–Alumni ID */}
           <div className="space-y-2">
             <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
               <Icon className="w-4 h-4 text-emerald-600" />
@@ -351,7 +351,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
             </p>
           </div>
 
-          {/* Salary Range (Staff & Alumni only) */}
+          {/* Salary Range (Staff & Employer/Alumni only) */}
           {(accountType === 'staff' || accountType === 'alumni') && (
             <div className="space-y-2">
               <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">

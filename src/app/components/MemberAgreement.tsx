@@ -37,7 +37,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
       case 'staff':
       case 'alumni':
         return {
-          title: memberType === 'staff' ? "Staff Agreement" : "Alumni Agreement",
+          title: memberType === 'staff' ? "Staff Agreement" : "Employer/Alumni Agreement",
           icon: <UserCircle className="w-8 h-8 text-emerald-600" />,
           terms: [
             "In case of default, repayments may be automatically deducted from your linked salary/bank account.",

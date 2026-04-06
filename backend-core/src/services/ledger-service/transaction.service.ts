@@ -238,7 +238,7 @@ export async function processTransferCreditToWallet(
 export const processTransferCreditToSavings = processTransferCreditToWallet;
 
 /**
- * Loan disbursement — wallet updated first, then sealed double-entry journal (no balance-only path).
+ * Loan disbursement - wallet updated first, then sealed double-entry journal (no balance-only path).
  */
 export async function processLoanDisbursement(
   userId: string,
@@ -339,7 +339,7 @@ export async function processLoanDisbursement(
 }
 
 /**
- * Loan repayment — sealed journal first, then wallet update (amounts match computed post-state).
+ * Loan repayment - sealed journal first, then wallet update (amounts match computed post-state).
  */
 export async function processLoanRepayment(
   userId: string,

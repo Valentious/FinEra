@@ -1,5 +1,5 @@
 /**
- * Local subscriber registry — RabbitMQ consumer invokes `dispatchToHandlers`.
+ * Local subscriber registry - RabbitMQ consumer invokes `dispatchToHandlers`.
  */
 
 import type { CurrencyCode } from "@prisma/client";

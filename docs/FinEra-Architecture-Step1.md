@@ -1,4 +1,4 @@
-# FinEra — System Architecture (Step 1)
+# FinEra - System Architecture (Step 1)
 
 This document defines the **target** layered architecture, **microservice** boundaries, **API gateway** design, **event-driven** contracts, **multi-currency** isolation, and **admin audit** requirements. It maps to the current monorepo layout (`src/` frontend, `backend-core/` application tier) and describes how to evolve toward separate deployables.
 
@@ -11,7 +11,7 @@ This document defines the **target** layered architecture, **microservice** boun
 | **Presentation** | Admin and user dashboards; routing; forms; display-only state; **no** balance/credit math | `src/` (Vite + React) |
 | **Application** | Microservices: auth, users, credit, ledger, admin, notifications; orchestration; validation; domain rules | `backend-core/src/services/*`, `backend-core/src/api-gateway/` |
 | **Data** | ACID money flows, ledgers, profiles, audit append-only logs; caching and idempotency | PostgreSQL + Prisma (`prisma/`, `infrastructure/database/`); Redis (sessions, rate limits, dedup keys, read models) |
-| **Integration** | External PSPs, KYC vendors, SMS/email providers, FX rate feeds; adapters only — **no** core ledger rules here | `backend-core/src/integration/` (adapters, webhooks, retry policies) |
+| **Integration** | External PSPs, KYC vendors, SMS/email providers, FX rate feeds; adapters only - **no** core ledger rules here | `backend-core/src/integration/` (adapters, webhooks, retry policies) |
 
 **Rule:** All financial logic (balances, limits, interest, postings, eligibility) lives in **Application** + **Data** services. The UI calls APIs and renders returned numbers.
 
@@ -91,7 +91,7 @@ flowchart TB
 |---------|------|----------------|
 | **Auth** | Registration, login, refresh, OTP, password flows, JWT issuance, session invalidation | Wallet balances, credit decisions |
 | **User** | Profile, KYC metadata, references; user-scoped reads coordinated with Ledger for “display wallets” via API | Posting to ledger |
-| **Credit Engine** | Scoring, limits, loan lifecycle **business rules**, interest **parameters** as data — execution of money movement still goes through Ledger | Double-entry journal lines (delegates to Ledger) |
+| **Credit Engine** | Scoring, limits, loan lifecycle **business rules**, interest **parameters** as data - execution of money movement still goes through Ledger | Double-entry journal lines (delegates to Ledger) |
 | **Ledger** | **Double-entry** chart of accounts, journals, balances per currency wallet, repayments, deposits, withdrawals, idempotent commands | User profile fields |
 | **Admin** | Config, learning content, partner program, **audit log append** for every admin mutation | End-user notification delivery (delegate to Notification) |
 | **Notification** | Email/SMS/push **orchestration**, templates, delivery status, in-app inbox | Ledger postings |
@@ -181,7 +181,7 @@ Every **admin mutation** must emit an event and **append an audit row** (see §6
 
 | Rule | Implementation hint |
 |------|----------------------|
-| **Isolation** | Separate ledger **accounts** / **wallet rows** per `(userId, currency)` — never one balance field mixing currencies |
+| **Isolation** | Separate ledger **accounts** / **wallet rows** per `(userId, currency)` - never one balance field mixing currencies |
 | **Posting** | Journal lines tagged with a single `currency` code; validation rejects mixed-currency journals |
 | **FX** | Conversions are explicit transactions (e.g. sell ZAR / buy USD) via Ledger + `fx.service` rates from Integration; no silent cross-currency in one “transfer” without FX leg |
 | **API** | Client sends `currency` where relevant; server validates against allowed set `{ USD, ZIG, ZAR }` |
@@ -207,7 +207,7 @@ Existing code paths: `ledger-service/currency.config.ts`, `currency-context.ts`,
 FinEra Inclusive Credit/
 ├── docs/
 │   └── FinEra-Architecture-Step1.md    # This document
-├── src/                                 # Presentation — User + Admin UIs
+├── src/                                 # Presentation - User + Admin UIs
 │   ├── app/
 │   ├── services/                        # HTTP clients only (no money math)
 │   └── ...
@@ -224,7 +224,7 @@ FinEra Inclusive Credit/
 │   │   │   ├── ledger-service/          # Double-entry, wallets, transactions
 │   │   │   ├── admin-service/           # Config, learning, partner; audit writers
 │   │   │   └── notification-service/  # Target home for notification delivery (extract from admin when splitting)
-│   │   ├── integration/                 # External PSP, KYC, SMS, FX feeds — adapters
+│   │   ├── integration/                 # External PSP, KYC, SMS, FX feeds - adapters
 │   │   ├── infrastructure/
 │   │   │   ├── database/
 │   │   │   ├── ledger/                  # Double-entry primitives shared in-process
@@ -244,7 +244,7 @@ FinEra Inclusive Credit/
 | Target | Current notes |
 |--------|----------------|
 | Six services | Implemented as folders under `backend-core/src/services/*`; single process |
-| Notification Service | `notification.routes.ts` still under `admin-service/` — migrate to `notification-service/` when splitting |
+| Notification Service | `notification.routes.ts` still under `admin-service/` - migrate to `notification-service/` when splitting |
 | Integration layer | New `integration/` root for outbound adapters |
 | Message broker | `infrastructure/messaging/` scaffolded; wire publisher in a later step |
 | API Gateway | `api-gateway/app.ts` is the gateway |
@@ -261,4 +261,4 @@ FinEra Inclusive Credit/
 
 ---
 
-*Document version: Step 1 — folder structure, service architecture, and API gateway design.*
+*Document version: Step 1 - folder structure, service architecture, and API gateway design.*

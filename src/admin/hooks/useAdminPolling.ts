@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Fallback when WebSocket is down — refresh overview on interval.
+ * Fallback when WebSocket is down - refresh overview on interval.
  */
 export function useAdminPolling(
   enabled: boolean,

@@ -88,6 +88,23 @@ async function main() {
   });
   console.log("Admin login: admin@finera.local / FinEraAdmin#2026!");
 
+  const extraEmail = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const extraPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (extraEmail && extraPassword && extraEmail.includes("@")) {
+    const extraHash = await bcrypt.hash(extraPassword, 12);
+    await prisma.adminUser.upsert({
+      where: { email: extraEmail },
+      update: { passwordHash: extraHash },
+      create: {
+        email: extraEmail,
+        fullName: process.env.SEED_ADMIN_FULL_NAME ?? "Seeded Admin",
+        passwordHash: extraHash,
+        role: "ADMIN",
+      },
+    });
+    console.log(`Extra admin (from SEED_ADMIN_*): ${extraEmail}`);
+  }
+
   const hash = await bcrypt.hash("TestPassword123!", 12);
 
   const user = await prisma.user.upsert({

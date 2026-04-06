@@ -1,5 +1,17 @@
-const envBase = import.meta.env.VITE_API_URL?.replace(/\/$/, "") ?? "";
-/** Same-origin + Vite proxy (`/api`, `/ws`) when VITE_API_URL is unset — required for HTTP-only admin cookies. */
+/**
+ * Docs often set `VITE_API_URL=http://localhost:4000/api/v1`. We always append `/api/v1` below,
+ * so strip a trailing `/api/v1` to avoid `/api/v1/api/v1/...` (404 on admin login).
+ */
+function viteApiRoot(): string {
+  const raw = import.meta.env.VITE_API_URL?.trim() ?? "";
+  if (!raw) return "";
+  let base = raw.replace(/\/$/, "");
+  if (base.endsWith("/api/v1")) base = base.slice(0, -"/api/v1".length).replace(/\/$/, "");
+  return base;
+}
+
+const envBase = viteApiRoot();
+/** Same-origin + Vite proxy (`/api`, `/ws`) when `VITE_API_URL` is unset - required for HTTP-only admin cookies. */
 export const API_PREFIX = envBase ? `${envBase}/api/v1` : "/api/v1";
 
 async function adminFetch(path: string, init?: RequestInit): Promise<Response> {
@@ -30,7 +42,13 @@ export async function adminLogin(email: string, password: string) {
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error((json as { message?: string }).message ?? "Login failed");
+    const j = json as { message?: string; error?: { message?: string } };
+    let msg = j.message ?? j.error?.message ?? `Login failed (${res.status})`;
+    if (res.status === 404) {
+      msg +=
+        " - check `VITE_API_URL`: use `http://localhost:4000` (no `/api/v1`) or leave unset to use the Vite `/api` proxy.";
+    }
+    throw new Error(msg);
   }
   return json;
 }
@@ -68,7 +86,7 @@ export async function fetchServiceHealth() {
   return res.json();
 }
 
-/** WebSocket URL — session cookie sent on same-origin connections (use Vite proxy in dev). */
+/** WebSocket URL - session cookie sent on same-origin connections (use Vite proxy in dev). */
 export function getAdminWebSocketUrl(): string {
   if (typeof window === "undefined") return "ws://localhost:5173/ws/admin";
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";

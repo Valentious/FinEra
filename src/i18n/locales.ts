@@ -1,5 +1,5 @@
 /**
- * UI strings for FinEra — keys are shared across all locales.
+ * UI strings for FinEra - keys are shared across all locales.
  * Add new keys in English first, then mirror in other languages.
  */
 
@@ -289,7 +289,7 @@ const sw: MessageBundle = {
   "common.ok": "Sawa",
 };
 
-/** Shona — chiShona */
+/** Shona - chiShona */
 const sn: MessageBundle = {
   ...en,
   "nav.dashboard": "Dashboard",
@@ -345,7 +345,7 @@ const sn: MessageBundle = {
   "common.ok": "Zvakanaka",
 };
 
-/** Ndebele — isiNdebele */
+/** Ndebele - isiNdebele */
 const nd: MessageBundle = {
   ...en,
   "nav.quickActions": "Izinto Ezisheshayo",

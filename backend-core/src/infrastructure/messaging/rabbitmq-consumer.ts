@@ -30,7 +30,7 @@ export async function startConsumer(): Promise<void> {
         try {
           env = parseEnvelope(msg.content.toString());
         } catch (e) {
-          logger.error({ err: e }, "invalid RabbitMQ envelope — nack to DLX");
+          logger.error({ err: e }, "invalid RabbitMQ envelope - nack to DLX");
           ch.nack(msg, false, false);
           return;
         }

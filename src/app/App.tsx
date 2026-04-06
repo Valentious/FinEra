@@ -5,6 +5,7 @@ import { LoginRegister } from "@/app/components/LoginRegister";
 import { OTPVerification } from "@/app/components/OTPVerification";
 import { MainNavigation } from "@/app/components/MainNavigation";
 import { AccountTypeSelection } from "@/app/components/AccountTypeSelection";
+import type { AccountOperatingMode } from "@/app/components/AccountTypeSelection";
 import { VerifyAccess } from "@/app/components/VerifyAccess";
 import { ProfileDetails } from "@/app/components/ProfileDetails";
 import { Dashboard } from "@/app/components/Dashboard";
@@ -45,6 +46,7 @@ import { AccountSwitchOverlay } from "@/app/components/AccountSwitchOverlay";
 import { BankLinking } from "@/app/components/BankLinking";
 import { BackendUnavailableBanner } from "@/app/components/BackendUnavailableBanner";
 import { AppErrorBoundary } from "@/app/components/AppErrorBoundary";
+import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
 import { PeerTransferFlow } from "@/app/components/PeerTransferFlow";
 import { useI18n } from "@/app/providers/I18nProvider";
 import { isAppLocale } from "@/i18n/locales";
@@ -135,6 +137,16 @@ const loadUserData = (email: string): UserData | null => {
     return null;
   }
 };
+
+function readSessionAccountMode(): AccountOperatingMode {
+  try {
+    const s = sessionStorage.getItem("finera_pre_account_mode");
+    if (s === "demo" || s === "real") return s;
+  } catch {
+    /* ignore */
+  }
+  return "real";
+}
 // ==================== END MOCK DATA HELPERS ====================
 
 export default function App() {
@@ -144,6 +156,7 @@ export default function App() {
 
   const [currentScreen, setCurrentScreen] = useState<Screen>("splash");
   const [preSelectedAccountType, setPreSelectedAccountType] = useState<'student' | 'staff' | 'alumni' | null>(null);
+  const [preSelectedAccountMode, setPreSelectedAccountMode] = useState<AccountOperatingMode>(readSessionAccountMode);
   const [userData, setUserData] = useState<UserData>({
     memberId: "",
     fullName: "",
@@ -540,6 +553,7 @@ export default function App() {
           walletBalance: user.walletBalance ?? 0,
           approvedCreditWallet: user.approvedCreditWallet ?? 0,
           activeCredit: user.activeCredit ?? 0,
+          accountMode: user.accountMode ?? "real",
         };
         if (!updated.finEraAccountNumbers) {
           updated.finEraAccountNumbers = generateFinEraAccountNumbers();
@@ -566,6 +580,7 @@ export default function App() {
       await apiService.register({
         ...data,
         accountType,
+        accountMode: preSelectedAccountMode,
       });
       const email = String(data.email || "")
         .trim()
@@ -580,8 +595,14 @@ export default function App() {
     }
   };
 
-  const handlePreSelectAccountType = (type: 'student' | 'staff' | 'alumni') => {
+  const handlePreSelectAccountType = (type: "student" | "staff" | "alumni", accountMode: AccountOperatingMode) => {
     setPreSelectedAccountType(type);
+    setPreSelectedAccountMode(accountMode);
+    try {
+      sessionStorage.setItem("finera_pre_account_mode", accountMode);
+    } catch {
+      /* ignore */
+    }
     setCurrentScreen("loginRegister");
   };
 
@@ -664,21 +685,30 @@ export default function App() {
     }
   };
 
+  const showTrustRibbon = currentScreen !== "splash";
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 selection:text-primary">
       <Toaster position="top-center" richColors />
       {!USE_MOCK_DATA && !backendAvailable && <BackendUnavailableBanner />}
       
       {isAuthScreen && (
-        <MainNavigation 
-          activeScreen={currentScreen} 
-          onNavigate={(s) => setCurrentScreen(s as Screen)} 
+        <MainNavigation
+          activeScreen={currentScreen}
+          onNavigate={(s) => setCurrentScreen(s as Screen)}
           onLogout={handleLogout}
           userName={userData.fullName || "User"}
           accountNumber={displayAccountNumber}
           walletNumericId={displayWalletNumericId}
-          isAdmin={userData.accountType === 'staff'}
+          isAdmin={userData.accountType === "staff"}
           onCreateWallet={() => setCurrentScreen("depositFlow")}
+        />
+      )}
+
+      {showTrustRibbon && (
+        <DashboardTrustRibbon
+          accountMode={userData.accountMode ?? preSelectedAccountMode}
+          insetForSidebar={isAuthScreen}
         />
       )}
 
@@ -687,15 +717,40 @@ export default function App() {
       <main
         className={
           isAuthScreen
-            ? // Fixed header is h-16 (4rem). Never use p-* / md:p-* on all sides - it overrides padding-top (~32px on md) and hides content under the bar.
-              "pt-[max(calc(4rem+1.5rem),calc(env(safe-area-inset-top,0px)+4rem+1rem))] md:pl-64 px-4 pb-6 md:px-8 md:pb-8"
-            : ""
+            ? // Fixed header is h-16 (4rem). Extra bottom padding for fixed trust ribbon + safe area.
+              "pt-[max(calc(4rem+1.5rem),calc(env(safe-area-inset-top,0px)+4rem+1rem))] md:pl-64 px-4 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))] md:px-8 md:pb-[max(2rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]"
+            : showTrustRibbon
+              ? // Pre-login / onboarding: reserve space for the same fixed trust ribbon.
+                "pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]"
+              : ""
         }
       >
         <AppErrorBoundary onReset={() => setCurrentScreen("dashboard")}>
         {currentScreen === "splash" && <SplashScreen onComplete={() => setCurrentScreen("accountType")} />}
-        {currentScreen === "accountType" && <AccountTypeSelection onSelectType={handlePreSelectAccountType} onBack={() => setCurrentScreen("splash")} />}
-        {currentScreen === "loginRegister" && <LoginRegister accountType={preSelectedAccountType || 'student'} onLogin={handleLogin} onRegister={handleRegister} onBack={() => setCurrentScreen("accountType")} />}
+        {currentScreen === "accountType" && (
+          <AccountTypeSelection
+            accountMode={preSelectedAccountMode}
+            onAccountModeChange={(m) => {
+              setPreSelectedAccountMode(m);
+              try {
+                sessionStorage.setItem("finera_pre_account_mode", m);
+              } catch {
+                /* ignore */
+              }
+            }}
+            onSelectType={handlePreSelectAccountType}
+            onBack={() => setCurrentScreen("splash")}
+          />
+        )}
+        {currentScreen === "loginRegister" && (
+          <LoginRegister
+            accountType={preSelectedAccountType || "student"}
+            accountMode={preSelectedAccountMode}
+            onLogin={handleLogin}
+            onRegister={handleRegister}
+            onBack={() => setCurrentScreen("accountType")}
+          />
+        )}
         {currentScreen === "otpVerification" && <OTPVerification email={userData.email} onVerify={() => setCurrentScreen("verify")} onBack={() => setCurrentScreen("loginRegister")} />}
         {currentScreen === "verify" && <VerifyAccess onVerify={() => setCurrentScreen("profileDetails")} />}
         {currentScreen === "profileDetails" && (
@@ -707,7 +762,7 @@ export default function App() {
                 const updatedUser = { ...userData, ...profileData, ...(res?.user ?? {}) };
                 setUserData(updatedUser);
                 saveUserData(updatedUser);
-                // Staff & Alumni: redirect to bank linking first
+                // Staff & Employer/Alumni: redirect to bank linking first
                 if (userData.accountType === "staff" || userData.accountType === "alumni") {
                   setCurrentScreen("bankLinking");
                 } else {

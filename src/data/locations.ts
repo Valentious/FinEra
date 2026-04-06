@@ -96,7 +96,7 @@ const FALLBACK_CITIES: City[] = COUNTRIES.filter(c => !["zw", "za", "ke", "ng", 
   countryId: c.id,
 }));
 
-/** All institutions - Staff: universities, companies, government, research. Student/Alumni: universities & polytechnics only */
+/** All institutions - Staff: universities, companies, government, research. Student / Employer–Alumni: universities & polytechnics only */
 export const INSTITUTIONS: Institution[] = [
   // Zimbabwe - Universities & Polytechnics
   { id: "uoz", name: "University of Zimbabwe", type: "university", cityId: "zw-hre" },
@@ -160,7 +160,7 @@ export function getCitiesByCountry(countryId: string): City[] {
   return FALLBACK_CITIES.filter((c) => c.countryId === countryId);
 }
 
-/** Get institutions for Staff: all formal orgs. For Student/Alumni: universities & polytechnics only. Filtered by country. */
+/** Get institutions for Staff: all formal orgs. For Student / Employer–Alumni: universities & polytechnics only. Filtered by country. */
 export function getInstitutionsByCountryAndType(
   countryId: string,
   accountType: "student" | "staff" | "alumni"
@@ -171,7 +171,7 @@ export function getInstitutionsByCountryAndType(
   if (accountType === "staff") {
     return inCountry; // All: universities, polytechnics, companies, government, research
   }
-  // Student & Alumni: universities and polytechnics only
+  // Student & Employer/Alumni: universities and polytechnics only
   return inCountry.filter(
     (i) => i.type === "university" || i.type === "polytechnic"
   );

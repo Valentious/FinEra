@@ -41,25 +41,25 @@ export function DashboardHome() {
       <div>
         <h1 className="text-2xl font-black text-slate-900">Dashboard</h1>
         <p className="text-sm text-slate-500">
-          Overview — currency context: <strong>{currency}</strong> (filters client views; ledger isolation is server-side).
+          Overview - currency context: <strong>{currency}</strong> (filters client views; ledger isolation is server-side).
         </p>
       </div>
 
       {err && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {err} — check API and admin token.
+          {err} - check API and admin token.
         </div>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Total users" value={overview?.totalUsers ?? "—"} accent={adminColors.system} />
-        <MetricCard title="Active loans" value={overview?.activeLoans ?? "—"} accent={adminColors.safe} />
+        <MetricCard title="Total users" value={overview?.totalUsers ?? "-"} accent={adminColors.system} />
+        <MetricCard title="Active loans" value={overview?.activeLoans ?? "-"} accent={adminColors.safe} />
         <MetricCard
           title="Default rate"
-          value={overview ? `${(overview.defaultRate * 100).toFixed(1)}%` : "—"}
+          value={overview ? `${(overview.defaultRate * 100).toFixed(1)}%` : "-"}
           accent={adminColors.warning}
         />
-        <MetricCard title="Open fraud flags" value={overview?.openFraudFlags ?? "—"} accent={adminColors.risk} />
+        <MetricCard title="Open fraud flags" value={overview?.openFraudFlags ?? "-"} accent={adminColors.risk} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -89,7 +89,7 @@ export function DashboardHome() {
 
       <section className="rounded-2xl border bg-white p-5" style={{ borderColor: adminColors.border }}>
         <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">System health</h2>
-        <p className="mt-2 text-lg font-semibold text-emerald-700">{overview?.systemHealth ?? "—"}</p>
+        <p className="mt-2 text-lg font-semibold text-emerald-700">{overview?.systemHealth ?? "-"}</p>
       </section>
     </div>
   );

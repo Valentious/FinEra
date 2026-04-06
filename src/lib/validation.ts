@@ -39,7 +39,7 @@ export function validateEmail(email: string): boolean {
 /** Institutional domain patterns: .edu, .ac.*, .gov, org domains */
 const INSTITUTIONAL_DOMAIN_REGEX = /@([a-z0-9-]+\.(edu|ac\.[a-z]{2,}|gov\.[a-z]{2,}|gov)|[a-z0-9-]+\.(edu|ac\.[a-z]{2,}|gov\.[a-z]{2,}|gov)(\.[a-z]{2})?)$/i;
 
-/** Validate institutional email (Staff & Alumni): academic, research, government, org domains */
+/** Validate institutional email (Staff & Employer/Alumni): academic, research, government, org domains */
 export function validateInstitutionalEmail(email: string): boolean {
   if (!VALIDATION.EMAIL_REGEX.test(email)) return false;
   return INSTITUTIONAL_DOMAIN_REGEX.test(email) || /\.(edu|ac\.|gov)\.?/i.test(email);

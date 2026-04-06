@@ -146,6 +146,7 @@ export async function register(data: RegisterInput): Promise<{ userId: string; e
   const walletCurrencies = ["USD", "ZIG", "ZAR"] as const;
 
   const user = await prisma.$transaction(async (tx) => {
+    const accountMode = data.accountMode === "demo" ? "demo" : "real";
     const u = await tx.user.create({
       data: {
         email,
@@ -161,6 +162,7 @@ export async function register(data: RegisterInput): Promise<{ userId: string; e
         emailVerificationToken: otpHash,
         emailVerificationExpiry: expiry,
         emailOtpLastSentAt: now,
+        metadata: { accountMode } as object,
       },
     });
     await tx.userAuth.create({

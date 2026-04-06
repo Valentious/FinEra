@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { adminLogin } from "../services/adminApi";
 import { adminColors } from "../design-system/tokens";
 import { ShieldCheck, Fingerprint } from "lucide-react";
+import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
 
 export function AdminLogin() {
   const nav = useNavigate();
@@ -26,7 +27,8 @@ export function AdminLogin() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4">
+    <>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]">
       <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl">
         <div className="mb-6 flex items-center gap-3">
           <div className="rounded-xl bg-emerald-600 p-3 text-white">
@@ -38,6 +40,31 @@ export function AdminLogin() {
           </div>
         </div>
         <form onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-2 rounded-lg border border-slate-700/80 bg-slate-950/60 px-3 py-2 text-xs leading-relaxed text-slate-400">
+            <p>
+              <strong className="text-slate-300">Staff admin</strong> is separate from the member app. Sign in with an{" "}
+              <span className="font-mono text-slate-300">AdminUser</span> row in the database, not your student/member
+              password.
+            </p>
+            <p>
+              After <span className="font-mono text-slate-300">npm run db:seed</span> (from{" "}
+              <span className="font-mono text-slate-300">backend-core</span>), the default is{" "}
+              <span className="font-mono text-slate-300">admin@finera.local</span> /{" "}
+              <span className="font-mono text-slate-300">FinEraAdmin#2026!</span>
+            </p>
+            <p>
+              To add another admin email, set <span className="font-mono text-slate-300">SEED_ADMIN_EMAIL</span> and{" "}
+              <span className="font-mono text-slate-300">SEED_ADMIN_PASSWORD</span> in{" "}
+              <span className="font-mono text-slate-300">backend-core/.env</span> and run{" "}
+              <span className="font-mono text-slate-300">npm run db:seed</span> again.
+            </p>
+            {import.meta.env.DEV && (
+              <p className="text-slate-500">
+                Dev: if <span className="font-mono">ADMIN_PROTO_LOGIN=true</span> is set on the API, any password is
+                accepted (development only).
+              </p>
+            )}
+          </div>
           <div>
             <label className="text-xs font-medium text-slate-400">Username / Email</label>
             <input
@@ -61,11 +88,11 @@ export function AdminLogin() {
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/80 px-3 py-2 text-xs text-slate-500">
             <Fingerprint className="h-4 w-4 shrink-0" />
-            Face ID / biometric — indicator only; wire device SDK in production.
+            Face ID / biometric - indicator only; wire device SDK in production.
           </div>
           {err && (
             <p className="rounded-lg border border-red-900 bg-red-950/80 px-3 py-2 text-sm text-red-200">
-              Access denied — {err}
+              Access denied - {err}
             </p>
           )}
           <button
@@ -79,5 +106,7 @@ export function AdminLogin() {
         </form>
       </div>
     </div>
+    <DashboardTrustRibbon insetForSidebar={false} />
+    </>
   );
 }

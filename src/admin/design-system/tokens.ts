@@ -1,5 +1,5 @@
 /**
- * Meaning-based palette — consistent across Admin (Figma foundations).
+ * Meaning-based palette - consistent across Admin (Figma foundations).
  * Green: safe / active | Red: risk / suspended | Yellow: warning | Blue: system / neutral
  */
 export const adminColors = {

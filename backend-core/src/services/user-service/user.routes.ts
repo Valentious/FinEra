@@ -43,22 +43,35 @@ const profileSelect = {
   },
 } satisfies Prisma.UserSelect;
 
+const profileSelectWithMeta = { ...profileSelect, metadata: true } satisfies Prisma.UserSelect;
+
+/** Flatten auth + metadata for API (exposes accountMode from metadata, never raw metadata). */
+function finalizeProfilePayload(raw: Record<string, unknown>) {
+  if (raw.authCredentials) {
+    raw.lastLoginAt = (raw.authCredentials as { lastLoginAt?: Date | null }).lastLoginAt;
+    delete raw.authCredentials;
+  }
+  if ("metadata" in raw) {
+    const meta = raw.metadata as Record<string, unknown> | null | undefined;
+    const mode = meta?.accountMode === "demo" ? "demo" : "real";
+    delete raw.metadata;
+    raw.accountMode = mode;
+  }
+  if (raw.dateOfBirth instanceof Date) {
+    raw.dateOfBirth = (raw.dateOfBirth as Date).toISOString().slice(0, 10);
+  }
+}
+
 router.get("/profile", async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.id },
-      select: profileSelect,
+      select: profileSelectWithMeta,
     });
-    if (user?.authCredentials) {
-      (user as Record<string, unknown>).lastLoginAt = user.authCredentials.lastLoginAt;
-      delete (user as Record<string, unknown>).authCredentials;
-    }
     if (!user) throw notFoundError("User not found");
 
     const raw = user as Record<string, unknown>;
-    if (raw.dateOfBirth instanceof Date) {
-      raw.dateOfBirth = (raw.dateOfBirth as Date).toISOString().slice(0, 10);
-    }
+    finalizeProfilePayload(raw);
 
     res.json({ success: true, data: user });
   } catch (e) {
@@ -111,23 +124,17 @@ router.put("/profile", async (req, res, next) => {
     if (Object.keys(data).length === 0) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: profileSelect,
+        select: profileSelectWithMeta,
       });
-      if (user?.authCredentials) {
-        (user as Record<string, unknown>).lastLoginAt = user.authCredentials.lastLoginAt;
-        delete (user as Record<string, unknown>).authCredentials;
-      }
       const raw = user as Record<string, unknown>;
-      if (raw.dateOfBirth instanceof Date) {
-        raw.dateOfBirth = (raw.dateOfBirth as Date).toISOString().slice(0, 10);
-      }
+      finalizeProfilePayload(raw);
       return res.json({ success: true, data: user });
     }
 
     const user = await prisma.user.update({
       where: { id: userId },
       data,
-      select: profileSelect,
+      select: profileSelectWithMeta,
     });
 
     if (body.dateOfBirth !== undefined) {
@@ -143,14 +150,8 @@ router.put("/profile", async (req, res, next) => {
       );
     }
 
-    if (user.authCredentials) {
-      (user as Record<string, unknown>).lastLoginAt = user.authCredentials.lastLoginAt;
-      delete (user as Record<string, unknown>).authCredentials;
-    }
     const raw = user as Record<string, unknown>;
-    if (raw.dateOfBirth instanceof Date) {
-      raw.dateOfBirth = (raw.dateOfBirth as Date).toISOString().slice(0, 10);
-    }
+    finalizeProfilePayload(raw);
 
     return res.json({ success: true, data: user });
   } catch (e) {

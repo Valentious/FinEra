@@ -1,5 +1,5 @@
 /**
- * Ledger API — balances from journal lines; history; admin credit (via engine).
+ * Ledger API - balances from journal lines; history; admin credit (via engine).
  */
 
 import { Router } from "express";
@@ -132,7 +132,7 @@ const adminJournalBody = z.object({
   confirmationReason: z.string().min(3).max(2000),
 });
 
-/** Credit user via same path as member deposit — double-entry + hash seal inside engine. */
+/** Credit user via same path as member deposit - double-entry + hash seal inside engine. */
 router.post("/journal", adminAuthMiddleware, requireAdminRole("ADMIN"), async (req, res, next) => {
   try {
     const body = adminJournalBody.parse(req.body);

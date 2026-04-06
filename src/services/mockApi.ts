@@ -393,6 +393,7 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     loyaltyProgress: 0,
     missedPayments: 0,
     onTimePayments: 0,
+    accountMode: data.accountMode === "demo" ? "demo" : "real",
     walletBalances: { USD: 0, ZIG: 0, ZAR: 0 },
     virtualDebitCards: [],
     _passwordHash: passwordHash,

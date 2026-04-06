@@ -145,7 +145,7 @@ export function DebitCardMethodPanel({
 
           {activeVirtual.length === 0 && (
             <p className="text-sm text-amber-800 bg-amber-50 rounded-xl p-3 font-medium">
-              No virtual card yet — create one below (Binance-style instant issue).
+              No virtual card yet - create one below (Binance-style instant issue).
             </p>
           )}
 

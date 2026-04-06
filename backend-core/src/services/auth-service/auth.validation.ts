@@ -48,6 +48,8 @@ export const registerSchema = z
     institution: optionalInstitutionSchema,
     dateOfBirth: dateIsoSchema,
     phoneNumber: phoneNumberSchema,
+    /** Optional: practice (demo) vs live account - persisted in User.metadata */
+    accountMode: z.enum(["real", "demo"]).optional(),
   })
   .strict();
 

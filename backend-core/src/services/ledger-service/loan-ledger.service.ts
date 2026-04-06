@@ -1,5 +1,5 @@
 /**
- * Loan disbursement & repayment — strictly double-entry + seal (no direct balance-only posts).
+ * Loan disbursement & repayment - strictly double-entry + seal (no direct balance-only posts).
  */
 
 import type { CurrencyCode, Prisma } from "@prisma/client";

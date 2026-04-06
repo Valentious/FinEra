@@ -44,13 +44,13 @@ const auditLogs = [
 const loanApplications = [
   { id: "L992", name: "Tinashe Moyo", type: "Essential", amount: 450, status: "Pending", time: "2h ago" },
   { id: "L991", name: "Dr. Sarah Phiri", type: "Business", amount: 1200, status: "Under Review", time: "4h ago" },
-  { id: "L990", name: "John Doe", type: "Emergency", amount: 200, status: "Pending", time: "5h ago" },
+  { id: "L990", name: "John Doe", type: "Delayed Allowed Coverage", amount: 200, status: "Pending", time: "5h ago" },
 ];
 
 const recentMembers = [
   { id: "MEM101", name: "Anesu Chida", type: "Student", idStatus: "Verified", date: "Today" },
   { id: "MEM102", name: "Prof. Mutasa", type: "Staff", idStatus: "Verified", date: "Yesterday" },
-  { id: "MEM103", name: "Grace Ncube", type: "Alumni", idStatus: "Pending Scan", date: "Yesterday" },
+  { id: "MEM103", name: "Grace Ncube", type: "Employer/Alumni", idStatus: "Pending Scan", date: "Yesterday" },
 ];
 
 const riskDistData = [

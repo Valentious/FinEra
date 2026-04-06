@@ -1,6 +1,6 @@
 /**
  * Authoritative wallet balance from double-entry lines tagged LIABILITY:WALLET:{walletId}.
- * No wallet-row fallback — missing ledger lines require reconciliation.
+ * No wallet-row fallback - missing ledger lines require reconciliation.
  */
 
 import { prisma } from "../../infrastructure/database/index.js";

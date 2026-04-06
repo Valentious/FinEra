@@ -1,6 +1,6 @@
-# FinEra Inclusive Credit - Full Stack
-# Run: docker-compose up -d
-# Dev: npm run dev (concurrently frontend + backend)
+# FinEra - single browser port (default 8080). API + DB + broker internal; no host ports for backend/DB/Rabbit.
+# Run: docker compose up -d --build
+# Admin + member app: http://localhost:8080  -  Admin: http://localhost:8080/admin
 
 version: "3.8"
 
@@ -12,8 +12,8 @@ services:
       POSTGRES_USER: finera
       POSTGRES_PASSWORD: finera_secure
       POSTGRES_DB: finera_db
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,9 +26,9 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: finera-rabbitmq
     hostname: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+    expose:
+      - "5672"
+      - "15672"
     environment:
       RABBITMQ_DEFAULT_USER: finera
       RABBITMQ_DEFAULT_PASS: finera_rabbit_secure
@@ -50,8 +50,11 @@ services:
       RABBITMQ_URL: amqp://finera:finera_rabbit_secure@rabbitmq:5672
       NODE_ENV: production
       PORT: 4000
-    ports:
-      - "4000:4000"
+      JWT_SECRET: docker-dev-jwt-secret-min-32-characters-required
+      JWT_REFRESH_SECRET: docker-dev-refresh-secret-min-32-chars-required
+      FRONTEND_URL: http://localhost:8080
+    expose:
+      - "4000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,19 +65,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 15s
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_URL: /api/v1
     container_name: finera-frontend
     ports:
-      - "5173:80"
+      - "8080:80"
     depends_on:
-      - backend
-    environment:
-      VITE_API_URL: http://localhost:4000/api/v1
+      backend:
+        condition: service_healthy
+    environment: {}
 
 volumes:
   postgres_data:
