@@ -9,12 +9,18 @@ import { getConfig } from "../config/index.js";
 import { authError, forbiddenError } from "./errorHandler.js";
 import { prisma } from "../infrastructure/database/index.js";
 
+export type AppRole = "admin" | "staff" | "user";
+
 declare global {
   namespace Express {
     interface Request {
-      user?: { id: string; email: string; accountType: string };
+      user?: { id: string; email: string; accountType: string; role: AppRole };
     }
   }
+}
+
+function accountTypeToRole(accountType: string): AppRole {
+  return accountType.toUpperCase() === "STAFF" ? "staff" : "user";
 }
 
 export async function authMiddleware(req: Request, _res: Response, next: NextFunction): Promise<void> {
@@ -49,9 +55,32 @@ export async function authMiddleware(req: Request, _res: Response, next: NextFun
       return;
     }
 
-    req.user = { id: user.id, email: user.email, accountType: user.accountType };
+    req.user = {
+      id: user.id,
+      email: user.email,
+      accountType: user.accountType,
+      role: accountTypeToRole(user.accountType),
+    };
     next();
   } catch {
     next(authError("Invalid or expired token"));
   }
+}
+
+/**
+ * Member-side RBAC guard for API handlers that require specific roles.
+ * `admin` is reserved for dedicated admin-auth routes/cookies.
+ */
+export function requireRoles(...roles: AppRole[]) {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      next(authError("Authentication required"));
+      return;
+    }
+    if (!roles.includes(req.user.role)) {
+      next(forbiddenError("Insufficient role for this action"));
+      return;
+    }
+    next();
+  };
 }

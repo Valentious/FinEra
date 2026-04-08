@@ -355,7 +355,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">{userData.accountType === 'student' ? 'Student' : userData.accountType === 'staff' ? 'Staff' : 'Employer/Alumni'} ID</Label>
+                      <Label className="text-xs font-bold text-slate-600">{userData.accountType === 'student' ? 'Student' : userData.accountType === 'staff' ? 'Staff' : 'Employer'} ID</Label>
                       <Input 
                         defaultValue={userData.studentStaffId} 
                         disabled 

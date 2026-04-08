@@ -762,7 +762,7 @@ export default function App() {
                 const updatedUser = { ...userData, ...profileData, ...(res?.user ?? {}) };
                 setUserData(updatedUser);
                 saveUserData(updatedUser);
-                // Staff & Employer/Alumni: redirect to bank linking first
+                // Staff & Employer: redirect to bank linking first
                 if (userData.accountType === "staff" || userData.accountType === "alumni") {
                   setCurrentScreen("bankLinking");
                 } else {

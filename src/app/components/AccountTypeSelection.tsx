@@ -85,14 +85,14 @@ export function AccountTypeSelection({
             </ToggleGroup>
             <span className="text-base font-bold text-slate-800">account</span>
           </div>
-          <p className="max-w-md text-center text-xs font-medium text-slate-500">
+          <p className="max-w-md text-center text-xs font-medium text-black">
             {accountMode === "demo"
               ? "Explore: no real money movement or binding credit obligations."
-              : "Real: standard member account with live wallets and enforceable credit policies."}
+              : "Real: standard member account with enforceable credit policies and live wallets."}
           </p>
         </div>
 
-        <p className="text-center text-sm font-black uppercase tracking-widest text-slate-600">Select member category</p>
+        <p className="text-center text-sm font-black uppercase tracking-widest text-black">Select member category</p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card
@@ -105,7 +105,7 @@ export function AccountTypeSelection({
               </div>
             </div>
             <h3 className="text-xl">Student Account</h3>
-            <p className="text-slate-600">For registered students</p>
+            <p className="text-slate-600">For registered University students</p>
             <Button className="w-full">Select</Button>
           </Card>
 
@@ -132,8 +132,8 @@ export function AccountTypeSelection({
                 <Users className="w-8 h-8 text-purple-600" />
               </div>
             </div>
-            <h3 className="text-xl">Employer/Alumni Account</h3>
-            <p className="text-slate-600">For Approved Employers/Alumni</p>
+            <h3 className="text-xl">Employer Account</h3>
+            <p className="text-slate-600">For Approved Employers</p>
             <Button className="w-full">Select</Button>
           </Card>
         </div>
@@ -141,3 +141,8 @@ export function AccountTypeSelection({
     </div>
   );
 }
+
+
+
+
+

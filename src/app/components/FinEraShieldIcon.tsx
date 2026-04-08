@@ -1,5 +1,5 @@
 /**
- * FinEra brand shield icon - green with white tick/checkmark.
+ * FinEra brand shield icon with a bold "F" monogram.
  * Single source of truth for logo/icon consistency across the app.
  */
 
@@ -28,22 +28,19 @@ export function FinEraShieldIcon({ size = 40, className = "" }: FinEraShieldIcon
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Shield outline */}
+        {/* White shield */}
         <path
           d="M24 6L8 12v10c0 8 6 14 16 18 10-4 16-10 16-18V12L24 6z"
+          fill="white"
           stroke="white"
-          strokeWidth="2"
+          strokeWidth="1.2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          fill="none"
         />
-        {/* Checkmark inside shield */}
+        {/* Minimal geometric F monogram */}
         <path
-          d="M16 24l6 6 12-12"
-          stroke="white"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          d="M18 34V14h13v4H22v4h8v4h-8v8h-4z"
+          fill={BRAND_GREEN_DARK}
         />
       </svg>
     </div>

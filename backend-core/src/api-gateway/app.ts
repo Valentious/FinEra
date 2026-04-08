@@ -3,11 +3,8 @@
  */
 
 import express from "express";
-import cors from "cors";
-import helmet from "helmet";
 import compression from "compression";
 import cookieParser from "cookie-parser";
-import rateLimit from "express-rate-limit";
 import { loadConfig, getConfig } from "../config/index.js";
 
 loadConfig();
@@ -26,88 +23,28 @@ import currenciesRoutes from "../services/ledger-service/currencies.routes.js";
 import ledgerSystemRoutes from "../services/ledger-service/ledger-system.routes.js";
 import adminAuthRoutes from "../services/admin-service/admin-auth.routes.js";
 import adminDashboardRoutes from "../services/admin-service/admin-dashboard.routes.js";
+import { logger } from "../core/utils/logger.js";
+import { buildCorsOptions, buildHelmet, buildRateLimiter, corsMiddleware } from "../middleware/security/index.js";
 
 const app = express();
 
 app.set("trust proxy", 1);
-app.use(helmet());
+app.use(buildHelmet(getConfig()));
 app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 
 const config = getConfig();
-const allowedOrigins = [
-  config.FRONTEND_URL,
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://localhost:5175",
-  "http://localhost:5176",
-  "http://localhost:5177",
-  "http://localhost:8080",
-  "http://127.0.0.1:8080",
-  "http://127.0.0.1:3000",
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:5174",
-  "http://127.0.0.1:5175",
-  "http://127.0.0.1:5176",
-  "http://127.0.0.1:5177",
-];
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        cb(null, true);
-      } else {
-        cb(null, allowedOrigins[0]);
-      }
-    },
-    credentials: true,
-  })
-);
+app.use(corsMiddleware(buildCorsOptions(config)));
 
 app.use(requestIdMiddleware);
 
-const authLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: config.RATE_LIMIT_AUTH,
-  message: { success: false, message: "Too many attempts" },
-});
-const generalLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: config.RATE_LIMIT_GENERAL,
-  message: { success: false, message: "Too many requests" },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-const walletLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: config.RATE_LIMIT_WALLET,
-  message: { success: false, message: "Too many wallet requests" },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-const creditLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: config.RATE_LIMIT_CREDIT,
-  message: { success: false, message: "Too many credit requests" },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-const ledgerLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: config.RATE_LIMIT_LEDGER,
-  message: { success: false, message: "Too many ledger requests" },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-const adminLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: config.RATE_LIMIT_ADMIN,
-  message: { success: false, message: "Too many admin requests" },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const authLimiter = buildRateLimiter(config.RATE_LIMIT_AUTH, "Too many attempts");
+const generalLimiter = buildRateLimiter(config.RATE_LIMIT_GENERAL, "Too many requests");
+const walletLimiter = buildRateLimiter(config.RATE_LIMIT_WALLET, "Too many wallet requests");
+const creditLimiter = buildRateLimiter(config.RATE_LIMIT_CREDIT, "Too many credit requests");
+const ledgerLimiter = buildRateLimiter(config.RATE_LIMIT_LEDGER, "Too many ledger requests");
+const adminLimiter = buildRateLimiter(config.RATE_LIMIT_ADMIN, "Too many admin requests");
 
 app.use("/api/v1/auth", authLimiter, authRoutes);
 app.use("/api/v1/user", generalLimiter, userRoutes);
@@ -131,7 +68,10 @@ app.get("/api/registration-data", generalLimiter, async (_req, res) => {
     const payload = { countries: ref.COUNTRIES, cities, institutions: ref.INSTITUTIONS };
     res.json(payload);
   } catch (err) {
-    console.error("[registration-data] Failed:", err);
+    logger.error(
+      { event: "registration_data_failed", err: err instanceof Error ? err.message : String(err) },
+      "Failed to load registration data"
+    );
     res.status(500).json({ error: "Failed to load registration data" });
   }
 });

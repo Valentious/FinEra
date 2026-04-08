@@ -50,7 +50,7 @@ const loanApplications = [
 const recentMembers = [
   { id: "MEM101", name: "Anesu Chida", type: "Student", idStatus: "Verified", date: "Today" },
   { id: "MEM102", name: "Prof. Mutasa", type: "Staff", idStatus: "Verified", date: "Yesterday" },
-  { id: "MEM103", name: "Grace Ncube", type: "Employer/Alumni", idStatus: "Pending Scan", date: "Yesterday" },
+  { id: "MEM103", name: "Grace Ncube", type: "Employer", idStatus: "Pending Scan", date: "Yesterday" },
 ];
 
 const riskDistData = [
@@ -258,3 +258,4 @@ export function AdminOverview({
     </div>
   );
 }
+

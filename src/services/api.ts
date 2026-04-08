@@ -89,7 +89,7 @@ export interface UserData {
   onTimePayments: number;
   /** Multi-currency FinEra account numbers (FE-USD-xxx, FE-ZIG-xxx, FE-ZAR-xxx) */
   finEraAccountNumbers?: FinEraAccountNumbers;
-  /** Bank linking data (Staff & Employer/Alumni only) */
+  /** Bank linking data (Staff & Employer only) */
   bankLinkingData?: BankLinkingData;
   /** User's country (from profile) - used for payment options */
   countryId?: string;

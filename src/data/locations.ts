@@ -171,7 +171,7 @@ export function getInstitutionsByCountryAndType(
   if (accountType === "staff") {
     return inCountry; // All: universities, polytechnics, companies, government, research
   }
-  // Student & Employer/Alumni: universities and polytechnics only
+  // Student & Employer: universities and polytechnics only
   return inCountry.filter(
     (i) => i.type === "university" || i.type === "polytechnic"
   );
@@ -194,3 +194,5 @@ export function searchInstitutions(
   const q = query.toLowerCase();
   return list.filter((i) => i.name.toLowerCase().includes(q));
 }
+
+

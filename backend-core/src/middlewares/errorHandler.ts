@@ -80,6 +80,15 @@ export function errorHandler(
 ): void {
   const isProd = process.env.NODE_ENV === "production";
 
+  if (err.message === "Origin not allowed by CORS") {
+    res.status(403).json({
+      success: false,
+      message: "Origin not allowed",
+      error: { code: "AUTHORIZATION_ERROR", message: "Origin not allowed" },
+    });
+    return;
+  }
+
   if (err instanceof AppError) {
     const fieldErrors = err.details?.fields as FieldErrorItem[] | undefined;
     res.status(err.statusCode).json({
