@@ -42,9 +42,9 @@ export function OTPVerification({ email, onVerify, onBack }: OTPVerificationProp
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-transparent p-4">
       <div className="w-full max-w-md">
-        <Button variant="ghost" className="mb-6 -ml-2 text-slate-500 hover:text-emerald-600" onClick={onBack}>
+        <Button variant="ghost" className="mb-6 -ml-2 text-muted-foreground hover:text-emerald-600" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to registration
         </Button>
@@ -61,7 +61,7 @@ export function OTPVerification({ email, onVerify, onBack }: OTPVerificationProp
               <CardTitle className="text-2xl font-bold">Verify your email</CardTitle>
               <CardDescription className="max-w-[280px] mx-auto mt-2">
                 We've sent a 6-digit code to <br />
-                <span className="font-semibold text-slate-900">{email}</span>
+                <span className="font-semibold text-foreground">{email}</span>
               </CardDescription>
             </CardHeader>
 
@@ -99,7 +99,7 @@ export function OTPVerification({ email, onVerify, onBack }: OTPVerificationProp
                     {isVerifying ? 'Verifying...' : 'Verify & Continue'}
                   </Button>
 
-                  <div className="text-sm text-slate-500">
+                  <div className="text-sm text-muted-foreground">
                     Didn't receive the code? {" "}
                     {timer > 0 ? (
                       <span className="text-emerald-600 font-medium">Resend in {timer}s</span>

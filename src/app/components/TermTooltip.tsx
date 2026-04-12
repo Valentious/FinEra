@@ -76,24 +76,24 @@ export function TermTooltip({ term, moduleId, children }: TermTooltipProps) {
         </TooltipTrigger>
         <TooltipContent side="top" className="p-0 border-slate-200 bg-white shadow-xl max-w-sm">
           <div className="p-3 space-y-2">
-            <h4 className="font-semibold text-slate-900">{term}</h4>
+            <h4 className="font-semibold text-foreground">{term}</h4>
             {loading ? (
-              <div className="flex items-center gap-2 text-slate-500">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin" /> Loading...
               </div>
             ) : definition ? (
               <>
                 <div className="definition-section">
-                  <strong className="text-xs text-slate-500">Simple Definition:</strong>
-                  <p className="text-sm text-slate-700">{definition.simple}</p>
+                  <strong className="text-xs text-muted-foreground">Simple Definition:</strong>
+                  <p className="text-sm text-foreground">{definition.simple}</p>
                 </div>
                 <div className="definition-section">
-                  <strong className="text-xs text-slate-500">Advanced:</strong>
-                  <p className="text-xs text-slate-600">{definition.advanced}</p>
+                  <strong className="text-xs text-muted-foreground">Advanced:</strong>
+                  <p className="text-xs text-muted-foreground">{definition.advanced}</p>
                 </div>
                 <div className="definition-section">
-                  <strong className="text-xs text-slate-500">Example:</strong>
-                  <p className="text-xs text-slate-600">{definition.example}</p>
+                  <strong className="text-xs text-muted-foreground">Example:</strong>
+                  <p className="text-xs text-muted-foreground">{definition.example}</p>
                 </div>
                 <div className="definition-section p-2 bg-emerald-50 rounded-lg">
                   <strong className="text-xs text-emerald-700">For You:</strong>

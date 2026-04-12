@@ -73,7 +73,7 @@ export function FileOrCameraInput({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm font-bold text-slate-700">
+      <p className="text-sm font-bold text-foreground">
         {label}
         {sideLabel && <span className="text-emerald-600 ml-1">({sideLabel})</span>}
       </p>
@@ -114,9 +114,9 @@ export function FileOrCameraInput({
             onClick={() => inputRef.current?.click()}
             className="aspect-[1.6/1] rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 transition-all bg-slate-50"
           >
-            <Upload className="w-12 h-12 text-slate-400 mb-2" />
-            <p className="font-bold text-slate-700">Click to upload</p>
-            <p className="text-[10px] text-slate-500 font-bold mt-1">PNG, JPG, PDF (max {MAX_SIZE_MB}MB)</p>
+            <Upload className="w-12 h-12 text-muted-foreground mb-2" />
+            <p className="font-bold text-foreground">Click to upload</p>
+            <p className="text-[10px] text-muted-foreground font-bold mt-1">PNG, JPG, PDF (max {MAX_SIZE_MB}MB)</p>
           </div>
           {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
           <Button variant="ghost" size="sm" onClick={() => setMode("choose")}>
@@ -150,7 +150,7 @@ export function FileOrCameraInput({
               />
             ) : (
               <div className="w-16 h-16 bg-slate-200 rounded-lg flex items-center justify-center">
-                <span className="text-[10px] font-bold text-slate-500">PDF</span>
+                <span className="text-[10px] font-bold text-muted-foreground">PDF</span>
               </div>
             )}
             <div className="flex-1">

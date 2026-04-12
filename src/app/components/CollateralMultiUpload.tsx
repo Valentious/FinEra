@@ -127,9 +127,9 @@ export function CollateralMultiUpload({
           onClick={() => inputRef.current?.click()}
           className="rounded-2xl border-2 border-dashed border-slate-200 p-6 cursor-pointer hover:border-emerald-500 transition-all bg-slate-50/50 text-center min-h-[120px] flex flex-col items-center justify-center"
         >
-          <Upload className="w-10 h-10 text-slate-400 mb-2" />
-          <p className="font-bold text-slate-700 text-sm">Drag & drop or click</p>
-          <p className="text-[10px] text-slate-500 font-bold mt-1">PNG, JPG, PDF (max {MAX_SIZE_MB}MB)</p>
+          <Upload className="w-10 h-10 text-muted-foreground mb-2" />
+          <p className="font-bold text-foreground text-sm">Drag & drop or click</p>
+          <p className="text-[10px] text-muted-foreground font-bold mt-1">PNG, JPG, PDF (max {MAX_SIZE_MB}MB)</p>
         </div>
         <Button
           type="button"
@@ -140,7 +140,7 @@ export function CollateralMultiUpload({
         >
           <Camera className="w-10 h-10 text-emerald-600" />
           <span>Capture with camera</span>
-          <span className="text-[10px] font-normal text-slate-500">Up to {maxFiles} files</span>
+          <span className="text-[10px] font-normal text-muted-foreground">Up to {maxFiles} files</span>
         </Button>
       </div>
 
@@ -152,7 +152,7 @@ export function CollateralMultiUpload({
                 <img src={f} alt={`Preview ${i + 1}`} className="w-full aspect-square object-cover" />
               ) : (
                 <div className="w-full aspect-square bg-slate-100 flex items-center justify-center">
-                  <span className="text-xs font-bold text-slate-500">PDF</span>
+                  <span className="text-xs font-bold text-muted-foreground">PDF</span>
                 </div>
               )}
               <button

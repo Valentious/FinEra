@@ -70,8 +70,8 @@ export function BuyBackAgreement({
           <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-4">
             <FileText className="w-8 h-8 text-emerald-600" />
           </div>
-          <h1 className="text-3xl font-black text-slate-900">Digital Asset Sale & Buy-Back Agreement</h1>
-          <p className="text-slate-600 font-medium mt-2 max-w-2xl mx-auto">
+          <h1 className="text-3xl font-black text-foreground">Digital Asset Sale & Buy-Back Agreement</h1>
+          <p className="text-muted-foreground font-medium mt-2 max-w-2xl mx-auto">
             Required before final credit activation
           </p>
         </div>
@@ -81,8 +81,8 @@ export function BuyBackAgreement({
           <div className="flex items-start gap-3">
             <Info className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-slate-800 font-bold mb-2">How This Works</p>
-              <p className="text-slate-700 text-sm font-medium">
+              <p className="text-foreground font-bold mb-2">How This Works</p>
+              <p className="text-foreground text-sm font-medium">
                 You are selling your pledged asset to SFIS at the approved credit amount. You agree to repurchase the asset by repaying the total amount below within the selected repayment period.
               </p>
             </div>
@@ -91,7 +91,7 @@ export function BuyBackAgreement({
 
         {/* Financial Breakdown */}
         <Card className="p-6 border-slate-200">
-          <h3 className="text-lg font-black text-slate-900 mb-4">Financial Breakdown</h3>
+          <h3 className="text-lg font-black text-foreground mb-4">Financial Breakdown</h3>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
@@ -100,8 +100,8 @@ export function BuyBackAgreement({
                   <DollarSign className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600 font-medium">Approved Credit (Asset Sale Value)</p>
-                  <p className="text-xs text-slate-500">Principal amount</p>
+                  <p className="text-sm text-muted-foreground font-medium">Approved Credit (Asset Sale Value)</p>
+                  <p className="text-xs text-muted-foreground">Principal amount</p>
                 </div>
               </div>
               <p className="text-2xl font-black text-green-700">USD ${principal.toLocaleString()}</p>
@@ -109,19 +109,19 @@ export function BuyBackAgreement({
 
             <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600 font-medium">Interest (18% per 4 weeks):</span>
-                <span className="font-black text-slate-900">USD ${interest.toFixed(2)}</span>
+                <span className="text-sm text-muted-foreground font-medium">Interest (18% per 4 weeks):</span>
+                <span className="font-black text-foreground">USD ${interest.toFixed(2)}</span>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600 font-medium">Service Fee (1.5%):</span>
-                <span className="font-black text-slate-900">USD ${serviceFee.toFixed(2)}</span>
+                <span className="text-sm text-muted-foreground font-medium">Service Fee (1.5%):</span>
+                <span className="font-black text-foreground">USD ${serviceFee.toFixed(2)}</span>
               </div>
               
               <div className="h-px bg-slate-200 my-2" />
               
               <div className="flex justify-between items-center pt-2">
-                <span className="text-base font-black text-slate-900">Total Buy-Back Amount:</span>
+                <span className="text-base font-black text-foreground">Total Buy-Back Amount:</span>
                 <span className="text-3xl font-black text-emerald-600">USD ${totalBuyBackAmount.toFixed(2)}</span>
               </div>
             </div>
@@ -130,7 +130,7 @@ export function BuyBackAgreement({
 
         {/* Repayment Options */}
         <Card className="p-6 border-slate-200">
-          <h3 className="text-lg font-black text-slate-900 mb-4">Repayment Options</h3>
+          <h3 className="text-lg font-black text-foreground mb-4">Repayment Options</h3>
           
           <RadioGroup value={repaymentOption} onValueChange={(value: 'single' | 'biweekly') => setRepaymentOption(value)}>
             <div className="space-y-3">
@@ -146,20 +146,20 @@ export function BuyBackAgreement({
               >
                 <RadioGroupItem value="single" id="single" className="mt-1" />
                 <div className="flex-1">
-                  <Label htmlFor="single" className="font-black text-slate-900 cursor-pointer flex items-center gap-2">
+                  <Label htmlFor="single" className="font-black text-foreground cursor-pointer flex items-center gap-2">
                     4 Weeks (Single Payment)
                     <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-black rounded-full uppercase">Recommended</span>
                   </Label>
-                  <p className="text-sm text-slate-600 mt-1 font-medium">
+                  <p className="text-sm text-muted-foreground mt-1 font-medium">
                     Pay the full amount in one installment
                   </p>
                   <div className="mt-3 p-3 bg-white rounded-lg border border-slate-200">
                     <div className="flex items-center gap-2 mb-1">
-                      <Calendar className="w-4 h-4 text-slate-500" />
-                      <span className="text-xs font-bold text-slate-500 uppercase">Due Date</span>
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs font-bold text-muted-foreground uppercase">Due Date</span>
                     </div>
-                    <p className="text-lg font-black text-slate-900">
-                      {formatDate(singlePaymentDueDate)} <span className="text-sm font-medium text-slate-500">(28 days)</span>
+                    <p className="text-lg font-black text-foreground">
+                      {formatDate(singlePaymentDueDate)} <span className="text-sm font-medium text-muted-foreground">(28 days)</span>
                     </p>
                     <p className="text-sm font-black text-emerald-600 mt-1">
                       Amount: USD ${totalBuyBackAmount.toFixed(2)}
@@ -180,10 +180,10 @@ export function BuyBackAgreement({
               >
                 <RadioGroupItem value="biweekly" id="biweekly" className="mt-1" />
                 <div className="flex-1">
-                  <Label htmlFor="biweekly" className="font-black text-slate-900 cursor-pointer">
+                  <Label htmlFor="biweekly" className="font-black text-foreground cursor-pointer">
                     Bi-Weekly (2 Equal Installments)
                   </Label>
-                  <p className="text-sm text-slate-600 mt-1 font-medium">
+                  <p className="text-sm text-muted-foreground mt-1 font-medium">
                     Split payment into two equal parts
                   </p>
                   
@@ -195,11 +195,11 @@ export function BuyBackAgreement({
                     >
                       <div className="p-3 bg-white rounded-lg border border-slate-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <Calendar className="w-4 h-4 text-slate-500" />
-                          <span className="text-xs font-bold text-slate-500 uppercase">Installment 1</span>
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-xs font-bold text-muted-foreground uppercase">Installment 1</span>
                         </div>
-                        <p className="text-base font-black text-slate-900">
-                          {formatDate(installment1DueDate)} <span className="text-sm font-medium text-slate-500">(Day 14)</span>
+                        <p className="text-base font-black text-foreground">
+                          {formatDate(installment1DueDate)} <span className="text-sm font-medium text-muted-foreground">(Day 14)</span>
                         </p>
                         <p className="text-sm font-black text-emerald-600 mt-1">
                           Amount: USD ${installment1.toFixed(2)}
@@ -208,11 +208,11 @@ export function BuyBackAgreement({
 
                       <div className="p-3 bg-white rounded-lg border border-slate-200">
                         <div className="flex items-center gap-2 mb-1">
-                          <Calendar className="w-4 h-4 text-slate-500" />
-                          <span className="text-xs font-bold text-slate-500 uppercase">Installment 2</span>
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-xs font-bold text-muted-foreground uppercase">Installment 2</span>
                         </div>
-                        <p className="text-base font-black text-slate-900">
-                          {formatDate(installment2DueDate)} <span className="text-sm font-medium text-slate-500">(Day 28)</span>
+                        <p className="text-base font-black text-foreground">
+                          {formatDate(installment2DueDate)} <span className="text-sm font-medium text-muted-foreground">(Day 28)</span>
                         </p>
                         <p className="text-sm font-black text-emerald-600 mt-1">
                           Amount: USD ${installment2.toFixed(2)}
@@ -248,11 +248,11 @@ export function BuyBackAgreement({
             <div className="flex-1">
               <Label 
                 htmlFor="terms" 
-                className="font-black text-slate-900 cursor-pointer leading-relaxed"
+                className="font-black text-foreground cursor-pointer leading-relaxed"
               >
                 I understand this is a sale with a buy-back obligation.
               </Label>
-              <p className="text-sm text-slate-600 mt-2 font-medium">
+              <p className="text-sm text-muted-foreground mt-2 font-medium">
                 By checking this box, you confirm that you have read and understood the terms of this digital asset sale and buy-back agreement. You commit to repurchasing your asset by repaying the total buy-back amount according to the selected repayment schedule.
               </p>
             </div>

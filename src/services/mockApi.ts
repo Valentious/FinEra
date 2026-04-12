@@ -24,6 +24,7 @@ import type {
   PeerTransferRecipient,
 } from './api';
 import { getWalletLabel } from '@/types/wallet';
+import { requiresWalletDisciplineForAmount } from '@/loan/loanTypes';
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -843,9 +844,11 @@ export async function mockApplyCreditApplication(data: CreditApplication): Promi
     };
   }
 
-  // Check savings requirement (20% for non-emergency) - use currency-specific balance
   const savingsForCurrency = getWalletBalance(user, creditCurrency);
-  if (data.creditType !== 'emergency' && savingsForCurrency < data.amount * 0.2) {
+  if (
+    requiresWalletDisciplineForAmount(data.loanType, data.creditType) &&
+    savingsForCurrency < data.amount * 0.2
+  ) {
     return {
       applicationId: 'APP' + Date.now(),
       status: 'rejected',

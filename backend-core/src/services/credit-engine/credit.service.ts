@@ -3,7 +3,7 @@
  * Orchestrates domain engines: CreditScoreEngine, CreditLimitEngine, InterestRateEngine
  */
 
-import type { CurrencyCode } from "@prisma/client";
+import type { CurrencyCode, LoanProductType } from "@prisma/client";
 import { prisma } from "../../infrastructure/database/index.js";
 import { CreditScoreEngine } from "./domain/credit-score.service.js";
 import { CreditLimitEngine } from "./domain/credit-limit.service.js";
@@ -116,7 +116,7 @@ export function getInterestRate(
   loanAmount: number,
   loanTermMonths: number,
   existingLoansCount: number,
-  collateralPresent: boolean
+  loanType: LoanProductType
 ): number {
   return interestEngine.calculateInterestRate({
     userId: "",
@@ -125,6 +125,6 @@ export function getInterestRate(
     loanTermMonths,
     financialDisciplineScore: score,
     existingLoansCount,
-    collateralPresent,
+    loanType,
   });
 }

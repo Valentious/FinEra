@@ -83,8 +83,8 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
           >
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-black text-slate-900">Find Nearby Agent</h2>
-                <p className="text-slate-500 font-medium">Payment Agent Gateway • Proximity Sort</p>
+                <h2 className="text-2xl font-black text-foreground">Find Nearby Agent</h2>
+                <p className="text-muted-foreground font-medium">Payment Agent Gateway • Proximity Sort</p>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="rounded-full">Map View</Button>
@@ -92,8 +92,8 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
             </div>
 
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input placeholder="Search location or agent name..." className="pl-10 h-12 rounded-xl bg-white border-slate-100" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Search location or agent name..." className="pl-10 h-12 rounded-xl bg-card border-border" />
             </div>
 
             <div className="space-y-3">
@@ -107,19 +107,19 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
                     <div className="flex gap-4">
                       <div className="relative">
                         <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
-                          <UserCircle className="w-8 h-8 text-slate-400" />
+                          <UserCircle className="w-8 h-8 text-muted-foreground" />
                         </div>
                         {agent.availability === "Online" && (
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-whatsapp-green border-2 border-white rounded-full" />
                         )}
                       </div>
                       <div>
-                        <h4 className="font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{agent.name}</h4>
+                        <h4 className="font-black text-foreground group-hover:text-emerald-600 transition-colors">{agent.name}</h4>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
+                          <span className="text-xs font-bold text-muted-foreground flex items-center gap-1">
                             <MapPin className="w-3 h-3" /> {agent.location}
                           </span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-black">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-muted-foreground font-black">
                             {agent.distance}
                           </span>
                         </div>
@@ -130,7 +130,7 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
                         <Star className="w-3 h-3 fill-current" />
                         <span className="text-xs font-black">{agent.rating}</span>
                       </div>
-                      <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{agent.agentCode}</p>
+                      <p className="text-[10px] font-bold text-muted-foreground mt-1 uppercase tracking-wider">{agent.agentCode}</p>
                     </div>
                   </div>
                 </button>
@@ -157,7 +157,7 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
                 
                 <div className="flex gap-4 mt-8 w-full">
                   <button className="flex-1 bg-white/10 hover:bg-white/20 py-4 rounded-2xl border border-white/10 flex flex-col items-center gap-1 transition-all">
-                    <Phone className="w-5 h-5 text-green-400" />
+                    <Phone className="w-5 h-5 text-whatsapp-green" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Call</span>
                   </button>
                   <button className="flex-1 bg-white/10 hover:bg-white/20 py-4 rounded-2xl border border-white/10 flex flex-col items-center gap-1 transition-all">
@@ -174,8 +174,8 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
 
             <Card className="p-6 border-slate-100 shadow-sm bg-white space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 font-bold">Amount to {type === 'withdrawal' ? 'receive' : 'pay'}</span>
-                <span className="text-2xl font-black text-slate-900">${amount.toLocaleString()}</span>
+                <span className="text-muted-foreground font-bold">Amount to {type === 'withdrawal' ? 'receive' : 'pay'}</span>
+                <span className="text-2xl font-black text-foreground">${amount.toLocaleString()}</span>
               </div>
               <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 flex gap-3">
                 <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0" />
@@ -205,18 +205,18 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
               <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Clock className="w-8 h-8 text-emerald-600" />
               </div>
-              <h3 className="text-2xl font-black text-slate-900">Awaiting Agent Confirmation</h3>
-              <p className="text-slate-500 font-medium">Ask the agent to confirm your request on their portal.</p>
+              <h3 className="text-2xl font-black text-foreground">Awaiting Agent Confirmation</h3>
+              <p className="text-muted-foreground font-medium">Ask the agent to confirm your request on their portal.</p>
             </div>
 
             <div className="p-8 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-center">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Agent Verification Code</p>
-              <p className="text-4xl font-black text-slate-900 tracking-[0.5em]">{selectedAgent.agentCode.split('-')[1]}</p>
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-4">Agent Verification Code</p>
+              <p className="text-4xl font-black text-foreground tracking-[0.5em]">{selectedAgent.agentCode.split('-')[1]}</p>
             </div>
 
             <div className="space-y-4">
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-black text-slate-500 uppercase ml-1">Agent Transaction ID</label>
+                <label className="text-xs font-black text-muted-foreground uppercase ml-1">Agent Transaction ID</label>
                 <Input 
                   value={txnCode} 
                   onChange={(e) => setTxnCode(e.target.value)}
@@ -246,8 +246,8 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
               <div className="w-24 h-24 border-4 border-emerald-100 rounded-full" />
               <Loader2 className="w-24 h-24 text-emerald-600 animate-spin absolute top-0 left-0" />
             </div>
-            <h3 className="text-2xl font-black mt-8 text-slate-900">Validating Agent Data...</h3>
-            <p className="text-slate-500 font-medium mt-2">Syncing with real-time financial logs.</p>
+            <h3 className="text-2xl font-black mt-8 text-foreground">Validating Agent Data...</h3>
+            <p className="text-muted-foreground font-medium mt-2">Syncing with real-time financial logs.</p>
           </motion.div>
         )}
 
@@ -258,34 +258,34 @@ export function AgentGateway({ type, amount, onSuccess, onCancel }: AgentGateway
             animate={{ opacity: 1, scale: 1 }}
             className="text-center space-y-6"
           >
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto text-green-600">
+            <div className="w-20 h-20 bg-whatsapp-green-light rounded-full flex items-center justify-center mx-auto text-whatsapp-green">
               <CheckCircle2 className="w-12 h-12" />
             </div>
             <div>
-              <h2 className="text-3xl font-black text-slate-900">Transaction Verified</h2>
-              <p className="text-slate-500 font-medium mt-1">Funds updated instantly in your account.</p>
+              <h2 className="text-3xl font-black text-foreground">Transaction Verified</h2>
+              <p className="text-muted-foreground font-medium mt-1">Funds updated instantly in your account.</p>
             </div>
 
             <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 rounded-3xl bg-white text-left">
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold text-[10px] uppercase">Agent</span>
-                  <span className="text-slate-900 font-black">{selectedAgent?.name}</span>
+                  <span className="text-muted-foreground font-bold text-[10px] uppercase">Agent</span>
+                  <span className="text-foreground font-black">{selectedAgent?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold text-[10px] uppercase">Amount</span>
-                  <span className="text-slate-900 font-black">${amount.toLocaleString()}</span>
+                  <span className="text-muted-foreground font-bold text-[10px] uppercase">Amount</span>
+                  <span className="text-foreground font-black">${amount.toLocaleString()}</span>
                 </div>
                 <div className="h-[1px] bg-slate-100 my-2" />
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold text-[10px] uppercase">Verification Code</span>
+                  <span className="text-muted-foreground font-bold text-[10px] uppercase">Verification Code</span>
                   <span className="text-emerald-600 font-black">{txnCode}</span>
                 </div>
               </div>
             </Card>
 
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <p className="text-[10px] text-slate-400 font-medium italic">
+              <p className="text-[10px] text-muted-foreground font-medium italic">
                 A confirmation SMS and receipt have been sent to your registered contact. 15-minute reversal window active.
               </p>
             </div>

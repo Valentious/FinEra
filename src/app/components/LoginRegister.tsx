@@ -166,7 +166,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
     : "name@institution.edu";
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-transparent p-4">
       <div className="w-full max-w-md">
         {/* Back Button */}
         {onBack && (
@@ -174,7 +174,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
             <Button
               variant="ghost"
               onClick={onBack}
-              className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Account Type
@@ -187,7 +187,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
             <FinEraShieldIcon size={48} className="rounded-xl" />
             <div className="hero-header flex flex-col items-center justify-center text-center">
               <FinEraLogoText variant="light" size="md" />
-              <p className="inclusive-text text-xs font-semibold text-slate-600 tracking-[0.2em] uppercase mt-2 mb-0">INCLUSIVE CREDIT</p>
+              <p className="inclusive-text text-xs font-semibold text-muted-foreground tracking-[0.2em] uppercase mt-2 mb-0">INCLUSIVE CREDIT</p>
             </div>
           </div>
         </div>
@@ -230,7 +230,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                     <div className="space-y-2">
                       <Label htmlFor="email">Email Address</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input 
                           id="email" 
                           placeholder="name@university.edu" 
@@ -247,7 +247,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                         <Button variant="link" className="px-0 h-auto text-xs text-emerald-600">Forgot password?</Button>
                       </div>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input 
                           id="password" 
                           type="password" 
@@ -279,7 +279,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                     <div className="space-y-2">
                       <Label htmlFor="reg-name">Full Name</Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input 
                           id="reg-name" 
                           placeholder="John Doe" 
@@ -384,7 +384,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                     <div className="space-y-3">
                       <Label htmlFor="reg-email">{emailLabel}</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           id="reg-email"
                           type="email"
@@ -400,15 +400,15 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                         />
                       </div>
                       {emailError && <p className="text-sm text-red-600 font-medium">{emailError}</p>}
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         After you create your account, we will send a 6-digit code to this address on the next step.
                       </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="reg-password">Create Password</Label>
-                      <p className="text-xs text-slate-500">{PASSWORD_POLICY_HINT}</p>
+                      <p className="text-xs text-muted-foreground">{PASSWORD_POLICY_HINT}</p>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           id="reg-password"
                           type="password"
@@ -427,7 +427,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                     <div className="space-y-2">
                       <Label htmlFor="reg-confirm-password">Confirm Password</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input 
                           id="reg-confirm-password" 
                           type="password" 
@@ -455,7 +455,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
           </Tabs>
         </motion.div>
 
-        <p className="mt-8 text-center text-sm text-slate-500">
+        <p className="mt-8 text-center text-sm text-muted-foreground">
           By continuing, you agree to our <span className="text-emerald-600 font-medium">Terms of Service</span> and <span className="text-emerald-600 font-medium">Privacy Policy</span>.
         </p>
       </div>

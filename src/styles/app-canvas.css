@@ -1,0 +1,174 @@
+/**
+ * Global app canvas — matches SplashScreen (see `FineraGradientBackdrop`):
+ * - Linear wash: soft top-left → more intense green bottom-right
+ * - Soft orb top-left (~ primary/20, blur 120px)
+ * - Stronger orb bottom-right (~ primary/40, blur 150px)
+ * - Pulse timing aligned with splash motion (8s / 10s + 1s delay)
+ *
+ * Canvas lives on `html` so fixed layers stack correctly behind `body` content.
+ */
+
+:root {
+  --finera-canvas-base: var(--background-main);
+  --finera-canvas-mid: color-mix(in srgb, var(--primary-green) 16%, var(--background-main));
+  --finera-canvas-deep: color-mix(in srgb, var(--primary-green) 36%, #ecfdf5);
+  --finera-canvas-corner: color-mix(in srgb, var(--primary-green) 52%, #d1fae5);
+  --finera-orb-tl: rgb(37 211 102 / 0.2);
+  --finera-orb-br: rgb(37 211 102 / 0.42);
+}
+
+.dark {
+  --finera-canvas-base: oklch(0.145 0 0);
+  --finera-canvas-mid: color-mix(in oklab, oklch(0.55 0.18 155) 22%, oklch(0.145 0 0));
+  --finera-canvas-deep: color-mix(in oklab, oklch(0.55 0.2 155) 38%, oklch(0.16 0.02 155));
+  --finera-canvas-corner: color-mix(in oklab, oklch(0.62 0.2 155) 45%, oklch(0.18 0.06 155));
+  --finera-orb-tl: rgb(37 211 102 / 0.14);
+  --finera-orb-br: rgb(37 211 102 / 0.38);
+}
+
+@keyframes finera-orb-tl {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.72;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes finera-orb-br {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.88;
+    transform: scale(1.22);
+  }
+}
+
+html {
+  min-height: 100dvh;
+  background-color: var(--finera-canvas-base);
+  background-image: linear-gradient(
+    to bottom right,
+    var(--finera-canvas-base) 0%,
+    var(--finera-canvas-mid) 38%,
+    var(--finera-canvas-deep) 72%,
+    var(--finera-canvas-corner) 100%
+  );
+  background-attachment: fixed;
+}
+
+html::before {
+  content: "";
+  position: fixed;
+  z-index: 0;
+  top: -10%;
+  left: -10%;
+  width: 40%;
+  height: 40%;
+  border-radius: 50%;
+  background: var(--finera-orb-tl);
+  filter: blur(120px);
+  pointer-events: none;
+  transform-origin: 20% 20%;
+  animation: finera-orb-tl 8s ease-in-out infinite;
+}
+
+html::after {
+  content: "";
+  position: fixed;
+  z-index: 0;
+  bottom: -10%;
+  right: -10%;
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  background: var(--finera-orb-br);
+  filter: blur(150px);
+  pointer-events: none;
+  transform-origin: 80% 80%;
+  animation: finera-orb-br 10s ease-in-out infinite 1s;
+}
+
+body {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  background: transparent;
+}
+
+/** Member app root — let html canvas + orbs show through (screens add local plates where needed). */
+#root {
+  position: relative;
+  min-height: 100dvh;
+  background: transparent;
+}
+
+/**
+ * Splash (and any full-screen layer): same gradient + orbs, clipped to parent.
+ */
+.finera-gradient-plate {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-color: var(--finera-canvas-base);
+  background-image: linear-gradient(
+    to bottom right,
+    var(--finera-canvas-base) 0%,
+    var(--finera-canvas-mid) 38%,
+    var(--finera-canvas-deep) 72%,
+    var(--finera-canvas-corner) 100%
+  );
+}
+
+.finera-gradient-plate::before {
+  content: "";
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 40%;
+  height: 40%;
+  border-radius: 50%;
+  background: var(--finera-orb-tl);
+  filter: blur(120px);
+  transform-origin: 20% 20%;
+  animation: finera-orb-tl 8s ease-in-out infinite;
+}
+
+.finera-gradient-plate::after {
+  content: "";
+  position: absolute;
+  bottom: -10%;
+  right: -10%;
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  background: var(--finera-orb-br);
+  filter: blur(150px);
+  transform-origin: 80% 80%;
+  animation: finera-orb-br 10s ease-in-out infinite 1s;
+}
+
+/** Clipped corners when the plate sits inside rounded dashboard shells */
+.finera-gradient-plate--ribbon {
+  border-radius: 1rem;
+}
+
+.finera-gradient-plate--card {
+  border-radius: 1.75rem;
+}
+
+.finera-gradient-plate--panel {
+  border-radius: var(--radius-xl, 1.25rem);
+}
+
+/** Match Tailwind `rounded-lg` for compact stat / callout shells */
+.finera-gradient-plate--rounded-lg {
+  border-radius: 0.5rem;
+}

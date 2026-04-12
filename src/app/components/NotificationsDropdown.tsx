@@ -395,16 +395,16 @@ export function NotificationsDropdown({ onNavigate }: NotificationsDropdownProps
         onClick={() => setOpen((o) => !o)}
         className={cn(
           "relative h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 rounded-full",
-          "border border-emerald-400/35 bg-emerald-500/20 text-white shadow-md shadow-black/20",
-          "ring-2 ring-emerald-400/45 ring-offset-2 ring-offset-slate-800",
-          "hover:bg-emerald-500/35 hover:text-white hover:ring-emerald-300/55",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800"
+          "border border-white/40 bg-white/15 text-zinc-800 shadow-md shadow-primary/15 dark:text-zinc-100",
+          "ring-2 ring-white/45 ring-offset-2 ring-offset-transparent",
+          "hover:bg-white/25 hover:ring-white/55 dark:hover:bg-white/20",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
         )}
       >
         <Bell className="h-5 w-5" strokeWidth={2.25} aria-hidden />
         {unreadCount > 0 && (
           <span
-            className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-slate-800 bg-emerald-500 px-1 text-[10px] font-black text-white shadow-sm"
+            className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white/70 bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-sm"
             aria-hidden
           >
             {unreadCount > 9 ? "9+" : unreadCount}

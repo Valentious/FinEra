@@ -87,6 +87,13 @@ enum LoanStatus {
   RESTRUCTURED
 }
 
+enum LoanProductType {
+  ASSET_BACKED
+  SALARY_BACKED
+  COLLATERAL
+  NON_COLLATERAL
+}
+
 enum InterestType {
   FIXED
   VARIABLE
@@ -146,6 +153,19 @@ enum NotificationType {
   LEARNING_NUDGE
   LEARNING_RECOMMENDATION
   DEFAULT_WARNING
+}
+
+/// Admin-managed downloadable templates (member agreement / payroll consent).
+enum DocumentTemplateType {
+  AGREEMENT
+  PAYROLL_CONSENT
+}
+
+/// Verification state for uploaded member agreement / payroll consent files.
+enum MemberDocumentVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
 }
 
 enum LearningModuleTier {
@@ -272,6 +292,9 @@ model User {
   recommendationsLog       RecommendationLog[]
   partnerProgram          PartnerProgram?
   portfolioSnapshots      PortfolioSnapshot[]
+  memberDocument          MemberDocument?
+  employmentDetails       EmploymentDetails?
+  defaultCompliance       MemberDefaultCompliance?
 
   @@index([email])
   @@index([countryCode, accountType])
@@ -482,6 +505,7 @@ model Loan {
   loanNumber            String     @unique // LN-YYYYMM-6random
   userId                String
   walletId              String
+  loanType              LoanProductType @default(NON_COLLATERAL)
   principalAmount       Decimal    @db.Decimal(18, 8)
   interestRate          Decimal    @db.Decimal(5, 2)
   interestType          InterestType @default(FIXED)
@@ -870,4 +894,68 @@ model PortfolioSnapshot {
   @@unique([userId, snapshotDate, currencyCode])
   @@index([userId])
   @@index([snapshotDate])
+}
+
+/// Latest downloadable template per document type (admin replaces in place).
+model DocumentTemplate {
+  id           String               @id @default(uuid())
+  documentType DocumentTemplateType @unique
+  filePath     String
+  fileName     String?
+  mimeType     String?
+  uploadedAt   DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+/// Member-uploaded signed documents tied to current loan product context.
+model MemberDocument {
+  id                     String                           @id @default(uuid())
+  userId                 String                           @unique
+  accountType            AccountType
+  loanProductType        LoanProductType
+  agreementFilePath      String?
+  consentFilePath        String?
+  agreementStatus        MemberDocumentVerificationStatus @default(PENDING)
+  consentStatus          MemberDocumentVerificationStatus?
+  adminNotes             String?
+  assetDocumentationNote String?
+  uploadedAt             DateTime                         @default(now())
+  updatedAt              DateTime                         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([agreementStatus])
+  @@index([consentStatus])
+}
+
+model EmploymentDetails {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  employerName    String
+  employerContact String
+  jobTitle        String
+  salaryEstimate  Decimal   @db.Decimal(18, 2)
+  verified        Boolean   @default(false)
+  verifiedAt      DateTime?
+  verifiedBy      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([verified])
+}
+
+/// Delinquency / payroll-enforcement flags (no automatic payroll debit).
+model MemberDefaultCompliance {
+  id                           String    @id @default(uuid())
+  userId                       String    @unique
+  consecutiveMissedRepayments  Int       @default(0)
+  defaultFlagged               Boolean   @default(false)
+  defaultFlaggedAt             DateTime?
+  payrollEnforcementEligible   Boolean   @default(false)
+  employerNotifiedAt           DateTime?
+  updatedAt                    DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

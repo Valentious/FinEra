@@ -39,8 +39,8 @@ export function DashboardHome() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-black text-slate-900">Dashboard</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-black text-foreground">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">
           Overview - currency context: <strong>{currency}</strong> (filters client views; ledger isolation is server-side).
         </p>
       </div>
@@ -64,23 +64,23 @@ export function DashboardHome() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border bg-white p-5" style={{ borderColor: adminColors.border }}>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">Risk distribution</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Risk distribution</h2>
           <ul className="mt-4 space-y-2">
             {(overview?.riskDistribution ?? []).map((r) => (
               <li key={r.level} className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-2">
                   <RiskTag level={mapRiskLevel(r.level)} />
-                  <span className="text-slate-600">{r.level}</span>
+                  <span className="text-muted-foreground">{r.level}</span>
                 </span>
                 <span className="font-mono font-semibold">{r.count}</span>
               </li>
             ))}
-            {!overview?.riskDistribution?.length && <li className="text-slate-400">No data</li>}
+            {!overview?.riskDistribution?.length && <li className="text-muted-foreground">No data</li>}
           </ul>
         </section>
 
         <section className="rounded-2xl border bg-white p-5" style={{ borderColor: adminColors.border }}>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">Live activity (events)</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Live activity (events)</h2>
           <pre className="mt-3 max-h-64 overflow-auto rounded-lg bg-slate-950 p-3 text-xs text-emerald-100">
             {JSON.stringify(activity, null, 2)}
           </pre>
@@ -88,7 +88,7 @@ export function DashboardHome() {
       </div>
 
       <section className="rounded-2xl border bg-white p-5" style={{ borderColor: adminColors.border }}>
-        <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">System health</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">System health</h2>
         <p className="mt-2 text-lg font-semibold text-emerald-700">{overview?.systemHealth ?? "-"}</p>
       </section>
     </div>
@@ -98,7 +98,7 @@ export function DashboardHome() {
 function MetricCard({ title, value, accent }: { title: string; value: string | number; accent: string }) {
   return (
     <div className="rounded-2xl border bg-white p-5 shadow-sm" style={{ borderColor: adminColors.border }}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
       <p className="mt-2 text-3xl font-black tabular-nums" style={{ color: accent }}>
         {value}
       </p>

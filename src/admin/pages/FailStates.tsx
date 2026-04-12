@@ -43,8 +43,8 @@ function FailShell({ icon, title, body }: { icon: ReactNode; title: string; body
     <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
       <div className="rounded-2xl border bg-white p-10 shadow-sm" style={{ borderColor: adminColors.border }}>
         <div className="mb-4 flex justify-center">{icon}</div>
-        <h1 className="text-xl font-black text-slate-900">{title}</h1>
-        <p className="mt-2 max-w-md text-sm text-slate-600">{body}</p>
+        <h1 className="text-xl font-black text-foreground">{title}</h1>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">{body}</p>
       </div>
     </div>
   );

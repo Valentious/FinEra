@@ -8,13 +8,11 @@ import { AccountTypeSelection } from "@/app/components/AccountTypeSelection";
 import type { AccountOperatingMode } from "@/app/components/AccountTypeSelection";
 import { VerifyAccess } from "@/app/components/VerifyAccess";
 import { ProfileDetails } from "@/app/components/ProfileDetails";
-import { Dashboard } from "@/app/components/Dashboard";
 import { DashboardV2 } from "@/app/components/DashboardV2";
 import { SavingsWallet } from "@/app/components/SavingsWallet";
 import { WalletManagement } from "@/app/components/WalletManagement";
 import { ApplyForCredit } from "@/app/components/ApplyForCredit";
 import { CreditDetails } from "@/app/components/CreditDetails";
-import { CreditTypeSelection } from "@/app/components/CreditTypeSelection";
 import { CollateralDetails } from "@/app/components/CollateralDetails";
 import { ConfirmApplication } from "@/app/components/ConfirmApplication";
 import { BuyBackAgreement } from "@/app/components/BuyBackAgreement";
@@ -27,13 +25,15 @@ import { WithdrawFlow } from "@/app/components/WithdrawFlow";
 import { DepositFlow } from "@/app/components/DepositFlow";
 import { ProfileSettings } from "@/app/components/ProfileSettings";
 import { AdminOverview } from "@/app/components/AdminOverview";
-import { MemberAgreement } from "@/app/components/MemberAgreement";
+import { AgreementsConsentScreen } from "@/app/components/AgreementsConsentScreen";
 import { MakeRepayment } from "@/app/components/MakeRepayment";
 import { MakePayment } from "@/app/components/MakePayment";
 import { AccountCreationSuccess } from "@/app/components/AccountCreationSuccess";
 import { QuickActionsScreen } from "@/app/components/QuickActionsScreen";
 import { Toaster, toast } from "sonner";
 import { apiService, checkBackendHealth, USE_MOCK_DATA, type UserData, type Transaction, type CreditApplication, type FinEraAccountNumbers, type CurrencyConfig } from "@/services/index";
+import type { LoanType } from "@/loan/loanTypes";
+import { isLoanTypeAllowedForAccount, requiresCollateralStep, requiresWalletDisciplineForAmount } from "@/loan/loanTypes";
 import { useAccountStore } from "@/stores/accountStore";
 import { fetchWalletsForStore } from "@/lib/walletFetcher";
 import {
@@ -66,9 +66,9 @@ type Screen =
   | "withdrawFlow"
   | "depositFlow"
   | "memberAgreement"
+  | "agreementsConsent"
   | "applyForCredit"
   | "creditDetails"
-  | "creditTypeSelection"
   | "collateralDetails"
   | "confirmApplication"
   | "buyBackAgreement"
@@ -306,6 +306,35 @@ export default function App() {
   const [creditLimitFetchError, setCreditLimitFetchError] = useState(false);
 
   const [currencyTabs, setCurrencyTabs] = useState<CurrencyConfig[]>([]);
+
+  /** Keep dashboard currency on a tab/wallet that exists — invalid Radix Select value white-screens the app. */
+  useEffect(() => {
+    if (walletLoading) return;
+
+    if (currencyTabs.length > 0) {
+      const okTab = currencyTabs.some((c) => c.currencyCode === selectedCurrency);
+      if (!okTab) {
+        const code = currencyTabs[0]?.currencyCode;
+        if (code) {
+          setDashboardCurrency(code as typeof selectedCurrency);
+          const w = wallets.find((x) => x.currency === code);
+          if (w) setActiveWalletById(w.id);
+        }
+        return;
+      }
+    }
+
+    if (wallets.length > 0) {
+      const okWallet = wallets.some((w) => w.currency === selectedCurrency);
+      if (!okWallet) {
+        const w0 = wallets[0];
+        if (w0) {
+          setDashboardCurrency(w0.currency as typeof selectedCurrency);
+          setActiveWalletById(w0.id);
+        }
+      }
+    }
+  }, [walletLoading, currencyTabs, wallets, selectedCurrency, setActiveWalletById]);
   const [walletForCurrency, setWalletForCurrency] = useState<{
     balance: number;
     walletLabel: string;
@@ -318,6 +347,10 @@ export default function App() {
   const activeCreditForTab = walletForCurrency?.activeCredit ?? 0;
   const [transactionsForCurrency, setTransactionsForCurrency] = useState<Transaction[]>([]);
   const [backendAvailable, setBackendAvailable] = useState(true);
+  /** Where Make Repayment should return after Back (dashboard shortcut vs repayment hub). */
+  const [makeRepaymentReturnScreen, setMakeRepaymentReturnScreen] = useState<"dashboard" | "repaymentDashboard">(
+    "repaymentDashboard"
+  );
 
   useEffect(() => {
     if (USE_MOCK_DATA) return;
@@ -364,9 +397,9 @@ export default function App() {
         "depositFlow",
         "withdrawFlow",
         "memberAgreement",
+        "agreementsConsent",
         "applyForCredit",
         "creditDetails",
-        "creditTypeSelection",
         "collateralDetails",
         "confirmApplication",
         "repaymentDashboard",
@@ -382,9 +415,9 @@ export default function App() {
   useEffect(() => {
     const creditScreens = [
       "memberAgreement",
+      "agreementsConsent",
       "applyForCredit",
       "creditDetails",
-      "creditTypeSelection",
       "collateralDetails",
       "confirmApplication",
     ];
@@ -513,9 +546,23 @@ export default function App() {
   const [creditApplication, setCreditApplication] = useState<CreditApplication>({
     creditType: "essential",
     amount: 0,
-    withCollateral: false,
+    loanType: "NON_COLLATERAL",
     currency: "USD",
   });
+
+  const [agreementsLoanType, setAgreementsLoanType] = useState<LoanType>("NON_COLLATERAL");
+
+  const startLoanFromDashboard = useCallback(
+    (loanType: LoanType) => {
+      if (!isLoanTypeAllowedForAccount(loanType, userData.accountType)) {
+        toast.error("This loan type is not available for your account.");
+        return;
+      }
+      setCreditApplication((prev) => ({ ...prev, loanType }));
+      setCurrentScreen("memberAgreement");
+    },
+    [userData.accountType]
+  );
 
   useEffect(() => {
     setCreditApplication((prev) => ({ ...prev, currency: selectedCurrency }));
@@ -614,9 +661,9 @@ export default function App() {
 
   const isAuthScreen = [
     "dashboard", "quickActions", "savingsWallet", "walletManagement", "withdrawFlow", "depositFlow", "applyForCredit",
-    "creditDetails", "creditTypeSelection", "collateralDetails", "confirmApplication",
+    "creditDetails", "collateralDetails", "confirmApplication",
     "buyBackAgreement", "applicationStatus", "creditApproved", "walletCredited", "repaymentDashboard", "financialEducation",
-    "profileSettings", "partnerProgram", "adminOverview", "memberAgreement", "makeRepayment", "makePayment",
+    "profileSettings", "partnerProgram", "adminOverview", "memberAgreement", "agreementsConsent", "makeRepayment", "makePayment",
     "peerTransfer",
   ].includes(currentScreen);
 
@@ -687,21 +734,33 @@ export default function App() {
 
   const showTrustRibbon = currentScreen !== "splash";
 
+  const handleMemberNavigate = useCallback(
+    (s: string) => {
+      const screen = s as Screen;
+      if (screen === "agreementsConsent") {
+        setAgreementsLoanType(creditApplication.loanType);
+      }
+      setCurrentScreen(screen);
+    },
+    [creditApplication.loanType]
+  );
+
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-dvh bg-transparent text-foreground font-sans selection:bg-primary/20 selection:text-primary">
       <Toaster position="top-center" richColors />
       {!USE_MOCK_DATA && !backendAvailable && <BackendUnavailableBanner />}
       
       {isAuthScreen && (
         <MainNavigation
           activeScreen={currentScreen}
-          onNavigate={(s) => setCurrentScreen(s as Screen)}
+          onNavigate={handleMemberNavigate}
           onLogout={handleLogout}
           userName={userData.fullName || "User"}
           accountNumber={displayAccountNumber}
           walletNumericId={displayWalletNumericId}
           isAdmin={userData.accountType === "staff"}
           onCreateWallet={() => setCurrentScreen("depositFlow")}
+          disciplineScore={userData.disciplineScore ?? 50}
         />
       )}
 
@@ -838,11 +897,17 @@ export default function App() {
               if (w) setActiveWalletById(w.id);
             }}
             displayAccountNumber={displayWalletNumericId || displayAccountNumber}
-            onApplyForCredit={() => setCurrentScreen("memberAgreement")}
+            accountType={userData.accountType}
+            onSelectLoanType={startLoanFromDashboard}
             onAddSavings={() => setCurrentScreen("depositFlow")}
             onViewRepayment={() => setCurrentScreen("repaymentDashboard")}
             onWithdrawFunds={() => setCurrentScreen("withdrawFlow")}
+            onMakeRepayment={() => {
+              setMakeRepaymentReturnScreen("dashboard");
+              setCurrentScreen("makeRepayment");
+            }}
             onMakePayment={() => setCurrentScreen("makePayment")}
+            onPeerTransfer={() => setCurrentScreen("peerTransfer")}
             transactions={transactionsForCurrency}
             currencyTabs={currencyTabs}
             dashboardConfig={currencyTabs.find((c) => c.currencyCode === selectedCurrency)?.dashboardConfig}
@@ -850,10 +915,27 @@ export default function App() {
         )}
 
         {currentScreen === "memberAgreement" && (
-          <MemberAgreement 
-            memberType={userData.accountType} 
-            onAgree={() => setCurrentScreen("applyForCredit")} 
-            onBack={() => setCurrentScreen("dashboard")} 
+          <AgreementsConsentScreen
+            loanType={creditApplication.loanType}
+            accountType={userData.accountType}
+            disciplineScore={userData.disciplineScore}
+            onContinue={() => setCurrentScreen("applyForCredit")}
+            onBack={() => setCurrentScreen("dashboard")}
+          />
+        )}
+
+        {currentScreen === "agreementsConsent" && (
+          <AgreementsConsentScreen
+            loanType={agreementsLoanType}
+            accountType={userData.accountType}
+            disciplineScore={userData.disciplineScore}
+            showLoanTypeSelector
+            onLoanTypeChange={(lt) => {
+              setAgreementsLoanType(lt);
+              setCreditApplication((p) => ({ ...p, loanType: lt }));
+            }}
+            onContinue={() => setCurrentScreen("dashboard")}
+            onBack={() => setCurrentScreen("dashboard")}
           />
         )}
 
@@ -864,6 +946,7 @@ export default function App() {
             totalSavings={walletForCurrency?.balance ?? userData.walletBalance}
             lockedSavings={activeCreditForTab > 0 ? (walletForCurrency?.balance ?? userData.walletBalance) * 0.2 : 0}
             availableSavings={activeCreditForTab > 0 ? (walletForCurrency?.balance ?? userData.walletBalance) * 0.8 : (walletForCurrency?.balance ?? userData.walletBalance)}
+            disciplineScore={userData.disciplineScore}
             onAddSavings={() => setCurrentScreen("depositFlow")}
             onWithdraw={() => {
               const bal = walletForCurrency?.balance ?? userData.walletBalance;
@@ -970,6 +1053,7 @@ export default function App() {
             walletBalance={creditWalletState.kind === "ok" ? creditWalletState.balance : 0}
             walletLabel={creditWalletState.kind === "ok" ? creditWalletState.walletLabel : getWalletLabel(selectedCurrency)}
             hasActiveLoan={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance > 0 : false}
+            loanType={creditApplication.loanType}
             onSelectCreditType={(type) => {
               setCreditApplication({ ...creditApplication, creditType: type });
               setCurrentScreen("creditDetails");
@@ -987,6 +1071,7 @@ export default function App() {
             creditLimitLoading={creditAvailability === null && !creditLimitFetchError}
             creditLimitError={creditLimitFetchError}
             limitsReady={creditDetails != null}
+            loanType={creditApplication.loanType}
             creditType={creditApplication.creditType}
             maxAmount={creditDetails?.maxAmount ?? 0}
             repaymentCycle={creditDetails?.repaymentCycle ?? ""}
@@ -998,35 +1083,32 @@ export default function App() {
                 return;
               }
               const savings = creditWalletState.balance;
-              if (creditApplication.creditType !== "emergency" && savings < amount * 0.2) {
+              if (
+                requiresWalletDisciplineForAmount(creditApplication.loanType, creditApplication.creditType) &&
+                savings < amount * 0.2
+              ) {
                 toast.error(
                   `Financial Discipline Notification: ${creditWalletState.kind === "ok" ? creditWalletState.walletLabel : getWalletLabel(selectedCurrency)} balance must be at least 20% of loan amount.`
                 );
                 return;
               }
               setCreditApplication({ ...creditApplication, amount });
-              setCurrentScreen("creditTypeSelection");
+              if (requiresCollateralStep(creditApplication.loanType)) {
+                setCurrentScreen("collateralDetails");
+              } else {
+                setCurrentScreen("confirmApplication");
+              }
             }}
             onBack={() => setCurrentScreen("applyForCredit")}
-          />
-        )}
-
-        {currentScreen === "creditTypeSelection" && (
-          <CreditTypeSelection
-            onSelect={(withCollateral) => {
-              setCreditApplication({ ...creditApplication, withCollateral });
-              if (withCollateral) setCurrentScreen("collateralDetails");
-              else setCurrentScreen("confirmApplication");
-            }}
-            onBack={() => setCurrentScreen("creditDetails")}
           />
         )}
 
         {currentScreen === "collateralDetails" && (
           <CollateralDetails
             currencyCode={selectedCurrency}
+            loanType={creditApplication.loanType}
             onSubmit={() => setCurrentScreen("confirmApplication")}
-            onBack={() => setCurrentScreen("creditTypeSelection")}
+            onBack={() => setCurrentScreen("creditDetails")}
           />
         )}
 
@@ -1036,8 +1118,8 @@ export default function App() {
               className="h-12 w-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"
               aria-hidden
             />
-            <p className="text-lg font-black text-slate-900">Processing your application</p>
-            <p className="text-sm text-slate-500 max-w-sm">
+            <p className="text-lg font-black text-foreground">Processing your application</p>
+            <p className="text-sm text-muted-foreground max-w-sm">
               Securely submitting your credit request. This usually takes a few seconds.
             </p>
           </div>
@@ -1048,7 +1130,7 @@ export default function App() {
             creditType={creditApplication.creditType}
             amount={creditApplication.amount}
             repaymentTerms={creditDetails?.repaymentCycle ?? ""}
-            withCollateral={creditApplication.withCollateral}
+            loanType={creditApplication.loanType}
             onSubmit={async () => {
               setCurrentScreen("applicationStatus");
               try {
@@ -1060,7 +1142,9 @@ export default function App() {
                 setCurrentScreen("confirmApplication");
               }
             }}
-            onBack={() => setCurrentScreen(creditApplication.withCollateral ? "collateralDetails" : "creditTypeSelection")}
+            onBack={() =>
+              setCurrentScreen(requiresCollateralStep(creditApplication.loanType) ? "collateralDetails" : "creditDetails")
+            }
           />
         )}
 
@@ -1089,7 +1173,10 @@ export default function App() {
             totalObligation={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance : activeCreditForTab}
             amountRepaid={0}
             outstandingBalance={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance : activeCreditForTab}
-            onMakeRepayment={() => setCurrentScreen("makeRepayment")}
+            onMakeRepayment={() => {
+              setMakeRepaymentReturnScreen("repaymentDashboard");
+              setCurrentScreen("makeRepayment");
+            }}
             onBack={() => setCurrentScreen("dashboard")}
           />
         )}
@@ -1108,7 +1195,7 @@ export default function App() {
                 ? creditWalletState.walletLabel
                 : walletForCurrency?.walletLabel ?? getWalletLabel(selectedCurrency)
             }
-            onBack={() => setCurrentScreen("repaymentDashboard")}
+            onBack={() => setCurrentScreen(makeRepaymentReturnScreen)}
             onConfirm={async (amount, method) => {
               try {
                 await apiService.makeRepayment({ amount, method, currency: selectedCurrency });

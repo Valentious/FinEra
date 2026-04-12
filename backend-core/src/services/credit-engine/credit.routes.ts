@@ -13,17 +13,31 @@ import { validationError } from "../../middlewares/errorHandler.js";
 import { assignLoanInterestRatePercent } from "../../shared/validation/rules.js";
 import { loanPrincipalSchema } from "../../shared/validation/zod-schemas.js";
 import { zodErrorToFieldErrors } from "../../shared/validation/zod-format.js";
+import type { AccountType, LoanProductType } from "@prisma/client";
+import { assertDocumentsAllowLoanApplication } from "../member-documents/member-documents.service.js";
 
 const router = Router();
 
 router.use(authMiddleware);
+
+const loanProductEnum = z.enum(["ASSET_BACKED", "SALARY_BACKED", "COLLATERAL", "NON_COLLATERAL"]);
+
+function requiresWalletDisciplineForAmount(loanType: LoanProductType, creditType: string): boolean {
+  if (creditType === "emergency") return false;
+  return loanType === "NON_COLLATERAL" && (creditType === "essential" || creditType === "business");
+}
+
+function loanTypeAllowedForAccount(loanType: LoanProductType, accountType: AccountType): boolean {
+  if (accountType === "STUDENT") return loanType === "COLLATERAL" || loanType === "NON_COLLATERAL";
+  return loanType === "ASSET_BACKED" || loanType === "SALARY_BACKED";
+}
 
 const applySchema = z.object({
   amount: loanPrincipalSchema,
   currency: z.enum(["USD", "ZIG", "ZAR", "EUR", "GBP"]),
   term: z.number().int().min(1).max(60).optional(),
   creditType: z.enum(["essential", "emergency", "business"]).optional(),
-  withCollateral: z.boolean().optional().default(false),
+  loanType: loanProductEnum.optional().default("NON_COLLATERAL"),
 });
 
 router.get("/score", async (req, res, next) => {
@@ -64,6 +78,7 @@ router.post("/apply", async (req, res, next) => {
     }
     const { amount, currency } = parsed.data;
     const term = parsed.data.term ?? 12;
+    const loanType = parsed.data.loanType as LoanProductType;
 
     const limitResult = await creditService.calculateCreditLimit(req.user!.id, { currency });
     const available = Number(limitResult.availableCredit);
@@ -82,6 +97,7 @@ router.post("/apply", async (req, res, next) => {
     if (!wallet) throw validationError("Wallet not found");
 
     await assertWalletHasNoActiveLoan(prisma, wallet.id);
+    await assertDocumentsAllowLoanApplication(req.user!.id, loanType);
 
     const rateDecimal = interestRatePct / 100;
     const totalInterest = amount * rateDecimal * (term / 12);
@@ -98,6 +114,7 @@ router.post("/apply", async (req, res, next) => {
         loanNumber,
         userId: req.user!.id,
         walletId: wallet.id,
+        loanType,
         principalAmount: amount,
         interestRate: interestRatePct,
         totalInterest,
@@ -150,14 +167,14 @@ router.get("/loans", async (req, res, next) => {
 const applyInstantSchema = z.object({
   amount: loanPrincipalSchema,
   creditType: z.enum(["essential", "emergency", "business"]),
-  withCollateral: z.boolean().optional().default(false),
+  loanType: loanProductEnum,
   currency: z.enum(["USD", "ZIG", "ZAR", "EUR", "GBP"]),
 });
 
 /**
  * POST /credit/apply-instant
  * Apply for credit with instant approval (auto-disburse).
- * Validates: no active loan, savings 20% for non-emergency.
+ * Validates: account vs loan product, no active loan, wallet 20% only for unsecured student flows.
  */
 router.post("/apply-instant", async (req, res, next) => {
   try {
@@ -165,7 +182,19 @@ router.post("/apply-instant", async (req, res, next) => {
     if (!parsed.success) {
       throw validationError("Validation failed", { fields: zodErrorToFieldErrors(parsed.error) });
     }
-    const { amount, creditType, currency } = parsed.data;
+    const { amount, creditType, currency, loanType } = parsed.data;
+    const loanProduct = loanType as LoanProductType;
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: { accountType: true },
+    });
+    if (!user) throw validationError("User not found");
+    if (!loanTypeAllowedForAccount(loanProduct, user.accountType)) {
+      throw validationError("This loan type is not available for your account", {
+        fields: [{ field: "loanType", error: "Loan type not allowed for account" }],
+      });
+    }
 
     const limitResult = await creditService.calculateCreditLimit(req.user!.id, { currency });
     if (amount > Number(limitResult.availableCredit)) {
@@ -182,15 +211,22 @@ router.post("/apply-instant", async (req, res, next) => {
     await assertWalletHasNoActiveLoan(prisma, wallet.id);
 
     const walletBal = Number(wallet.balance);
-    if (creditType !== "emergency" && walletBal < amount * 0.2) {
-      throw validationError("Wallet balance must be at least 20% of loan amount for this credit type");
+    if (requiresWalletDisciplineForAmount(loanProduct, creditType) && walletBal < amount * 0.2) {
+      throw validationError("Wallet balance must be at least 20% of loan amount for this product", {
+        fields: [{ field: "amount", error: "Insufficient wallet balance for unsecured student loan" }],
+      });
     }
 
+    await assertDocumentsAllowLoanApplication(req.user!.id, loanProduct);
+
     const serviceFee = amount * 0.015;
-    const interest = amount * 0.18;
+    let interestRatePct = 18;
+    if (loanProduct === "SALARY_BACKED") interestRatePct = 17;
+    else if (loanProduct === "ASSET_BACKED" || loanProduct === "COLLATERAL") interestRatePct = 16;
+    else if (loanProduct === "NON_COLLATERAL") interestRatePct = 18.5;
+    const interest = amount * (interestRatePct / 100);
     const totalRepayable = amount + serviceFee + interest;
     const term = creditType === "essential" ? 12 : creditType === "emergency" ? 6 : 24;
-    const interestRatePct = 18;
 
     const result = await processLoanDisbursement(req.user!.id, {
       principal: amount,
@@ -199,6 +235,7 @@ router.post("/apply-instant", async (req, res, next) => {
       currency,
       term,
       creditType,
+      loanType: loanProduct,
     });
 
     res.status(201).json({

@@ -234,15 +234,15 @@ export function DepositFlow({
               <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">Cash In to wallet ({currencyCode})</h2>
+              <h2 className="text-2xl font-black text-foreground">Cash In to wallet ({currencyCode})</h2>
             </div>
 
             <div className="space-y-6">
               {/* Amount Input */}
               <div className="space-y-2">
-                <Label className="font-bold text-slate-600 ml-1">Cash In Amount</Label>
+                <Label className="font-bold text-muted-foreground ml-1">Cash In Amount</Label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm sm:text-base max-w-[5rem] leading-tight">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-muted-foreground text-sm sm:text-base max-w-[5rem] leading-tight">
                     {sym}
                   </span>
                   <Input 
@@ -257,7 +257,7 @@ export function DepositFlow({
 
               {/* Method Selection */}
               <div className="space-y-3">
-                <Label className="font-bold text-slate-600 ml-1">Select Cash In Method</Label>
+                <Label className="font-bold text-muted-foreground ml-1">Select Cash In Method</Label>
                 <div className="grid grid-cols-1 gap-2">
                   {METHODS.map((m) => (
                     <button
@@ -271,7 +271,7 @@ export function DepositFlow({
                         <div className={`p-2 rounded-xl ${m.color}`}>
                           {m.icon}
                         </div>
-                        <span className="font-bold text-slate-700">{m.label}</span>
+                        <span className="font-bold text-foreground">{m.label}</span>
                       </div>
                       {method === m.id && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
                     </button>
@@ -281,14 +281,14 @@ export function DepositFlow({
 
               {/* Purpose Selection */}
               <div className="space-y-3">
-                <Label className="font-bold text-slate-600 ml-1">Purpose of Cash In</Label>
+                <Label className="font-bold text-muted-foreground ml-1">Purpose of Cash In</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {PURPOSES.map((p) => (
                     <button
                       key={p.id}
                       onClick={() => setPurpose(p.id)}
                       className={`px-4 py-3 rounded-xl border-2 text-sm font-bold transition-all ${
-                        purpose === p.id ? 'border-emerald-600 bg-emerald-600 text-white shadow-lg' : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200'
+                        purpose === p.id ? 'border-emerald-600 bg-emerald-600 text-white shadow-lg' : 'border-slate-100 bg-white text-muted-foreground hover:border-slate-200'
                       }`}
                     >
                       {p.label}
@@ -319,8 +319,8 @@ export function DepositFlow({
             <Button variant="ghost" size="sm" onClick={() => setStep("details")}>
               ← Back
             </Button>
-            <h3 className="text-xl font-black text-slate-900">Mobile Money Cash In</h3>
-            <p className="text-slate-600 text-sm">
+            <h3 className="text-xl font-black text-foreground">Mobile Money Cash In</h3>
+            <p className="text-muted-foreground text-sm">
               {METHODS.find(m => m.id === method)?.label} - Enter the phone number linked to your account
             </p>
             <div className="space-y-2">
@@ -377,9 +377,9 @@ export function DepositFlow({
               <Button variant="ghost" size="icon" onClick={() => setStep("details")} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">ATM Cash In Code</h2>
+              <h2 className="text-2xl font-black text-foreground">ATM Cash In Code</h2>
             </div>
-            <p className="text-slate-600 text-sm">
+            <p className="text-muted-foreground text-sm">
               Use this code at any supported ATM to complete your cash in of{" "}
               {formatAmountWithSymbol(sym, parseFloat(amount) || 0)}.
             </p>
@@ -387,26 +387,26 @@ export function DepositFlow({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Banknote className="w-5 h-5 text-amber-600" />
-                  <p className="text-sm font-bold text-slate-500">ATM Cash In Code</p>
+                  <p className="text-sm font-bold text-muted-foreground">ATM Cash In Code</p>
                 </div>
                 <button onClick={() => copyToClipboard(atmCode, 'code')} className="flex items-center gap-2">
-                  <Copy className="w-5 h-5 text-slate-500 cursor-pointer" />
+                  <Copy className="w-5 h-5 text-muted-foreground cursor-pointer" />
                   {codeCopied && <Check className="w-5 h-5 text-green-600" />}
                 </button>
               </div>
-              <p className="text-2xl font-black text-slate-900">{atmCode}</p>
+              <p className="text-2xl font-black text-foreground">{atmCode}</p>
               <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-slate-500" />
-                <p className="text-sm font-bold text-slate-500">Expires in: {atmExpiry ? `${Math.ceil((atmExpiry.getTime() - Date.now()) / 60000)} mins` : 'N/A'}</p>
+                <Clock className="w-5 h-5 text-muted-foreground" />
+                <p className="text-sm font-bold text-muted-foreground">Expires in: {atmExpiry ? `${Math.ceil((atmExpiry.getTime() - Date.now()) / 60000)} mins` : 'N/A'}</p>
               </div>
               <div className="pt-4 border-t border-slate-100">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-bold text-slate-500">Reference</p>
+                  <p className="text-sm font-bold text-muted-foreground">Reference</p>
                   <button onClick={() => copyToClipboard(atmReference, 'ref')} className="flex items-center gap-1">
-                    {refCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
+                    {refCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
                   </button>
                 </div>
-                <p className="text-lg font-black text-slate-900">{atmReference}</p>
+                <p className="text-lg font-black text-foreground">{atmReference}</p>
               </div>
             </div>
             <Button
@@ -429,10 +429,10 @@ export function DepositFlow({
               <div className="w-24 h-24 border-4 border-emerald-100 rounded-full" />
               <Loader2 className="w-24 h-24 text-emerald-600 animate-spin absolute top-0 left-0" />
             </div>
-            <h3 className="text-2xl font-black mt-8 text-slate-900">
+            <h3 className="text-2xl font-black mt-8 text-foreground">
               {isMobileMoney ? "Payment Request Sent" : "Connecting Gateway..."}
             </h3>
-            <p className="text-slate-500 font-medium mt-2 max-w-[280px]">
+            <p className="text-muted-foreground font-medium mt-2 max-w-[280px]">
               {isMobileMoney
                 ? "A payment request has been sent to your mobile device. Please enter your PIN to complete the transaction."
                 : "Securing your payment channel."}
@@ -451,23 +451,23 @@ export function DepositFlow({
               <CheckCircle2 className="w-16 h-16" />
             </div>
             <div>
-              <h2 className="text-3xl font-black text-slate-900">Cash In Successful</h2>
-              <p className="text-slate-500 font-medium mt-2">Your funds have been added to your wallet.</p>
+              <h2 className="text-3xl font-black text-foreground">Cash In Successful</h2>
+              <p className="text-muted-foreground font-medium mt-2">Your funds have been added to your wallet.</p>
             </div>
 
             <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 rounded-3xl bg-slate-50 text-left">
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold text-xs uppercase">Amount</span>
-                  <span className="text-slate-900 font-black">{formatAmountWithSymbol(sym, parseFloat(amount) || 0)}</span>
+                  <span className="text-muted-foreground font-bold text-xs uppercase">Amount</span>
+                  <span className="text-foreground font-black">{formatAmountWithSymbol(sym, parseFloat(amount) || 0)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold text-xs uppercase">Purpose</span>
-                  <span className="text-slate-900 font-bold">{PURPOSES.find(p => p.id === purpose)?.label}</span>
+                  <span className="text-muted-foreground font-bold text-xs uppercase">Purpose</span>
+                  <span className="text-foreground font-bold">{PURPOSES.find(p => p.id === purpose)?.label}</span>
                 </div>
                 <div className="h-[1px] bg-slate-200 my-2" />
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold text-xs uppercase">New Balance</span>
+                  <span className="text-muted-foreground font-bold text-xs uppercase">New Balance</span>
                   <span className="text-emerald-600 font-black">
                     {formatAmountWithSymbol(sym, currentBalance + (parseFloat(amount) || 0))}
                   </span>

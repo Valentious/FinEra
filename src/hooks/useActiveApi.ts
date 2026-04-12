@@ -7,6 +7,7 @@
 import { useCallback } from "react";
 import { useAccountStore } from "@/stores/accountStore";
 import apiService from "@/services/index";
+import type { LoanType } from "@/loan/loanTypes";
 
 export function useActiveApi() {
   const activeWallet = useAccountStore((s) => s.activeWallet);
@@ -78,7 +79,7 @@ export function useActiveApi() {
 
   /** Get loan / credit application - always uses active currency */
   const applyCreditApplication = useCallback(
-    (data: { creditType: string; amount: number; withCollateral?: boolean }) => {
+    (data: { creditType: string; amount: number; loanType: LoanType }) => {
       return apiService.applyCreditApplication({
         ...data,
         currency,

@@ -47,10 +47,10 @@ export function CaptureId({ side, onCapture, onComplete, onBack }: CaptureIdProp
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-xl font-bold text-slate-800">
+        <h2 className="text-xl font-bold text-foreground">
           Capture {side === "front" ? "Front" : "Back"} of ID
         </h2>
-        <p className="text-slate-600 text-sm">
+        <p className="text-muted-foreground text-sm">
           Position your ID clearly within the frame. Ensure good lighting and all corners are visible.
         </p>
       </div>
@@ -92,8 +92,8 @@ export function CaptureId({ side, onCapture, onComplete, onBack }: CaptureIdProp
       </div>
 
       <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4">
-        <h4 className="font-semibold text-slate-800 mb-2">Tips for best results</h4>
-        <ul className="text-sm text-slate-600 space-y-1">
+        <h4 className="font-semibold text-foreground mb-2">Tips for best results</h4>
+        <ul className="text-sm text-muted-foreground space-y-1">
           <li>• Ensure good lighting</li>
           <li>• Hold camera steady</li>
           <li>• Make sure all 4 corners are visible</li>
@@ -103,7 +103,7 @@ export function CaptureId({ side, onCapture, onComplete, onBack }: CaptureIdProp
 
       {onBack && (
         <div className="flex justify-center">
-          <Button variant="ghost" onClick={onBack} className="text-slate-600">
+          <Button variant="ghost" onClick={onBack} className="text-muted-foreground">
             Back to Registration
           </Button>
         </div>

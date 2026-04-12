@@ -89,10 +89,10 @@ export function VerifyEmailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]">
+    <div className="flex min-h-dvh items-center justify-center bg-transparent p-4 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]">
       <div className="w-full max-w-md">
         <div className="flex justify-start mb-4">
-          <Button variant="ghost" onClick={() => navigate("/")} className="gap-2 text-slate-600">
+          <Button variant="ghost" onClick={() => navigate("/")} className="gap-2 text-muted-foreground">
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
@@ -102,7 +102,7 @@ export function VerifyEmailPage() {
             <FinEraShieldIcon size={48} className="rounded-xl" />
             <div className="hero-header flex flex-col items-center text-center">
               <FinEraLogoText variant="light" size="md" />
-              <p className="inclusive-text text-xs font-semibold text-slate-600 tracking-[0.2em] uppercase mt-2 mb-0">
+              <p className="inclusive-text text-xs font-semibold text-muted-foreground tracking-[0.2em] uppercase mt-2 mb-0">
                 VERIFY YOUR EMAIL
               </p>
             </div>
@@ -121,7 +121,7 @@ export function VerifyEmailPage() {
               <div className="space-y-2">
                 <Label htmlFor="ve-email">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="ve-email"
                     type="email"

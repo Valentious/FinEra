@@ -3,6 +3,8 @@
  * Single source of truth for logo/icon consistency across the app.
  */
 
+import { cn } from "@/app/components/ui/utils";
+
 interface FinEraShieldIconProps {
   size?: number;
   className?: string;
@@ -14,7 +16,7 @@ const BRAND_GREEN_DARK = "#16a34a";
 export function FinEraShieldIcon({ size = 40, className = "" }: FinEraShieldIconProps) {
   return (
     <div
-      className={`flex-shrink-0 rounded-xl shadow-md flex items-center justify-center ${className}`}
+      className={cn("flex shrink-0 items-center justify-center rounded-xl shadow-md", className)}
       style={{
         width: size,
         height: size,

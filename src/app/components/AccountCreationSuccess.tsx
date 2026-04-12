@@ -88,7 +88,7 @@ export function AccountCreationSuccess({
 
           <CardContent className="p-6 sm:p-8 lg:p-10 space-y-6">
             <div className="bg-gradient-to-br from-emerald-50/90 to-white dark:from-emerald-950/30 dark:to-slate-900 rounded-2xl p-6 sm:p-7 border border-emerald-100 dark:border-emerald-900/60 shadow-sm">
-              <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 mb-5 text-center uppercase tracking-[0.2em]">
+              <h3 className="text-xs font-black text-muted-foreground mb-5 text-center uppercase tracking-[0.2em]">
                 Your account
               </h3>
 
@@ -100,10 +100,10 @@ export function AccountCreationSuccess({
                         <User className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
                           Account holder
                         </p>
-                        <p className="text-base font-black text-slate-900 dark:text-white truncate">{fullName}</p>
+                        <p className="text-base font-black text-foreground truncate">{fullName}</p>
                       </div>
                     </div>
                     <Button
@@ -113,7 +113,7 @@ export function AccountCreationSuccess({
                       className="h-9 w-9 p-0 shrink-0"
                       aria-label="Copy name"
                     >
-                      <Copy className="w-4 h-4 text-slate-400" />
+                      <Copy className="w-4 h-4 text-muted-foreground" />
                     </Button>
                   </div>
                 </div>
@@ -134,7 +134,7 @@ export function AccountCreationSuccess({
                             className="flex items-center justify-between gap-3 px-3 py-3.5 sm:px-4 rounded-lg hover:bg-emerald-50/40 dark:hover:bg-emerald-950/15 transition-colors"
                           >
                             <div className="min-w-0 flex-1">
-                              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
                                 {row.code} · {row.label}
                               </p>
                               <p className="text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-300 tracking-wider font-mono mt-0.5">
@@ -148,20 +148,20 @@ export function AccountCreationSuccess({
                               className="h-9 w-9 p-0 shrink-0"
                               aria-label={`Copy ${row.code} Wallet ID`}
                             >
-                              <Copy className="w-4 h-4 text-slate-400" />
+                              <Copy className="w-4 h-4 text-muted-foreground" />
                             </Button>
                           </li>
                         ))}
                       </ul>
                     ) : (
                       <div className="px-4 py-6 text-center">
-                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground leading-relaxed">
                           Your per-currency Wallet IDs will appear here and on the dashboard once wallets are synced.
                         </p>
                       </div>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 px-4 pb-4 leading-relaxed">
+                  <p className="text-[11px] text-muted-foreground px-4 pb-4 leading-relaxed">
                     Each currency has its own 10-digit ID for peer transfers. Use the ID that matches the wallet you are
                     sending to or receiving in.
                   </p>
@@ -174,10 +174,10 @@ export function AccountCreationSuccess({
                         <Phone className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
                           Linked phone
                         </p>
-                        <p className="text-base font-black text-slate-900 dark:text-white">{phoneNumber}</p>
+                        <p className="text-base font-black text-foreground">{phoneNumber}</p>
                       </div>
                     </div>
                     <Button
@@ -187,7 +187,7 @@ export function AccountCreationSuccess({
                       className="h-9 w-9 p-0 shrink-0"
                       aria-label="Copy phone"
                     >
-                      <Copy className="w-4 h-4 text-slate-400" />
+                      <Copy className="w-4 h-4 text-muted-foreground" />
                     </Button>
                   </div>
                 </div>

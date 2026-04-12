@@ -13,7 +13,7 @@
  */
 
 import { prisma } from "../../infrastructure/database/index.js";
-import type { CurrencyCode, TransactionType } from "@prisma/client";
+import type { CurrencyCode, LoanProductType, TransactionType } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import {
   validateSufficientBalance,
@@ -249,6 +249,7 @@ export async function processLoanDisbursement(
     currency: CurrencyCode;
     term: number;
     creditType?: string;
+    loanType: LoanProductType;
   }
 ): Promise<{
   loanId: string;
@@ -271,6 +272,7 @@ export async function processLoanDisbursement(
         loanNumber,
         userId,
         walletId: wallet.id,
+        loanType: params.loanType,
         principalAmount: params.principal,
         interestRate: params.interestRate,
         totalInterest: params.totalRepayable - params.principal,

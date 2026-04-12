@@ -86,14 +86,14 @@ export function DebitCardMethodPanel({
           ←
         </Button>
         <div>
-          <h3 className="text-lg font-black text-slate-900">{title}</h3>
-          <p className="text-xs text-slate-500 font-medium">Debit card · Mastercard</p>
+          <h3 className="text-lg font-black text-foreground">{title}</h3>
+          <p className="text-xs text-muted-foreground font-medium">Debit card · Mastercard</p>
         </div>
       </div>
 
       {step === "kind" && (
         <div className="space-y-3">
-          <p className="text-sm text-slate-600">Choose how you want to use your debit card.</p>
+          <p className="text-sm text-muted-foreground">Choose how you want to use your debit card.</p>
           <Button
             className="w-full h-14 rounded-2xl justify-start gap-3 bg-indigo-600 hover:bg-indigo-700 font-black"
             onClick={() => setStep("virtual")}
@@ -114,7 +114,7 @@ export function DebitCardMethodPanel({
 
       {step === "virtual" && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             Create unlimited virtual cards. Block a card anytime after use.
           </p>
 
@@ -132,7 +132,7 @@ export function DebitCardMethodPanel({
                       }`}
                     >
                       <p className="font-mono text-sm font-bold">{c.maskedPan}</p>
-                      <p className="text-xs text-slate-500">{c.label}</p>
+                      <p className="text-xs text-muted-foreground">{c.label}</p>
                     </button>
                     <Button type="button" variant="outline" size="sm" className="shrink-0 text-red-600" onClick={() => toggleBlock(c.id)}>
                       <Ban className="w-4 h-4" />
@@ -164,8 +164,8 @@ export function DebitCardMethodPanel({
           </div>
 
           {blockedVirtual.length > 0 && (
-            <div className="text-xs text-slate-500 space-y-1">
-              <p className="font-bold text-slate-600">Blocked cards</p>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p className="font-bold text-muted-foreground">Blocked cards</p>
               {blockedVirtual.map((c) => (
                 <div key={c.id} className="flex justify-between items-center py-1">
                   <span className="font-mono">{c.maskedPan}</span>
@@ -189,14 +189,14 @@ export function DebitCardMethodPanel({
 
       {step === "physicalRegister" && (
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             Register the last 4 digits of your physical Mastercard. You can create many virtual cards; one registered physical
             card per profile for Cash In / Out.
           </p>
           {!editingPhysical && physicalMastercardLast4 && physicalMastercardLast4.length === 4 ? (
             <div className="space-y-3">
               <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
-                <p className="text-xs font-bold text-slate-500 uppercase">Physical Mastercard</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase">Physical Mastercard</p>
                 <p className="font-mono font-black text-lg">**** **** **** {physicalMastercardLast4}</p>
               </div>
               <Button

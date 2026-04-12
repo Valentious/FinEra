@@ -284,16 +284,16 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                       </button>
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900">{profileFullName || userData.fullName}</p>
-                      <p className="text-xs text-slate-500 uppercase tracking-wider">{userData.accountType} Member</p>
-                      <p className="text-xs text-slate-400 mt-1">Acc: {userData.finEraAccountNumbers?.usd ?? userData.accountNumber}</p>
+                      <p className="font-bold text-foreground">{profileFullName || userData.fullName}</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">{userData.accountType} Member</p>
+                      <p className="text-xs text-muted-foreground mt-1">Acc: {userData.finEraAccountNumbers?.usd ?? userData.accountNumber}</p>
                     </div>
                   </div>
 
                   {/* Form Fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">{t("profile.fieldTitle")}</Label>
+                      <Label className="text-xs font-bold text-muted-foreground">{t("profile.fieldTitle")}</Label>
                       <Input
                         value={profileTitle}
                         onChange={(e) => setProfileTitle(e.target.value)}
@@ -301,7 +301,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">{t("profile.fieldFullName")}</Label>
+                      <Label className="text-xs font-bold text-muted-foreground">{t("profile.fieldFullName")}</Label>
                       <Input
                         value={profileFullName}
                         onChange={(e) => setProfileFullName(e.target.value)}
@@ -309,12 +309,12 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">{t("profile.fieldEmail")}</Label>
-                      <Input value={profileEmail} readOnly disabled className="h-11 rounded-xl bg-slate-50 text-slate-600" />
-                      <p className="text-[10px] text-slate-500">{t("profile.emailLocked")}</p>
+                      <Label className="text-xs font-bold text-muted-foreground">{t("profile.fieldEmail")}</Label>
+                      <Input value={profileEmail} readOnly disabled className="h-11 rounded-xl bg-slate-50 text-muted-foreground" />
+                      <p className="text-[10px] text-muted-foreground">{t("profile.emailLocked")}</p>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">{t("profile.fieldPhone")}</Label>
+                      <Label className="text-xs font-bold text-muted-foreground">{t("profile.fieldPhone")}</Label>
                       <Input
                         value={profilePhone}
                         onChange={(e) => setProfilePhone(e.target.value)}
@@ -324,7 +324,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">{t("profile.fieldCity")}</Label>
+                      <Label className="text-xs font-bold text-muted-foreground">{t("profile.fieldCity")}</Label>
                       <Input
                         value={profileCity}
                         onChange={(e) => setProfileCity(e.target.value)}
@@ -347,19 +347,19 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">National ID</Label>
+                      <Label className="text-xs font-bold text-muted-foreground">National ID</Label>
                       <Input 
                         defaultValue={userData.nationalIdNumber} 
                         disabled 
-                        className="h-11 rounded-xl bg-slate-50 text-slate-500 cursor-not-allowed" 
+                        className="h-11 rounded-xl bg-slate-50 text-muted-foreground cursor-not-allowed" 
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">{userData.accountType === 'student' ? 'Student' : userData.accountType === 'staff' ? 'Staff' : 'Employer'} ID</Label>
+                      <Label className="text-xs font-bold text-muted-foreground">{userData.accountType === 'student' ? 'Student' : userData.accountType === 'staff' ? 'Staff' : 'Employer'} ID</Label>
                       <Input 
                         defaultValue={userData.studentStaffId} 
                         disabled 
-                        className="h-11 rounded-xl bg-slate-50 text-slate-500 cursor-not-allowed" 
+                        className="h-11 rounded-xl bg-slate-50 text-muted-foreground cursor-not-allowed" 
                       />
                     </div>
                   </div>
@@ -391,7 +391,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-600">{t("profile.displayLanguage")}</Label>
+                    <Label className="text-xs font-bold text-muted-foreground">{t("profile.displayLanguage")}</Label>
                     <select 
                       value={language}
                       onChange={async (e) => {
@@ -443,11 +443,11 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                         <HelpCircle className="w-5 h-5 text-emerald-600" />
                       </div>
                       <div className="text-left">
-                        <p className="text-sm font-bold text-slate-900">Help Centre</p>
-                        <p className="text-xs text-slate-500">Browse FAQs and guides</p>
+                        <p className="text-sm font-bold text-foreground">Help Centre</p>
+                        <p className="text-xs text-muted-foreground">Browse FAQs and guides</p>
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-emerald-600 transition-colors" />
                   </button>
 
                   <button 
@@ -459,13 +459,13 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                         <MessageSquare className="w-5 h-5 text-green-600" />
                       </div>
                       <div className="text-left">
-                        <p className="text-sm font-bold text-slate-900">Live Chat</p>
-                        <p className="text-xs text-slate-500">Chat with support now</p>
+                        <p className="text-sm font-bold text-foreground">Live Chat</p>
+                        <p className="text-xs text-muted-foreground">Chat with support now</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-green-600 transition-colors" />
+                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-green-600 transition-colors" />
                     </div>
                   </button>
                 </CardContent>
@@ -497,10 +497,10 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-emerald-300 transition-all">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-slate-600" />
+                        <FileText className="w-5 h-5 text-muted-foreground" />
                         <div>
-                          <p className="text-sm font-bold text-slate-900">Proof of Identity</p>
-                          <p className="text-xs text-slate-500">Upload National ID, Passport, or Driver's License</p>
+                          <p className="text-sm font-bold text-foreground">Proof of Identity</p>
+                          <p className="text-xs text-muted-foreground">Upload National ID, Passport, or Driver's License</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -518,10 +518,10 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                     <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-emerald-300 transition-all">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <DollarSign className="w-5 h-5 text-slate-600" />
+                          <DollarSign className="w-5 h-5 text-muted-foreground" />
                           <div>
-                            <p className="text-sm font-bold text-slate-900">Proof of Income</p>
-                            <p className="text-xs text-slate-500">Payslip or employment letter (within 3 months)</p>
+                            <p className="text-sm font-bold text-foreground">Proof of Income</p>
+                            <p className="text-xs text-muted-foreground">Payslip or employment letter (within 3 months)</p>
                           </div>
                         </div>
                         <Button size="sm" variant="outline" className="rounded-lg">
@@ -558,7 +558,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
                   <div className="space-y-3">
-                    <Label className="text-xs font-bold text-slate-600">Change Password</Label>
+                    <Label className="text-xs font-bold text-muted-foreground">Change Password</Label>
                     <Input type="password" placeholder="Current Password" className="h-11 rounded-xl" />
                     <Input type="password" placeholder="New Password" className="h-11 rounded-xl" />
                     <Input type="password" placeholder="Confirm New Password" className="h-11 rounded-xl" />
@@ -615,10 +615,10 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50">
                     <div className="flex items-center gap-3">
-                      <Smartphone className="w-5 h-5 text-slate-600" />
+                      <Smartphone className="w-5 h-5 text-muted-foreground" />
                       <div>
                         <p className="text-sm font-bold">SMS Authentication</p>
-                        <p className="text-xs text-slate-500">Receive codes via text message</p>
+                        <p className="text-xs text-muted-foreground">Receive codes via text message</p>
                       </div>
                     </div>
                     <Switch 
@@ -647,11 +647,11 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-600">Daily Cash Out Limit</Label>
+                    <Label className="text-xs font-bold text-muted-foreground">Daily Cash Out Limit</Label>
                     <Input type="number" defaultValue="500" className="h-11 rounded-xl" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-slate-600">Monthly Credit Application Limit</Label>
+                    <Label className="text-xs font-bold text-muted-foreground">Monthly Credit Application Limit</Label>
                     <Input type="number" defaultValue="3" className="h-11 rounded-xl" />
                   </div>
                 </CardContent>
@@ -678,10 +678,10 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   ].map((login, i) => (
                     <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
                       <div className="flex items-center gap-3">
-                        <Smartphone className="w-4 h-4 text-slate-500" />
+                        <Smartphone className="w-4 h-4 text-muted-foreground" />
                         <div>
-                          <p className="text-sm font-bold text-slate-900">{login.device}</p>
-                          <p className="text-xs text-slate-500">{login.location} • {login.time}</p>
+                          <p className="text-sm font-bold text-foreground">{login.device}</p>
+                          <p className="text-xs text-muted-foreground">{login.location} • {login.time}</p>
                         </div>
                       </div>
                       <CheckCircle2 className="w-4 h-4 text-green-600" />
@@ -704,7 +704,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="p-4 bg-slate-50 rounded-xl font-mono text-xs text-slate-600 flex items-center justify-between">
+                  <div className="p-4 bg-slate-50 rounded-xl font-mono text-xs text-muted-foreground flex items-center justify-between">
                     <span>••••••••••••••••••••••••••••</span>
                     <Button size="sm" variant="outline" className="rounded-lg">
                       Regenerate
@@ -727,7 +727,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <p className="text-sm text-slate-500 text-center py-8">No connected apps</p>
+                  <p className="text-sm text-muted-foreground text-center py-8">No connected apps</p>
                 </CardContent>
               </Card>
 
@@ -745,7 +745,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <p className="text-sm text-slate-600 mb-4">If you need a break from credit services, you can temporarily exclude yourself from applying for new credits.</p>
+                  <p className="text-sm text-muted-foreground mb-4">If you need a break from credit services, you can temporarily exclude yourself from applying for new credits.</p>
                   <Button variant="outline" className="border-red-300 text-red-700 hover:bg-red-100 rounded-xl">
                     Request Self-Exclusion
                   </Button>
@@ -809,8 +809,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                         <Smartphone className="w-5 h-5 text-green-600" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-900">Ecocash</p>
-                        <p className="text-xs text-slate-500">Mobile money</p>
+                        <p className="text-sm font-bold text-foreground">Ecocash</p>
+                        <p className="text-xs text-muted-foreground">Mobile money</p>
                       </div>
                     </div>
                     <CheckCircle2 className="w-5 h-5 text-green-600" />
@@ -822,8 +822,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                         <CreditCard className="w-5 h-5 text-emerald-600" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-900">InnBucks</p>
-                        <p className="text-xs text-slate-500">Mobile money</p>
+                        <p className="text-sm font-bold text-foreground">InnBucks</p>
+                        <p className="text-xs text-muted-foreground">Mobile money</p>
                       </div>
                     </div>
                     <Button size="sm" variant="outline" className="rounded-lg">Add</Button>
@@ -835,8 +835,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                         <Smartphone className="w-5 h-5 text-purple-600" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-900">OneMoney</p>
-                        <p className="text-xs text-slate-500">Mobile money</p>
+                        <p className="text-sm font-bold text-foreground">OneMoney</p>
+                        <p className="text-xs text-muted-foreground">Mobile money</p>
                       </div>
                     </div>
                     <Button size="sm" variant="outline" className="rounded-lg">Add</Button>
@@ -868,13 +868,13 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                 <CardContent className="pt-6 space-y-4">
                   <button className="w-full p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Scale className="w-5 h-5 text-slate-600" />
+                      <Scale className="w-5 h-5 text-muted-foreground" />
                       <div className="text-left">
-                        <p className="text-sm font-bold text-slate-900">Responsible Trading</p>
-                        <p className="text-xs text-slate-500">Learn about safe credit practices</p>
+                        <p className="text-sm font-bold text-foreground">Responsible Trading</p>
+                        <p className="text-xs text-muted-foreground">Learn about safe credit practices</p>
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   </button>
 
                   <button 
@@ -884,11 +884,11 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                     <div className="flex items-center gap-3">
                       <MessageCircle className="w-5 h-5 text-green-600" />
                       <div className="text-left">
-                        <p className="text-sm font-bold text-slate-900">WhatsApp Support</p>
-                        <p className="text-xs text-slate-500">Chat with our support team</p>
+                        <p className="text-sm font-bold text-foreground">WhatsApp Support</p>
+                        <p className="text-xs text-muted-foreground">Chat with our support team</p>
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   </button>
 
                   <button 
@@ -898,11 +898,11 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                     <div className="flex items-center gap-3">
                       <MessageSquare className="w-5 h-5 text-emerald-600" />
                       <div className="text-left">
-                        <p className="text-sm font-bold text-slate-900">Live Chat</p>
-                        <p className="text-xs text-slate-500">Get instant help from our agents</p>
+                        <p className="text-sm font-bold text-foreground">Live Chat</p>
+                        <p className="text-xs text-muted-foreground">Get instant help from our agents</p>
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </CardContent>
               </Card>

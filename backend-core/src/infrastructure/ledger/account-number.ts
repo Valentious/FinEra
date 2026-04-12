@@ -53,6 +53,15 @@ type Tx = Omit<Prisma.TransactionClient, "$connect" | "$disconnect" | "$on" | "$
 
 /** Atomic monotonic sequence (row locked in the surrounding transaction). */
 export async function allocateAccountSequence(tx: Tx): Promise<bigint> {
+  // Idempotent bootstrap for environments created via db push/baseline
+  // where this helper table may not exist yet.
+  await tx.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "account_number_sequence" (
+      "id" text PRIMARY KEY,
+      "next" bigint NOT NULL DEFAULT 0
+    )
+  `);
+
   await tx.$executeRaw`
     INSERT INTO "account_number_sequence" ("id", "next")
     VALUES ('global', 0)

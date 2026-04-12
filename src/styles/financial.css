@@ -1,0 +1,30 @@
+/**
+ * Banking-style numerics: Roboto Mono + tabular lining figures.
+ * Weights 600–700; letter-spacing tightened for legibility at size.
+ */
+@layer components {
+  .fin-amount {
+    font-family: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    letter-spacing: -0.035em;
+  }
+
+  .fin-amount--hero {
+    font-weight: 700;
+  }
+
+  .fin-amount--primary {
+    font-weight: 600;
+  }
+
+  .fin-amount--secondary {
+    font-weight: 600;
+    font-size: 0.9em;
+  }
+
+  .fin-amount--ledger {
+    font-weight: 600;
+    font-size: 0.95em;
+  }
+}

@@ -5,7 +5,6 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Checkbox } from "@/app/components/ui/checkbox";
-import { Badge } from "@/app/components/ui/badge";
 import { 
   ArrowLeft, 
   ShieldAlert, 
@@ -13,17 +12,27 @@ import {
   FileCheck
 } from "lucide-react";
 import { CollateralMultiUpload } from "./CollateralMultiUpload";
+import { LoanApplicationFlow } from "@/app/components/LoanApplicationFlow";
+import type { LoanType } from "@/loan/loanTypes";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { CURRENCY_AMOUNT_SYMBOLS, currencyAmountPlaceholder } from "@/types/wallet";
-
 interface CollateralDetailsProps {
   currencyCode: string;
+  loanType: LoanType;
   onSubmit: (data: unknown) => void;
   onBack: () => void;
 }
 
-export function CollateralDetails({ currencyCode, onSubmit, onBack }: CollateralDetailsProps) {
+const brandShell =
+  "relative overflow-hidden border-none bg-gradient-to-br from-primary to-[#1ebe5d] text-white shadow-[0_8px_24px_-8px_rgba(37,211,102,0.35)]";
+
+export function CollateralDetails({
+  currencyCode,
+  loanType,
+  onSubmit,
+  onBack,
+}: CollateralDetailsProps) {
   const cc = currencyCode.toUpperCase();
   const sym = CURRENCY_AMOUNT_SYMBOLS[cc] ?? cc;
   const inputPadClass = sym.length > 2 ? "pl-24" : "pl-10";
@@ -55,8 +64,9 @@ export function CollateralDetails({ currencyCode, onSubmit, onBack }: Collateral
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div className="min-h-dvh bg-transparent p-4 md:p-8">
       <div className="max-w-2xl mx-auto space-y-6">
+        <LoanApplicationFlow loanType={loanType} step="collateral" />
         <AnimatePresence mode="wait">
           {step === "disclosure" && (
             <motion.div
@@ -70,36 +80,36 @@ export function CollateralDetails({ currencyCode, onSubmit, onBack }: Collateral
                 <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
-                <h2 className="text-2xl font-black text-slate-900">Mandatory Disclosure</h2>
+                <h2 className="text-2xl font-black text-foreground">Mandatory Disclosure</h2>
               </div>
 
-              <Card className="p-8 border-none bg-slate-900 text-white shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/20 blur-3xl rounded-full -mr-16 -mt-16" />
+              <Card className={`${brandShell} p-8`}>
+                <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-white/20 blur-3xl" />
                 <div className="relative z-10 space-y-6">
-                  <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center border border-amber-500/30">
-                    <ShieldAlert className="w-8 h-8 text-amber-500" />
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/35 bg-white/15 backdrop-blur-md">
+                    <ShieldAlert className="h-8 w-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-black">Legal Agreement & Risk Acknowledgment</h3>
-                  <div className="p-6 bg-white/5 rounded-2xl border border-white/10 italic text-emerald-100 leading-relaxed font-medium">
+                  <h3 className="text-xl font-semibold tracking-tight text-white">Legal Agreement & Risk Acknowledgment</h3>
+                  <div className="rounded-2xl border border-zinc-200/50 bg-white/60 p-6 text-sm font-medium italic leading-relaxed text-zinc-700 backdrop-blur-sm dark:border-white/12 dark:bg-black/30 dark:text-zinc-200">
                     "{DISCLOSURE_TEXT}"
                   </div>
-                  
-                  <div className="flex items-center space-x-3 p-4 bg-emerald-600/20 rounded-xl border border-emerald-600/30">
+
+                  <div className="flex items-center space-x-3 rounded-xl border border-white/45 bg-white/45 p-4 backdrop-blur-sm dark:border-white/15 dark:bg-white/10">
                     <Checkbox
                       id="disclosure-check"
                       checked={disclosureAccepted}
                       onCheckedChange={(checked) => setDisclosureAccepted(checked as boolean)}
-                      className="border-white/30 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                      className="border-zinc-500/40 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:border-zinc-400/35"
                     />
-                    <Label htmlFor="disclosure-check" className="text-xs font-bold cursor-pointer text-emerald-100">
+                    <Label htmlFor="disclosure-check" className="cursor-pointer text-xs font-medium text-white">
                       I have read, understood, and accept these collateral-based lending terms.
                     </Label>
                   </div>
 
-                  <Button 
+                  <Button
                     disabled={!disclosureAccepted}
                     onClick={() => setStep("form")}
-                    className="w-full h-14 bg-white text-slate-900 hover:bg-slate-100 rounded-2xl font-black transition-all shadow-xl active:scale-[0.98]"
+                    className="h-14 w-full rounded-2xl bg-white font-semibold text-primary shadow-xl transition-all hover:bg-white/90 active:scale-[0.98]"
                   >
                     Agree & Proceed
                   </Button>
@@ -119,36 +129,39 @@ export function CollateralDetails({ currencyCode, onSubmit, onBack }: Collateral
                 <Button variant="ghost" size="icon" onClick={() => setStep("disclosure")} className="rounded-full">
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
-                <h2 className="text-2xl font-black text-slate-900">Asset Verification</h2>
+                <h2 className="text-2xl font-black text-foreground">Asset Verification</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-                  <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
-                    <Calculator className="w-4 h-4" />
+              <Card className={`${brandShell} p-5`}>
+                <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
+                <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="flex items-center gap-3 rounded-xl border border-white/45 bg-white/45 p-4 backdrop-blur-sm dark:border-white/15 dark:bg-white/10">
+                    <div className="rounded-lg border border-white/35 bg-white/15 p-2">
+                      <Calculator className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-white/80">Liquidation Rate</p>
+                      <p className="text-sm font-semibold tracking-tight text-white">70% of Assessment</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase">Liquidation Rate</p>
-                    <p className="text-sm font-black text-slate-900">70% of Assessment</p>
+                  <div className="flex items-center gap-3 rounded-xl border border-white/45 bg-white/45 p-4 backdrop-blur-sm dark:border-white/15 dark:bg-white/10">
+                    <div className="rounded-lg border border-white/35 bg-white/15 p-2">
+                      <FileCheck className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-white/80">Insurance Policy</p>
+                      <p className="text-sm font-semibold tracking-tight text-white">0.5% Coverage Req.</p>
+                    </div>
                   </div>
                 </div>
-                <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-                  <div className="p-2 bg-green-50 rounded-lg text-green-600">
-                    <FileCheck className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase">Insurance Policy</p>
-                    <p className="text-sm font-black text-slate-900">0.5% Coverage Req.</p>
-                  </div>
-                </div>
-              </div>
+              </Card>
 
               <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 rounded-3xl bg-white">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <Label className="font-bold text-slate-600 ml-1">Asset Market Value ({cc})</Label>
+                    <Label className="font-bold text-muted-foreground ml-1">Asset Market Value ({cc})</Label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm max-w-[5rem] leading-tight">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-muted-foreground text-sm max-w-[5rem] leading-tight">
                         {sym}
                       </span>
                       <Input
@@ -163,7 +176,7 @@ export function CollateralDetails({ currencyCode, onSubmit, onBack }: Collateral
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="font-bold text-slate-600 ml-1">Asset Description & Condition</Label>
+                    <Label className="font-bold text-muted-foreground ml-1">Asset Description & Condition</Label>
                     <Textarea
                       placeholder="e.g. MacBook Pro M2, 16GB RAM, No scratches, Original packaging included."
                       value={description}
@@ -175,7 +188,7 @@ export function CollateralDetails({ currencyCode, onSubmit, onBack }: Collateral
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="font-bold text-slate-600">Upload Asset Evidence (Front, Back, Serial)</Label>
+                    <Label className="font-bold text-muted-foreground">Upload Asset Evidence (Front, Back, Serial)</Label>
                     <CollateralMultiUpload files={collateralFiles} onChange={setCollateralFiles} />
                   </div>
 
@@ -188,10 +201,10 @@ export function CollateralDetails({ currencyCode, onSubmit, onBack }: Collateral
                       required
                     />
                     <div className="flex-1">
-                      <Label htmlFor="ownership" className="text-xs font-black text-slate-700 cursor-pointer">
+                      <Label htmlFor="ownership" className="text-xs font-black text-foreground cursor-pointer">
                         Proof of Ownership Confirmation
                       </Label>
-                      <p className="text-[10px] text-slate-500 font-medium mt-1 leading-relaxed">
+                      <p className="text-[10px] text-muted-foreground font-medium mt-1 leading-relaxed">
                         I legally own this asset and authorize its assessment for secure storage verification. I understand it will be held as collateral.
                       </p>
                     </div>
@@ -203,7 +216,7 @@ export function CollateralDetails({ currencyCode, onSubmit, onBack }: Collateral
                 </form>
               </Card>
 
-              <div className="flex items-center justify-center gap-2 text-slate-400">
+              <div className="flex items-center justify-center gap-2 text-muted-foreground">
                 <ShieldAlert className="w-4 h-4" />
                 <span className="text-[10px] font-bold uppercase tracking-widest">Secure Asset Gateway v4.0</span>
               </div>

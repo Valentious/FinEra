@@ -1,0 +1,10 @@
+{
+  "name": "FinEra Inclusive Credit",
+  "short_name": "FinEra",
+  "description": "Inclusive credit and wallet experience",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7FDF9",
+  "theme_color": "#25D366",
+  "orientation": "portrait-primary"
+}

@@ -71,10 +71,10 @@ function TermTooltipContent({ term: t, context }: { term: FinancialTerm; context
 
   return (
     <div className="max-w-sm p-3 space-y-2">
-      <p className="font-semibold text-slate-900">{t.term}</p>
-      <p className="text-sm text-slate-600">{t.simpleDefinition}</p>
+      <p className="font-semibold text-foreground">{t.term}</p>
+      <p className="text-sm text-muted-foreground">{t.simpleDefinition}</p>
       {t.advancedDefinition && (
-        <p className="text-xs text-slate-500 border-t border-slate-100 pt-2 mt-2">
+        <p className="text-xs text-muted-foreground border-t border-slate-100 pt-2 mt-2">
           {t.advancedDefinition}
         </p>
       )}
@@ -84,7 +84,7 @@ function TermTooltipContent({ term: t, context }: { term: FinancialTerm; context
         </p>
       )}
       {t.relatedTerms?.length > 0 && (
-        <p className="text-[10px] text-slate-400">
+        <p className="text-[10px] text-muted-foreground">
           Related: {t.relatedTerms.join(", ")}
         </p>
       )}

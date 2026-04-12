@@ -19,6 +19,7 @@ export type AdminNavId =
   | "users"
   | "wallets"
   | "credit"
+  | "documents"
   | "agents"
   | "risk"
   | "transactions"

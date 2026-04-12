@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { getPartnerProgram, applyPartnerProgram, type PartnerProgramApplication } from "@/services/api";
 import { toast } from "sonner";
+import { FineraGradientBackdrop } from "@/app/components/FineraGradientBackdrop";
 
 const SERVICE_OPTIONS = ["Cash In", "Cash Out", "Loan Support", "Payment Assistance"];
 
@@ -100,40 +101,49 @@ export function PartnerProgram() {
 
   if (loading && status === "NOT_APPLIED") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Loader2 className="w-12 h-12 animate-spin text-emerald-600" />
-        <p className="text-slate-600 font-medium">Loading partner program...</p>
+      <div className="relative isolate flex min-h-[400px] flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl">
+        <FineraGradientBackdrop clip="card" />
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="font-medium text-foreground">Loading partner program...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
+    <div className="relative isolate min-h-[min(100%,calc(100dvh-6rem))] overflow-x-hidden pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <FineraGradientBackdrop />
+      <div className="relative z-10 space-y-8">
+      {/* Header — same canvas as SplashScreen */}
+      <div className="relative overflow-hidden rounded-3xl p-8 text-white shadow-2xl">
+        <FineraGradientBackdrop clip="card" />
         <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
-              <UserPlus className="w-6 h-6 text-emerald-400" />
+          <div className="mb-4 flex items-center gap-2">
+            <div className="rounded-lg border border-white/20 bg-white/10 p-2 backdrop-blur-md">
+              <UserPlus className="h-6 w-6 text-emerald-100" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300">
-              Partner Program
-            </span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/85">Partner Program</span>
           </div>
-          <h1 className="text-4xl font-black mb-2 leading-tight">Transaction Partner Program</h1>
-          <p className="text-slate-300 text-sm">
+          <h1 className="mb-2 text-4xl font-black leading-tight">Transaction Partner Program</h1>
+          <p className="text-sm text-white/80">
             Become a registered agent and earn through system-based financial services.
           </p>
         </div>
-        <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[140%] bg-emerald-500/20 rounded-full blur-[80px]" />
       </div>
 
       {error && (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="flex items-center justify-between py-4">
-            <span className="text-amber-800">{error}</span>
-            <Button variant="outline" size="sm" onClick={fetchProgram}>
-              <RefreshCw className="w-4 h-4 mr-2" /> Retry
+        <Card className="relative overflow-hidden border-white/25 shadow-md">
+          <FineraGradientBackdrop clip="panel" />
+          <CardContent className="relative z-10 flex items-center justify-between py-4 text-white">
+            <span className="text-sm text-white/95">{error}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-white/50 bg-white/15 text-white hover:bg-white/25"
+              onClick={fetchProgram}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Retry
             </Button>
           </CardContent>
         </Card>
@@ -147,20 +157,21 @@ export function PartnerProgram() {
               ? "border-emerald-200 bg-emerald-50"
               : status === "REJECTED"
                 ? "border-red-200 bg-red-50"
-                : "border-amber-200 bg-amber-50"
+                : "relative overflow-hidden border-white/25 text-white"
           }
         >
-          <CardContent className="flex items-center gap-4 py-4">
-            {status === "APPROVED" && <CheckCircle2 className="w-10 h-10 text-emerald-600" />}
-            {status === "PENDING" && <Clock className="w-10 h-10 text-amber-600" />}
-            {status === "REJECTED" && <XCircle className="w-10 h-10 text-red-600" />}
+          {status === "PENDING" && <FineraGradientBackdrop clip="panel" />}
+          <CardContent className={`flex items-center gap-4 py-4 ${status === "PENDING" ? "relative z-10" : ""}`}>
+            {status === "APPROVED" && <CheckCircle2 className="h-10 w-10 text-emerald-600" />}
+            {status === "PENDING" && <Clock className="h-10 w-10 text-white" />}
+            {status === "REJECTED" && <XCircle className="h-10 w-10 text-red-600" />}
             <div>
-              <h3 className="font-bold text-slate-900">
+              <h3 className={`font-bold ${status === "PENDING" ? "text-white" : "text-foreground"}`}>
                 {status === "APPROVED" && "You are an approved partner"}
                 {status === "PENDING" && "Application pending review"}
                 {status === "REJECTED" && "Application was not approved"}
               </h3>
-              <p className="text-sm text-slate-600">
+              <p className={`text-sm ${status === "PENDING" ? "text-white/88" : "text-muted-foreground"}`}>
                 {status === "APPROVED" && "You can now facilitate transactions and earn commissions."}
                 {status === "PENDING" && "Our team will review your submission within 3-5 business days."}
                 {status === "REJECTED" && "Contact support if you have questions."}
@@ -176,8 +187,8 @@ export function PartnerProgram() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
           <div className="relative z-10">
             <Users className="w-10 h-10 text-emerald-600 mb-6" />
-            <h3 className="text-xl font-black text-slate-900 mb-2">Become an Agent</h3>
-            <p className="text-slate-500 text-sm font-medium mb-6">
+            <h3 className="text-xl font-black text-foreground mb-2">Become an Agent</h3>
+            <p className="text-muted-foreground text-sm font-medium mb-6">
               Earn commissions by facilitating cash in and cash out for your community.
             </p>
             {status === "NOT_APPLIED" && (
@@ -195,8 +206,8 @@ export function PartnerProgram() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
           <div className="relative z-10">
             <DollarSign className="w-10 h-10 text-green-600 mb-6" />
-            <h3 className="text-xl font-black text-slate-900 mb-2">Earnings Calculator</h3>
-            <p className="text-slate-500 text-sm font-medium mb-6">
+            <h3 className="text-xl font-black text-foreground mb-2">Earnings Calculator</h3>
+            <p className="text-muted-foreground text-sm font-medium mb-6">
               Estimate your monthly revenue based on transaction volume and community size.
             </p>
             <Button variant="outline" className="w-full border-slate-200 font-black rounded-xl">
@@ -209,8 +220,8 @@ export function PartnerProgram() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
           <div className="relative z-10">
             <Briefcase className="w-10 h-10 text-amber-600 mb-6" />
-            <h3 className="text-xl font-black text-slate-900 mb-2">Agent Benefits</h3>
-            <p className="text-slate-500 text-sm font-medium mb-6">
+            <h3 className="text-xl font-black text-foreground mb-2">Agent Benefits</h3>
+            <p className="text-muted-foreground text-sm font-medium mb-6">
               Priority support, marketing materials, and certified agent branding for your kiosk.
             </p>
             <Button variant="outline" className="w-full border-slate-200 font-black rounded-xl">
@@ -225,12 +236,12 @@ export function PartnerProgram() {
         <Card className="p-8 border-emerald-100">
           <div className="flex items-center gap-2 mb-6">
             <FileText className="w-5 h-5 text-emerald-600" />
-            <h2 className="text-2xl font-black text-slate-900">Application Details</h2>
+            <h2 className="text-2xl font-black text-foreground">Application Details</h2>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-sm font-black text-slate-700 uppercase tracking-wide">
+              <Label htmlFor="fullName" className="text-sm font-black text-foreground uppercase tracking-wide">
                 Full Name *
               </Label>
               <Input
@@ -244,7 +255,7 @@ export function PartnerProgram() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="idNumber" className="text-sm font-black text-slate-700 uppercase tracking-wide">
+              <Label htmlFor="idNumber" className="text-sm font-black text-foreground uppercase tracking-wide">
                 National ID / Student ID *
               </Label>
               <Input
@@ -258,7 +269,7 @@ export function PartnerProgram() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="contactNumber" className="text-sm font-black text-slate-700 uppercase tracking-wide">
+              <Label htmlFor="contactNumber" className="text-sm font-black text-foreground uppercase tracking-wide">
                 Contact Number *
               </Label>
               <PhoneInputField
@@ -274,7 +285,7 @@ export function PartnerProgram() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location" className="text-sm font-black text-slate-700 uppercase tracking-wide">
+              <Label htmlFor="location" className="text-sm font-black text-foreground uppercase tracking-wide">
                 Location *
               </Label>
               <Input
@@ -288,7 +299,7 @@ export function PartnerProgram() {
             </div>
 
             <div className="space-y-3">
-              <Label className="text-sm font-black text-slate-700 uppercase tracking-wide">
+              <Label className="text-sm font-black text-foreground uppercase tracking-wide">
                 Type of Services You Can Offer *
               </Label>
               <div className="grid grid-cols-2 gap-3">
@@ -300,7 +311,7 @@ export function PartnerProgram() {
                     className={`p-4 rounded-xl border-2 font-bold text-sm transition-all ${
                       formData.services.includes(service)
                         ? "border-emerald-600 bg-emerald-50 text-emerald-700"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                        : "border-slate-200 bg-white text-muted-foreground hover:border-slate-300"
                     }`}
                   >
                     {service}
@@ -328,8 +339,8 @@ export function PartnerProgram() {
       {status === "NOT_APPLIED" && !showForm && (
         <Card className="p-8 border border-slate-200 bg-slate-50 dark:bg-slate-900 dark:border-slate-800 flex flex-col items-center justify-center text-center max-w-xl mx-auto">
           <UserPlus className="w-14 h-14 text-emerald-600 mb-4" />
-          <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Join campus agents</h3>
-          <p className="text-slate-600 dark:text-slate-400 font-medium mb-6 max-w-sm text-sm">
+          <h3 className="text-xl font-black text-foreground mb-2">Join campus agents</h3>
+          <p className="text-muted-foreground font-medium mb-6 max-w-sm text-sm">
             Facilitate financial inclusion and earn commissions. Start your application above.
           </p>
           <Button
@@ -340,6 +351,7 @@ export function PartnerProgram() {
           </Button>
         </Card>
       )}
+      </div>
     </div>
   );
 }

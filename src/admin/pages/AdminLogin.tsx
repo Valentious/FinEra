@@ -36,37 +36,37 @@ export function AdminLogin() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">Admin Sign-In</h1>
-            <p className="text-sm text-slate-400">Authorized stakeholders only</p>
+            <p className="text-sm text-muted-foreground">Authorized stakeholders only</p>
           </div>
         </div>
         <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-2 rounded-lg border border-slate-700/80 bg-slate-950/60 px-3 py-2 text-xs leading-relaxed text-slate-400">
+          <div className="space-y-2 rounded-lg border border-slate-700/80 bg-slate-950/60 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
             <p>
-              <strong className="text-slate-300">Staff admin</strong> is separate from the member app. Sign in with an{" "}
-              <span className="font-mono text-slate-300">AdminUser</span> row in the database, not your student/member
+              <strong className="text-muted-foreground">Staff admin</strong> is separate from the member app. Sign in with an{" "}
+              <span className="font-mono text-muted-foreground">AdminUser</span> row in the database, not your student/member
               password.
             </p>
             <p>
-              After <span className="font-mono text-slate-300">npm run db:seed</span> (from{" "}
-              <span className="font-mono text-slate-300">backend-core</span>), the default is{" "}
-              <span className="font-mono text-slate-300">admin@finera.local</span> /{" "}
-              <span className="font-mono text-slate-300">FinEraAdmin#2026!</span>
+              After <span className="font-mono text-muted-foreground">npm run db:seed</span> (from{" "}
+              <span className="font-mono text-muted-foreground">backend-core</span>), the default is{" "}
+              <span className="font-mono text-muted-foreground">admin@finera.local</span> /{" "}
+              <span className="font-mono text-muted-foreground">FinEraAdmin#2026!</span>
             </p>
             <p>
-              To add another admin email, set <span className="font-mono text-slate-300">SEED_ADMIN_EMAIL</span> and{" "}
-              <span className="font-mono text-slate-300">SEED_ADMIN_PASSWORD</span> in{" "}
-              <span className="font-mono text-slate-300">backend-core/.env</span> and run{" "}
-              <span className="font-mono text-slate-300">npm run db:seed</span> again.
+              To add another admin email, set <span className="font-mono text-muted-foreground">SEED_ADMIN_EMAIL</span> and{" "}
+              <span className="font-mono text-muted-foreground">SEED_ADMIN_PASSWORD</span> in{" "}
+              <span className="font-mono text-muted-foreground">backend-core/.env</span> and run{" "}
+              <span className="font-mono text-muted-foreground">npm run db:seed</span> again.
             </p>
             {import.meta.env.DEV && (
-              <p className="text-slate-500">
+              <p className="text-muted-foreground">
                 Dev: if <span className="font-mono">ADMIN_PROTO_LOGIN=true</span> is set on the API, any password is
                 accepted (development only).
               </p>
             )}
           </div>
           <div>
-            <label className="text-xs font-medium text-slate-400">Username / Email</label>
+            <label className="text-xs font-medium text-muted-foreground">Username / Email</label>
             <input
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
               value={email}
@@ -76,7 +76,7 @@ export function AdminLogin() {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-slate-400">Password</label>
+            <label className="text-xs font-medium text-muted-foreground">Password</label>
             <input
               type="password"
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"
@@ -86,7 +86,7 @@ export function AdminLogin() {
               required
             />
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/80 px-3 py-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/80 px-3 py-2 text-xs text-muted-foreground">
             <Fingerprint className="h-4 w-4 shrink-0" />
             Face ID / biometric - indicator only; wire device SDK in production.
           </div>

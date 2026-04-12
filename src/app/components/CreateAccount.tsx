@@ -128,7 +128,7 @@ export function CreateAccount({ onContinue }: CreateAccountProps) {
 
           <div className="space-y-2">
             <Label htmlFor="password">Create Password</Label>
-            <p className="text-xs text-slate-500">{PASSWORD_POLICY_HINT}</p>
+            <p className="text-xs text-muted-foreground">{PASSWORD_POLICY_HINT}</p>
             <Input
               id="password"
               type="password"

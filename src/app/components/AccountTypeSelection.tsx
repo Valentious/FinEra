@@ -22,14 +22,14 @@ export function AccountTypeSelection({
 }: AccountTypeSelectionProps) {
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-whatsapp-green-light to-whatsapp-green p-4">
       <div className="max-w-5xl w-full space-y-8">
         {onBack && (
           <div className="flex justify-start">
             <Button
               variant="ghost"
               onClick={onBack}
-              className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="w-4 h-4" />
               Back
@@ -42,7 +42,7 @@ export function AccountTypeSelection({
             <FinEraShieldIcon size={56} />
             <div className="hero-header flex flex-col items-center justify-center text-center">
               <FinEraLogoText variant="light" size="lg" className="font-black" />
-              <p className="inclusive-text text-sm font-semibold text-slate-600 tracking-[0.2em] uppercase mt-2 mb-0">
+              <p className="inclusive-text text-sm font-semibold text-muted-foreground tracking-[0.2em] uppercase mt-2 mb-0">
                 INCLUSIVE CREDIT
               </p>
             </div>
@@ -50,9 +50,9 @@ export function AccountTypeSelection({
         </div>
 
         <div className="flex flex-col items-center gap-3">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">Operating mode</p>
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-muted-foreground">Operating mode</p>
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            <span className="text-base font-bold text-slate-800">Select</span>
+            <span className="text-base font-bold text-foreground">Select</span>
             <ToggleGroup
               type="single"
               value={accountMode}
@@ -65,7 +65,7 @@ export function AccountTypeSelection({
               <ToggleGroupItem
                 value="real"
                 aria-label="Real account"
-                className="rounded-lg px-5 py-2.5 text-sm font-black data-[state=on]:border-emerald-600 data-[state=on]:bg-emerald-600 data-[state=on]:text-white"
+                className="rounded-lg px-5 py-2.5 text-sm font-black data-[state=on]:border-whatsapp-green data-[state=on]:bg-whatsapp-green data-[state=on]:text-white"
               >
                 <span className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 shrink-0" />
@@ -75,7 +75,7 @@ export function AccountTypeSelection({
               <ToggleGroupItem
                 value="demo"
                 aria-label="Explore account"
-                className="rounded-lg px-5 py-2.5 text-sm font-black data-[state=on]:border-violet-600 data-[state=on]:bg-violet-600 data-[state=on]:text-white"
+                className="rounded-lg px-5 py-2.5 text-sm font-black data-[state=on]:border-explore-primary data-[state=on]:bg-explore-primary data-[state=on]:text-white"
               >
                 <span className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 shrink-0" />
@@ -83,7 +83,7 @@ export function AccountTypeSelection({
                 </span>
               </ToggleGroupItem>
             </ToggleGroup>
-            <span className="text-base font-bold text-slate-800">account</span>
+            <span className="text-base font-bold text-foreground">account</span>
           </div>
           <p className="max-w-md text-center text-xs font-medium text-black">
             {accountMode === "demo"
@@ -96,7 +96,7 @@ export function AccountTypeSelection({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card
-            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all hover:border-green-500"
+            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-whatsapp-green"
             onClick={() => onSelectType("student", accountMode)}
           >
             <div className="flex justify-center">
@@ -105,35 +105,35 @@ export function AccountTypeSelection({
               </div>
             </div>
             <h3 className="text-xl">Student Account</h3>
-            <p className="text-slate-600">For registered University students</p>
+            <p className="text-muted-foreground">For registered University students</p>
             <Button className="w-full">Select</Button>
           </Card>
 
           <Card
-            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all hover:border-green-500"
+            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-whatsapp-green"
             onClick={() => onSelectType("staff", accountMode)}
           >
             <div className="flex justify-center">
-              <div className="p-4 bg-green-100 rounded-full">
-                <Briefcase className="w-8 h-8 text-green-600" />
+              <div className="p-4 bg-whatsapp-green-light rounded-full">
+                <Briefcase className="w-8 h-8 text-whatsapp-green" />
               </div>
             </div>
-            <h3 className="text-xl">Staff Account</h3>
-            <p className="text-slate-600">For confirmed administrative staff</p>
+            <h3 className="text-xl">Professional Account</h3>
+            <p className="text-muted-foreground">For Formally Employed Individuals</p>
             <Button className="w-full">Select</Button>
           </Card>
 
           <Card
-            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all hover:border-green-500"
+            className="p-8 text-center space-y-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-whatsapp-green"
             onClick={() => onSelectType("alumni", accountMode)}
           >
             <div className="flex justify-center">
-              <div className="p-4 bg-purple-100 rounded-full">
-                <Users className="w-8 h-8 text-purple-600" />
+              <div className="p-4 bg-explore-background rounded-full">
+                <Users className="w-8 h-8 text-explore-primary" />
               </div>
             </div>
-            <h3 className="text-xl">Employer Account</h3>
-            <p className="text-slate-600">For Approved Employers</p>
+            <h3 className="text-xl">Business Account</h3>
+            <p className="text-muted-foreground">For Enterprise Representatives</p>
             <Button className="w-full">Select</Button>
           </Card>
         </div>

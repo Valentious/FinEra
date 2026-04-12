@@ -25,12 +25,12 @@ export function WalletCredited({ currencyCode, amount, onWithdrawFunds, onViewRe
 
         <h1 className="text-3xl text-center mb-4 font-black">Funds Available</h1>
 
-        <p className="text-center text-slate-600 mb-8">
+        <p className="text-center text-muted-foreground mb-8">
           Your approved credit has been added to your {cc} Approved Credit Wallet.
         </p>
 
         <div className="p-6 bg-emerald-50 rounded-lg border border-emerald-200 mb-8 text-center">
-          <p className="text-sm text-slate-600 mb-2">Available balance ({cc})</p>
+          <p className="text-sm text-muted-foreground mb-2">Available balance ({cc})</p>
           <p className="text-4xl text-emerald-700 font-black">{formatAmountWithCurrency(amount, cc)}</p>
         </div>
 

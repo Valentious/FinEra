@@ -13,6 +13,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { formatAmountWithCurrency } from "@/types/wallet";
+import { finAmountHero, finAmountPrimary, finAmountSecondary } from "@/lib/financialTypography";
 
 const APPROVED_CREDIT_TRANSFER_FEE = 0.015;
 
@@ -74,8 +75,8 @@ export function WalletManagement({
         </Button>
 
         <div>
-          <h1 className="text-3xl font-black text-slate-900">Wallet Management</h1>
-          <p className="text-slate-500 font-medium mt-1">
+          <h1 className="text-3xl font-black text-foreground">Wallet Management</h1>
+          <p className="text-muted-foreground font-medium mt-1">
             Manage approved credit and {walletLabel} ({cc})
           </p>
         </div>
@@ -104,7 +105,7 @@ export function WalletManagement({
                 <p className="text-emerald-100 text-xs font-black uppercase tracking-widest mb-1">
                   Approved Credit Wallet
                 </p>
-                <h3 className="text-5xl font-black mb-4">
+                <h3 className={`mb-4 text-5xl leading-none text-white ${finAmountHero}`}>
                   {formatAmountWithCurrency(approvedCreditWallet, cc)}
                 </h3>
                 
@@ -152,7 +153,7 @@ export function WalletManagement({
                 <p className="text-green-100 text-xs font-black uppercase tracking-widest mb-1">
                   {walletLabel}
                 </p>
-                <h3 className="text-5xl font-black mb-4">
+                <h3 className={`mb-4 text-5xl leading-none text-white ${finAmountHero}`}>
                   {formatAmountWithCurrency(walletBalance, cc)}
                 </h3>
                 
@@ -175,7 +176,7 @@ export function WalletManagement({
                     <Button
                       onClick={onWithdraw}
                       disabled={walletBalance === 0}
-                      className="bg-white text-green-600 hover:bg-green-50 h-10 rounded-xl font-black"
+                      className="bg-white text-black hover:bg-green-50 h-10 rounded-xl font-black"
                     >
                       Cash Out
                     </Button>
@@ -191,10 +192,10 @@ export function WalletManagement({
           <div className="flex gap-3">
             <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div className="space-y-2">
-              <p className="text-sm text-slate-700 font-bold">
+              <p className="text-sm text-foreground font-bold">
                 Wallet System Rules
               </p>
-              <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
                 <li>Approved Credit Wallet funds cannot be cashed out directly</li>
                 <li>Transfer from Approved Credit → {walletLabel} to access funds</li>
               </ul>
@@ -220,29 +221,29 @@ export function WalletManagement({
               className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-2xl font-black text-slate-900 mb-2">
+              <h3 className="text-2xl font-black text-foreground mb-2">
                 Transfer to {walletLabel}
               </h3>
-              <p className="text-sm text-slate-600 font-medium mb-6">
+              <p className="text-sm text-muted-foreground font-medium mb-6">
                 Move funds from your Approved Credit Wallet into your FinCash wallet (USD, ZiG, ZAR, etc.). A 1.5% commission applies on each transfer.
               </p>
 
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="text-sm font-bold text-slate-700 mb-2 block">
+                  <label className="text-sm font-bold text-foreground mb-2 block">
                     Available in Approved Credit Wallet
                   </label>
-                  <div className="text-3xl font-black text-emerald-600">
+                  <div className={`text-3xl leading-none text-emerald-600 ${finAmountHero}`}>
                     {formatAmountWithCurrency(approvedCreditWallet, cc)}
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm font-bold text-slate-700 mb-2 block">
+                  <label className="text-sm font-bold text-foreground mb-2 block">
                     Transfer Amount
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-slate-400 max-w-[4rem] truncate">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-muted-foreground max-w-[4rem] truncate">
                       {cc === "USD" ? "$" : cc === "ZAR" ? "R" : cc === "ZIG" ? "ZiG" : cc}
                     </span>
                     <input
@@ -250,7 +251,7 @@ export function WalletManagement({
                       value={transferAmount}
                       onChange={(e) => setTransferAmount(e.target.value)}
                       placeholder="0.00"
-                      className="w-full h-14 pl-16 pr-4 rounded-xl border-2 border-emerald-300 bg-emerald-50/60 text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200/80 outline-none text-2xl font-black dark:bg-emerald-950/40 dark:border-emerald-700 dark:text-white"
+                      className="w-full h-14 pl-16 pr-4 rounded-xl border-2 border-primary bg-primary/10 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-2xl font-black dark:bg-primary/20 dark:border-primary dark:text-foreground"
                       step="0.01"
                       min="0"
                       max={approvedCreditWallet}
@@ -258,7 +259,7 @@ export function WalletManagement({
                   </div>
                   <button
                     onClick={() => setTransferAmount(approvedCreditWallet.toString())}
-                    className="text-xs font-bold text-emerald-600 hover:text-emerald-700 mt-2"
+                    className="text-xs font-bold text-primary hover:text-primary/80 mt-2"
                   >
                     Transfer maximum amount
                   </button>
@@ -266,17 +267,17 @@ export function WalletManagement({
 
                 {transferAmount && parseFloat(transferAmount) > 0 && (
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm space-y-1">
-                    <div className="flex justify-between font-bold text-slate-700">
+                    <div className="flex justify-between text-sm font-semibold text-foreground">
                       <span>Commission (1.5%)</span>
-                      <span>
+                      <span className={finAmountSecondary}>
                         {formatAmountWithCurrency(
                           Math.round(parseFloat(transferAmount) * APPROVED_CREDIT_TRANSFER_FEE * 100) / 100,
                           cc
                         )}
                       </span>
                     </div>
-                    <div className="flex justify-between font-black text-emerald-700">
-                      <span className="uppercase text-xs tracking-wide">You receive in {walletLabel}</span>
+                    <div className={`flex justify-between font-semibold text-emerald-700 ${finAmountPrimary}`}>
+                      <span className="text-xs font-semibold uppercase tracking-wide">You receive in {walletLabel}</span>
                       <span>
                         {formatAmountWithCurrency(
                           Math.round(

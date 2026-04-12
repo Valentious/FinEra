@@ -64,14 +64,14 @@ export function BankLinking({ accountHolderName, onComplete }: BankLinkingProps)
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-transparent p-4">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Building2 className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-black text-slate-900">Link Your Bank Account</h2>
-          <p className="text-slate-500 text-sm font-medium mt-1">
+          <h2 className="text-2xl font-black text-foreground">Link Your Bank Account</h2>
+          <p className="text-muted-foreground text-sm font-medium mt-1">
             Securely connect your bank for seamless transactions
           </p>
         </div>
@@ -80,7 +80,7 @@ export function BankLinking({ accountHolderName, onComplete }: BankLinkingProps)
           <div className="space-y-5">
             {/* Bank Name */}
             <div className="space-y-2">
-              <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+              <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-emerald-600" />
                 Bank Name
               </Label>
@@ -100,7 +100,7 @@ export function BankLinking({ accountHolderName, onComplete }: BankLinkingProps)
 
             {/* Account Holder Name */}
             <div className="space-y-2">
-              <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+              <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
                 <User className="w-4 h-4 text-emerald-600" />
                 Account Holder Name
               </Label>
@@ -114,7 +114,7 @@ export function BankLinking({ accountHolderName, onComplete }: BankLinkingProps)
 
             {/* Account Number */}
             <div className="space-y-2">
-              <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+              <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
                 <Hash className="w-4 h-4 text-emerald-600" />
                 Account Number
               </Label>
@@ -129,9 +129,9 @@ export function BankLinking({ accountHolderName, onComplete }: BankLinkingProps)
 
             {/* Branch (Optional) */}
             <div className="space-y-2">
-              <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+              <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-emerald-600" />
-                Branch <span className="text-slate-400 font-normal">(optional)</span>
+                Branch <span className="text-muted-foreground font-normal">(optional)</span>
               </Label>
               <Input
                 placeholder="e.g., Main Branch"

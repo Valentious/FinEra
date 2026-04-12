@@ -73,11 +73,11 @@ export function DateOfBirthField({
   return (
     <div className={cn("space-y-3", className)}>
       <div>
-        <Label htmlFor={id} className="text-sm font-bold text-slate-800">
+        <Label htmlFor={id} className="text-sm font-bold text-foreground">
           Date of birth <span className="text-red-500">*</span>
         </Label>
         {locked && (
-          <p className="text-xs text-slate-500 mt-0.5 mb-2">
+          <p className="text-xs text-muted-foreground mt-0.5 mb-2">
             Locked - contact support to change.
           </p>
         )}
@@ -97,7 +97,7 @@ export function DateOfBirthField({
             aria-describedby={error ? `${id}-error` : undefined}
             aria-label="Date of birth"
             className={cn(
-              "w-full min-w-0 flex-1 h-12 rounded-xl border-2 border-slate-200 bg-white px-3 text-base text-slate-900",
+              "w-full min-w-0 flex-1 h-12 rounded-xl border-2 border-slate-200 bg-white px-3 text-base text-foreground",
               "shadow-sm transition-colors",
               "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500",
               "[color-scheme:light]",
@@ -129,7 +129,7 @@ export function DateOfBirthField({
                 initialFocus
               />
               {date ? (
-                <p className="px-3 pb-2 text-xs text-slate-600 border-t border-slate-100 pt-2">
+                <p className="px-3 pb-2 text-xs text-muted-foreground border-t border-slate-100 pt-2">
                   Selected: {format(date, "PPP", { locale })}
                 </p>
               ) : null}

@@ -58,12 +58,12 @@ const METHODS = [
     id: "approved_credit",
     label: "From Approved Credit Wallet",
     icon: <CreditCard className="w-5 h-5" />,
-    color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300",
+    color: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary",
   },
-  { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-green-50 text-green-600" },
-  { id: "debit_card", label: "Debit card (Mastercard)", icon: <CreditCard className="w-5 h-5" />, color: "bg-indigo-50 text-indigo-700" },
-  { id: "atm", label: "ATM Cardless Cash Out", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600" },
-  { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
+  { id: "ecocash", label: "Ecocash", icon: <Smartphone className="w-5 h-5" />, color: "bg-secondary text-secondary-foreground dark:bg-secondary dark:text-secondary-foreground" },
+  { id: "debit_card", label: "Debit card (Mastercard)", icon: <CreditCard className="w-5 h-5" />, color: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300" },
+  { id: "atm", label: "ATM Cardless Cash Out", icon: <Banknote className="w-5 h-5" />, color: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300" },
+  { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary" },
 ];
 
 export function WithdrawFlow({
@@ -274,19 +274,19 @@ export function WithdrawFlow({
               <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">Cash Out ({currencyCode})</h2>
+              <h2 className="text-2xl font-black text-foreground">Cash Out ({currencyCode})</h2>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Available Balance</p>
-                <p className="text-2xl font-black text-slate-900">{formatAmountWithSymbol(sym, balance)}</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Available Balance</p>
+                <p className="text-2xl font-black text-foreground">{formatAmountWithSymbol(sym, balance)}</p>
               </div>
               <Wallet className="w-8 h-8 text-emerald-100" />
             </div>
 
             <div className="space-y-3">
-              <p className="text-sm font-bold text-slate-500">Select Cash Out Method</p>
+              <p className="text-sm font-bold text-muted-foreground">Select Cash Out Method</p>
               {METHODS.map((method) => {
                 const disabled = method.id === "approved_credit" && approvedCreditBalance <= 0;
                 return (
@@ -305,14 +305,14 @@ export function WithdrawFlow({
                       <div className={`p-3 rounded-xl shrink-0 ${method.color}`}>{method.icon}</div>
                       <div>
                         <span
-                          className={`font-bold text-slate-700 block ${
+                          className={`font-bold text-foreground block ${
                             disabled ? "" : "group-hover:text-emerald-600"
                           }`}
                         >
                           {method.label}
                         </span>
                         {method.id === "approved_credit" && (
-                          <span className="text-xs text-slate-500 font-medium">
+                          <span className="text-xs text-muted-foreground font-medium">
                             Move to {getWalletLabel(currencyCode)} - 1.5% commission
                           </span>
                         )}
@@ -348,18 +348,18 @@ export function WithdrawFlow({
               <Button variant="ghost" size="icon" onClick={() => setStep("method")} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">Approved Credit → FinCash ({currencyCode})</h2>
+              <h2 className="text-2xl font-black text-foreground">Approved Credit → FinCash ({currencyCode})</h2>
             </div>
 
-            <p className="text-sm text-slate-600 font-medium leading-relaxed">
+            <p className="text-sm text-muted-foreground font-medium leading-relaxed">
               Move funds from your <strong>Approved Credit Wallet</strong> into your{" "}
               <strong>{getWalletLabel(currencyCode)}</strong> (internal wallet). You can then cash out via Ecocash,
               ATM, or agent. A <strong>1.5% commission</strong> applies on the amount moved.
             </p>
 
             <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Available in Approved Credit</p>
-              <p className="text-2xl font-black text-slate-900">{formatAmountWithSymbol(sym, approvedCreditBalance)}</p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Available in Approved Credit</p>
+              <p className="text-2xl font-black text-foreground">{formatAmountWithSymbol(sym, approvedCreditBalance)}</p>
             </div>
 
             <div className="space-y-4">
@@ -392,7 +392,7 @@ export function WithdrawFlow({
 
               {parseFloat(amount) > 0 && !isNaN(parseFloat(amount)) && (
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-sm">
-                  <div className="flex justify-between font-bold text-slate-700">
+                  <div className="flex justify-between font-bold text-foreground">
                     <span>Commission (1.5%)</span>
                     <span>
                       {formatAmountWithSymbol(
@@ -469,7 +469,7 @@ export function WithdrawFlow({
               <Button variant="ghost" size="icon" onClick={() => setStep("method")} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">Enter Amount ({currencyCode})</h2>
+              <h2 className="text-2xl font-black text-foreground">Enter Amount ({currencyCode})</h2>
             </div>
 
             <div className="space-y-4">
@@ -515,8 +515,8 @@ export function WithdrawFlow({
             <Button variant="ghost" size="icon" onClick={() => setStep("amount")} className="rounded-full">
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h2 className="text-xl font-black text-slate-900">Recipient Details</h2>
-            <p className="text-slate-600 text-sm">
+            <h2 className="text-xl font-black text-foreground">Recipient Details</h2>
+            <p className="text-muted-foreground text-sm">
               Enter the phone number or account to receive this cash out via {METHODS.find(m => m.id === selectedMethod)?.label}
             </p>
             <div className="space-y-2">
@@ -605,7 +605,7 @@ export function WithdrawFlow({
               <Button variant="ghost" size="icon" onClick={() => setStep("amount")} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-slate-900">ATM Cash Out Code</h2>
+              <h2 className="text-2xl font-black text-foreground">ATM Cash Out Code</h2>
             </div>
 
             <div className="space-y-4">
@@ -634,34 +634,34 @@ export function WithdrawFlow({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Banknote className="w-5 h-5 text-amber-600" />
-                    <p className="text-sm font-bold text-slate-500">ATM Cash Out Code</p>
+                    <p className="text-sm font-bold text-muted-foreground">ATM Cash Out Code</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Copy className="w-5 h-5 text-slate-500 cursor-pointer" onClick={() => copyToClipboard(atmCode, 'code')} />
+                    <Copy className="w-5 h-5 text-muted-foreground cursor-pointer" onClick={() => copyToClipboard(atmCode, 'code')} />
                     {codeCopied && <Check className="w-5 h-5 text-green-600" />}
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-2xl font-black text-slate-900">{atmCode}</p>
+                  <p className="text-2xl font-black text-foreground">{atmCode}</p>
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-slate-500" />
-                    <p className="text-sm font-bold text-slate-500">Expires in: {atmExpiry ? `${Math.ceil((atmExpiry.getTime() - Date.now()) / 60000)} mins` : 'N/A'}</p>
+                    <Clock className="w-5 h-5 text-muted-foreground" />
+                    <p className="text-sm font-bold text-muted-foreground">Expires in: {atmExpiry ? `${Math.ceil((atmExpiry.getTime() - Date.now()) / 60000)} mins` : 'N/A'}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-slate-500" />
-                    <p className="text-sm font-bold text-slate-500">Secure Code</p>
+                    <Shield className="w-5 h-5 text-muted-foreground" />
+                    <p className="text-sm font-bold text-muted-foreground">Secure Code</p>
                   </div>
                 </div>
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-bold text-slate-500">Transaction Reference</p>
+                    <p className="text-sm font-bold text-muted-foreground">Transaction Reference</p>
                     <button onClick={() => copyToClipboard(atmReference, 'ref')} className="flex items-center gap-1">
-                      {refCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
+                      {refCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
                     </button>
                   </div>
-                  <p className="text-lg font-black text-slate-900">{atmReference}</p>
+                  <p className="text-lg font-black text-foreground">{atmReference}</p>
                 </div>
               </div>
 
@@ -686,8 +686,8 @@ export function WithdrawFlow({
               <div className="w-24 h-24 border-4 border-emerald-100 rounded-full" />
               <Loader2 className="w-24 h-24 text-emerald-600 animate-spin absolute top-0 left-0" />
             </div>
-            <h3 className="text-2xl font-black mt-8 text-slate-900">Processing...</h3>
-            <p className="text-slate-500 font-medium mt-2">
+            <h3 className="text-2xl font-black mt-8 text-foreground">Processing...</h3>
+            <p className="text-muted-foreground font-medium mt-2">
               {selectedMethod === "approved_credit"
                 ? `Moving funds from Approved Credit to your ${getWalletLabel(currencyCode)}…`
                 : "Moving your funds securely."}
@@ -706,10 +706,10 @@ export function WithdrawFlow({
               <CheckCircle2 className="w-16 h-16" />
             </div>
             <div>
-              <h2 className="text-3xl font-black text-slate-900">
+              <h2 className="text-3xl font-black text-foreground">
                 {selectedMethod === "approved_credit" ? "Transfer complete" : "Cash Out Successful"}
               </h2>
-              <p className="text-slate-500 font-medium mt-2">
+              <p className="text-muted-foreground font-medium mt-2">
                 {selectedMethod === "approved_credit"
                   ? `Your ${getWalletLabel(currencyCode)} has been credited (after 1.5% commission).`
                   : "Your money is on its way!"}
@@ -721,31 +721,31 @@ export function WithdrawFlow({
                 {selectedMethod === "approved_credit" ? (
                   <>
                     <div className="flex justify-between">
-                      <span className="text-slate-400 font-bold text-xs uppercase">Amount moved (gross)</span>
-                      <span className="text-slate-900 font-black">{formatAmountWithSymbol(sym, grossAmount)}</span>
+                      <span className="text-muted-foreground font-bold text-xs uppercase">Amount moved (gross)</span>
+                      <span className="text-foreground font-black">{formatAmountWithSymbol(sym, grossAmount)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400 font-bold text-xs uppercase">Commission (1.5%)</span>
-                      <span className="text-slate-900 font-bold">−{formatAmountWithSymbol(sym, approvedCreditFee)}</span>
+                      <span className="text-muted-foreground font-bold text-xs uppercase">Commission (1.5%)</span>
+                      <span className="text-foreground font-bold">−{formatAmountWithSymbol(sym, approvedCreditFee)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400 font-bold text-xs uppercase">Credited to FinCash</span>
+                      <span className="text-muted-foreground font-bold text-xs uppercase">Credited to FinCash</span>
                       <span className="text-emerald-700 font-black">{formatAmountWithSymbol(sym, approvedCreditNet)}</span>
                     </div>
                   </>
                 ) : (
                   <div className="flex justify-between">
-                    <span className="text-slate-400 font-bold text-xs uppercase">Amount</span>
-                    <span className="text-slate-900 font-black">{formatAmountWithSymbol(sym, grossAmount)}</span>
+                    <span className="text-muted-foreground font-bold text-xs uppercase">Amount</span>
+                    <span className="text-foreground font-black">{formatAmountWithSymbol(sym, grossAmount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold text-xs uppercase">Method</span>
-                  <span className="text-slate-900 font-bold">{METHODS.find(m => m.id === selectedMethod)?.label}</span>
+                  <span className="text-muted-foreground font-bold text-xs uppercase">Method</span>
+                  <span className="text-foreground font-bold">{METHODS.find(m => m.id === selectedMethod)?.label}</span>
                 </div>
                 <div className="h-[1px] bg-slate-200 my-2" />
                 <div className="flex justify-between">
-                  <span className="text-slate-400 font-bold text-xs uppercase">Updated FinCash balance</span>
+                  <span className="text-muted-foreground font-bold text-xs uppercase">Updated FinCash balance</span>
                   <span className="text-emerald-600 font-black">
                     {formatAmountWithSymbol(
                       sym,

@@ -49,7 +49,7 @@ export function GlobalAccountSwitcher({
       <label
         className={cn(
           "text-[10px] font-bold uppercase tracking-wider",
-          variant === "header" ? "text-slate-400" : "text-slate-500"
+          variant === "header" ? "text-muted-foreground" : "text-muted-foreground"
         )}
       >
         Choose your preferred account
@@ -75,8 +75,8 @@ export function GlobalAccountSwitcher({
         <DropdownMenuContent align="start" className="min-w-[240px]">
           {wallets.length === 0 && !isLoading ? (
             <div className="px-3 py-4 text-center">
-              <Wallet className="mx-auto h-8 w-8 text-slate-300 mb-2" />
-              <p className="text-sm font-medium text-slate-600">
+              <Wallet className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+              <p className="text-sm font-medium text-muted-foreground">
                 Create your first wallet
               </p>
               {onCreateWallet && (
@@ -108,7 +108,7 @@ export function GlobalAccountSwitcher({
                     <span className="flex items-center gap-2 flex-wrap">
                       <span className="text-lg">{getFlag(w.countryCode)}</span>
                       <span className="font-medium">{w.label}</span>
-                      <span className="text-slate-500 text-xs">{w.currency}</span>
+                      <span className="text-muted-foreground text-xs">{w.currency}</span>
                       {isActive && (
                         <span className="ml-auto text-[10px] font-bold text-emerald-600">
                           Active
@@ -116,11 +116,11 @@ export function GlobalAccountSwitcher({
                       )}
                     </span>
                     {w.accountNumber ? (
-                      <span className="text-[10px] text-slate-500 pl-7 font-mono">
+                      <span className="text-[10px] text-muted-foreground pl-7 font-mono">
                         Acc: {w.accountNumber}
                       </span>
                     ) : (
-                      <span className="text-[10px] text-slate-400 pl-7">
+                      <span className="text-[10px] text-muted-foreground pl-7">
                         Connected to: {w.provider}
                       </span>
                     )}

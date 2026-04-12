@@ -211,8 +211,8 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
         <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Icon className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-black text-slate-900">Complete Your Profile</h2>
-        <p className="text-slate-500 text-sm font-medium uppercase tracking-widest text-[10px] mt-1">
+        <h2 className="text-2xl font-black text-foreground">Complete Your Profile</h2>
+        <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest text-[10px] mt-1">
           Identity Verification Details
         </p>
       </div>
@@ -221,7 +221,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
         <div className="space-y-5">
           {/* Step 1: Country Selection */}
           <div className="space-y-2">
-            <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+            <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-emerald-600" />
               Country
             </Label>
@@ -240,7 +240,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
           {/* Step 2: City Selection */}
           {countryId && (
             <div className="space-y-2">
-              <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+              <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-emerald-600" />
                 City
               </Label>
@@ -260,12 +260,12 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
           {/* Step 3: Institution Selection */}
           {countryId && (
             <div className="space-y-2">
-              <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+              <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-emerald-600" />
                 {accountType === 'staff' ? 'Organization (Universities, Companies, Government)' : 'University / Polytechnic'}
               </Label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search institutions..."
                   value={institutionSearch}
@@ -287,14 +287,14 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
                 ))}
               </select>
               {institutions.length === 0 && countryId && (
-                <p className="text-xs text-slate-500">No institutions found. Try a different search.</p>
+                <p className="text-xs text-muted-foreground">No institutions found. Try a different search.</p>
               )}
             </div>
           )}
 
           {/* Title Selection */}
           <div className="space-y-2">
-            <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+            <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
               <Award className="w-4 h-4 text-emerald-600" />
               Title
             </Label>
@@ -310,14 +310,14 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
                 </option>
               ))}
             </select>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 px-1">
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1 px-1">
               * Your preferred title for official correspondence
             </p>
           </div>
 
           {/* National ID Number */}
           <div className="space-y-2">
-            <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+            <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
               <UserSquare2 className="w-4 h-4 text-emerald-600" />
               National ID Number
             </Label>
@@ -328,14 +328,14 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
               className="h-14 rounded-2xl border-slate-200 focus:ring-emerald-600 font-semibold text-base"
               maxLength={50}
             />
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 px-1">
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1 px-1">
               * Your official government-issued ID number
             </p>
           </div>
 
           {/* Student / Staff / Employer–Alumni ID */}
           <div className="space-y-2">
-            <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+            <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
               <Icon className="w-4 h-4 text-emerald-600" />
               {getIdLabel()}
             </Label>
@@ -346,7 +346,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
               className="h-14 rounded-2xl border-slate-200 focus:ring-emerald-600 font-semibold text-base"
               maxLength={50}
             />
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 px-1">
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1 px-1">
               * Your university/institution identification number
             </p>
           </div>
@@ -354,7 +354,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
           {/* Salary Range (Staff & Employer only) */}
           {(accountType === 'staff' || accountType === 'alumni') && (
             <div className="space-y-2">
-              <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+              <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-emerald-600" />
                 Monthly Salary Range
               </Label>
@@ -370,7 +370,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
                   </option>
                 ))}
               </select>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 px-1">
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1 px-1">
                 * Used to determine your credit limit eligibility
               </p>
             </div>
@@ -378,12 +378,12 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
 
           {/* Residential Address */}
           <div className="space-y-3">
-            <Label className="font-bold text-slate-700 ml-1 flex items-center gap-2">
+            <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-emerald-600" />
               Residential Address
             </Label>
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-slate-600">Address Line 1 *</Label>
+              <Label className="text-xs font-medium text-muted-foreground">Address Line 1 *</Label>
               <Input
                 type="text"
                 name="addressLine1"
@@ -393,10 +393,10 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
                 placeholder="Street address, building, house number"
                 className="h-12 rounded-2xl border-slate-200 focus:ring-emerald-600 font-medium"
               />
-              <p className="text-[10px] text-slate-400 font-medium">Street and number</p>
+              <p className="text-[10px] text-muted-foreground font-medium">Street and number</p>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-slate-600">Address Line 2 (optional)</Label>
+              <Label className="text-xs font-medium text-muted-foreground">Address Line 2 (optional)</Label>
               <Input
                 type="text"
                 name="addressLine2"
@@ -405,7 +405,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
                 placeholder="Apartment, suite, unit, etc (optional)"
                 className="h-12 rounded-2xl border-slate-200 focus:ring-emerald-600 font-medium"
               />
-              <p className="text-[10px] text-slate-400 font-medium">Apartment, suite, unit (optional)</p>
+              <p className="text-[10px] text-muted-foreground font-medium">Apartment, suite, unit (optional)</p>
             </div>
           </div>
 

@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   Handshake,
+  FileText,
 } from "lucide-react";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 import { FinEraLogoText } from "@/app/components/FinEraLogoText";
@@ -29,9 +30,20 @@ interface MainNavigationProps {
   walletNumericId?: string;
   isAdmin?: boolean;
   onCreateWallet?: () => void;
+  /** Same 0-100 bands as dashboard TrustScore card background */
+  disciplineScore?: number;
 }
 
-export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, accountNumber, walletNumericId, isAdmin, onCreateWallet }: MainNavigationProps) {
+export function MainNavigation({
+  activeScreen,
+  onNavigate,
+  onLogout,
+  userName,
+  accountNumber,
+  walletNumericId,
+  isAdmin,
+  onCreateWallet,
+}: MainNavigationProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { t } = useI18n();
 
@@ -41,47 +53,69 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
     { id: "savingsWallet", label: t("nav.finCashWallet"), icon: PiggyBank },
     { id: "financialEducation", label: t("nav.learningHub"), icon: GraduationCap },
     { id: "profileSettings", label: t("nav.accountSettings"), icon: Settings },
+    { id: "agreementsConsent", label: "Agreements & Consent", icon: FileText },
     { id: "partnerProgram", label: t("nav.partnerProgram"), icon: Handshake },
   ];
 
   return (
     <>
-      {/* Topbar */}
-      <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between border-b border-slate-600/30 bg-slate-800 px-4 dark:border-slate-700/50 dark:bg-slate-950">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="md:hidden text-slate-200 hover:text-white hover:bg-white/10"
-            onClick={() => setIsSidebarOpen(true)}
-          >
-            <Menu className="w-6 h-6" />
-          </Button>
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate("dashboard")}>
-            <FinEraShieldIcon size={32} className="rounded-lg" />
-            <div className="hidden sm:flex flex-col leading-tight">
-              <FinEraLogoText variant="dark" size="md" as="span" className="font-bold text-lg [&_.fin]:text-white [&_.era]:text-emerald-400" />
-              <span className="font-semibold text-xs text-slate-300 tracking-wider uppercase">INCLUSIVE CREDIT</span>
+      {/* Topbar - fixed brand green (not discipline-score bands) */}
+      <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-stretch border-b border-white/25 bg-gradient-to-br from-primary to-[#1ebe5d] px-4 text-white shadow-[0_8px_24px_-8px_rgba(37,211,102,0.35)]">
+        <div className="pointer-events-none absolute -right-12 -top-10 h-36 w-44 rounded-full bg-white/20 blur-2xl" aria-hidden />
+        <div className="relative z-10 flex w-full items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden text-white hover:bg-white/15"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+            <div className="flex cursor-pointer items-center gap-2" onClick={() => onNavigate("dashboard")}>
+              <FinEraShieldIcon size={32} className="rounded-lg ring-1 ring-white/35" />
+              <div className="hidden flex-col leading-tight sm:flex">
+                <FinEraLogoText
+                  variant="dark"
+                  size="md"
+                  as="span"
+                  className="font-bold text-lg text-white [&_.fin]:text-white [&_.era]:text-emerald-100"
+                />
+                <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
+                  INCLUSIVE CREDIT
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-4">
-          <NotificationsDropdown onNavigate={onNavigate} />
-          <div className="h-8 w-[1px] bg-slate-500/50 mx-1" />
-          <div className="flex items-center gap-2 pl-2">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold leading-none text-white">{userName}</p>
-              <p className="text-[10px] text-slate-300 font-semibold tracking-wide">
-                {walletNumericId
-                  ? `Wallet ID: ${walletNumericId}`
-                  : accountNumber
-                    ? `Acc: ${accountNumber}`
-                    : "Verified Member"}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/30 shadow-sm cursor-pointer hover:bg-white/30" onClick={() => onNavigate("profileSettings")}>
-              <User className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-4">
+            <NotificationsDropdown onNavigate={onNavigate} />
+            <div className="mx-1 h-8 w-px bg-white/35" />
+            <div className="flex items-center gap-2 pl-2">
+              <div className="hidden text-right sm:block">
+                <p className="text-sm font-semibold leading-none text-white">{userName}</p>
+                <p className="text-[10px] font-medium tracking-wide text-emerald-100/90">
+                  {walletNumericId
+                    ? `Wallet ID: ${walletNumericId}`
+                    : accountNumber
+                      ? `Acc: ${accountNumber}`
+                      : "Verified Member"}
+                </p>
+              </div>
+              <div
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 border-white/40 bg-white/20 hover:bg-white/30"
+                onClick={() => onNavigate("profileSettings")}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onNavigate("profileSettings");
+                  }
+                }}
+              >
+                <User className="h-6 w-6 text-white" />
+              </div>
             </div>
           </div>
         </div>
@@ -95,12 +129,14 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
               key={item.id}
               onClick={() => onNavigate(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                activeScreen === item.id 
-                  ? "bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100/50 dark:bg-emerald-950/40 dark:text-emerald-400 dark:shadow-none" 
-                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-900 dark:hover:text-white"
+                activeScreen === item.id
+                  ? "bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100/50 dark:bg-emerald-500/15 dark:text-foreground dark:shadow-none"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground dark:hover:bg-sidebar-accent"
               }`}
             >
-              <item.icon className={`w-5 h-5 ${activeScreen === item.id ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400 dark:text-slate-300"}`} />
+              <item.icon
+                className={`w-5 h-5 ${activeScreen === item.id ? "text-emerald-600 dark:text-foreground" : "text-muted-foreground"}`}
+              />
               <span className="font-medium">{item.label}</span>
               {activeScreen === item.id && (
                 <motion.div layoutId="activeNav" className="ml-auto w-1.5 h-1.5 bg-emerald-600 rounded-full" />
@@ -143,7 +179,7 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
                   <FinEraShieldIcon size={32} className="rounded-lg" />
                   <div className="flex flex-col leading-tight">
                     <FinEraLogoText variant="light" size="md" as="span" className="font-bold text-lg" />
-                    <span className="font-semibold text-xs text-slate-600 tracking-wider uppercase">INCLUSIVE CREDIT</span>
+                    <span className="font-semibold text-xs text-muted-foreground tracking-wider uppercase">INCLUSIVE CREDIT</span>
                   </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}>
@@ -162,10 +198,10 @@ export function MainNavigation({ activeScreen, onNavigate, onLogout, userName, a
                     className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all ${
                       activeScreen === item.id 
                         ? "bg-emerald-600 text-white shadow-lg shadow-emerald-200" 
-                        : "text-slate-500 hover:bg-slate-50"
+                        : "text-muted-foreground hover:bg-slate-50"
                     }`}
                   >
-                    <item.icon className={`w-6 h-6 ${activeScreen === item.id ? "text-white" : "text-slate-400"}`} />
+                    <item.icon className={`w-6 h-6 ${activeScreen === item.id ? "text-white" : "text-muted-foreground"}`} />
                     <span className="font-bold text-lg">{item.label}</span>
                   </button>
                 ))}

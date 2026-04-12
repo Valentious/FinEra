@@ -5,6 +5,7 @@ import { AdminLogin } from "./pages/AdminLogin";
 import { DashboardHome } from "./pages/DashboardHome";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { AuditLogsPage } from "./pages/AuditLogsPage";
+import { DocumentsCompliancePage } from "./pages/DocumentsCompliancePage";
 import { AccessDenied } from "./pages/FailStates";
 import { useAdminWebSocket } from "./hooks/useAdminWebSocket";
 import { useAdminPolling } from "./hooks/useAdminPolling";
@@ -35,7 +36,7 @@ function RequireAdmin() {
 
   if (state === "loading") {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center bg-slate-950 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))] text-slate-400">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-slate-950 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))] text-muted-foreground">
         Checking session…
         <DashboardTrustRibbon insetForSidebar={false} />
       </div>
@@ -79,11 +80,12 @@ export default function AdminApp() {
           <Route path="users" element={<PlaceholderPage title="Users & admin management" />} />
           <Route path="wallets" element={<PlaceholderPage title="Wallets & ledger monitoring" />} />
           <Route path="credit-intelligence" element={<PlaceholderPage title="Credit intelligence" />} />
+          <Route path="documents" element={<DocumentsCompliancePage />} />
           <Route
             path="agent-governance"
             element={
               <PlaceholderPage title="FinEra Verified Agent Registry (FVAR)">
-                <p className="text-slate-600">
+                <p className="text-muted-foreground">
                   Minimum savings balance rule ($3,000 USD equivalent) and compliance score - wire suspend/reinstate APIs with audit.
                 </p>
               </PlaceholderPage>

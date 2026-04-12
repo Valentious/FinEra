@@ -12,6 +12,7 @@ import {
   Banknote
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { FineraGradientBackdrop } from "@/app/components/FineraGradientBackdrop";
 
 interface MemberAgreementProps {
   memberType: 'student' | 'staff' | 'alumni';
@@ -70,26 +71,27 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
               {content.icon}
             </div>
             <div>
-              <h3 className="font-bold text-slate-900">{content.title}</h3>
-              <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Mandatory Verification</p>
+              <h3 className="font-bold text-foreground">{content.title}</h3>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Mandatory Verification</p>
             </div>
           </div>
 
           <div className="space-y-4">
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">Key Conditions</p>
+            <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Key Conditions</p>
             {content.terms.map((term, i) => (
               <div key={i} className="flex gap-4 items-start group">
                 <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-emerald-100 transition-colors">
                   <span className="text-xs font-black text-emerald-600">{i + 1}</span>
                 </div>
-                <p className="text-slate-600 text-sm font-medium leading-relaxed">{term}</p>
+                <p className="text-muted-foreground text-sm font-medium leading-relaxed">{term}</p>
               </div>
             ))}
           </div>
 
-          <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-            <p className="text-[11px] text-amber-800 font-medium">
+          <div className="relative flex gap-3 overflow-hidden rounded-2xl border border-white/25 p-4 text-white">
+            <FineraGradientBackdrop clip="panel" />
+            <AlertCircle className="relative z-10 h-5 w-5 shrink-0 text-white" />
+            <p className="relative z-10 text-[11px] font-medium text-white/90">
               By proceeding, you acknowledge that failure to comply with repayment schedules will trigger the administrative actions listed above.
             </p>
           </div>
@@ -104,7 +106,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
               />
               <label 
                 htmlFor="agree-terms" 
-                className="text-sm font-bold text-slate-700 cursor-pointer"
+                className="text-sm font-bold text-foreground cursor-pointer"
               >
                 I understand and agree to the {content.title}
               </label>
@@ -114,7 +116,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
               <Button 
                 variant="ghost" 
                 onClick={onBack}
-                className="flex-1 h-14 rounded-2xl font-bold text-slate-500"
+                className="flex-1 h-14 rounded-2xl font-bold text-muted-foreground"
               >
                 Cancel
               </Button>
@@ -130,6 +132,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

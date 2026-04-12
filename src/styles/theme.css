@@ -1,38 +1,47 @@
 @custom-variant dark (&:is(.dark *));
 
 /* FinEra INCLUSIVE CREDIT - Production Fintech Theme
- * Global Color System - Green Brand Identity
- * Primary: Brand Green
- * Secondary: Dark Slate / Navy
- * NO BLUE - All accents use green
+ * Global Color System - WhatsApp-Inspired Light Green Brand Identity
+ * Primary: WhatsApp Green (#25D366)
+ * Secondary: Light Green Tints
+ * Explore Mode: Light Purple/Blue Hybrid
  */
 
 :root {
-  /* Brand color tokens */
-  --primary-green: #22C55E;
-  --primary-green-dark: #16A34A;
-  --text-white: #FFFFFF;
-  --background-main: #0F172A;
-  --neutral-light: #F8FAFC;
+  /* Brand color tokens - WhatsApp Inspired */
+  --primary-green: #25D366;
+  --primary-green-hover: #1ebe5d;
+  --primary-green-light: #E8F8F1;
+  --background-main: #F7FDF9;
+  /* Light theme: UI copy is black / near-black (strict monochrome discipline) */
+  --text-primary: #000000;
+  --text-secondary: #141414;
+  --border-light: #E0F2EA;
+
+  /* Explore account theme */
+  --explore-primary: #7B61FF;
+  --explore-background: #F3F0FF;
+  --explore-secondary: #5DADE2;
 
   --font-size: 16px;
-  --background: #fafbfc;
-  --foreground: #0f172a;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --background: var(--background-main);
+  --foreground: #000000;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #000000;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #000000;
   --primary: var(--primary-green);
-  --primary-foreground: var(--text-white);
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --primary-foreground: #ffffff;
+  --secondary: var(--primary-green-light);
+  --secondary-foreground: #000000;
+  --muted: var(--primary-green-light);
+  --muted-foreground: #141414;
   --accent: var(--primary-green);
-  --accent-foreground: #0f172a;
+  --accent-foreground: #000000;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
+  --border: var(--border-light);
   --input: transparent;
   --input-background: #f8fafc;
   --switch-background: #cbd5e1;
@@ -40,57 +49,59 @@
   --font-weight-normal: 400;
   --ring: var(--primary-green);
   --chart-1: var(--primary-green);
-  --chart-2: var(--primary-green-dark);
-  --chart-3: #1e293b;
+  --chart-2: var(--primary-green-hover);
+  --chart-3: #000000;
   --chart-4: #eab308;
-  --chart-5: #64748b;
+  --chart-5: #141414;
   --radius: 0.75rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #0f172a;
+  --sidebar-foreground: #000000;
   --sidebar-primary: var(--primary-green);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f1f5f9;
-  --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: #e2e8f0;
+  --sidebar-accent: var(--primary-green-light);
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: var(--border-light);
   --sidebar-ring: var(--primary-green);
 }
 
 .dark {
+  --text-primary: #ffffff;
+  --text-secondary: #ffffff;
   --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --foreground: #ffffff;
   --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
+  --card-foreground: #ffffff;
   --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --popover-foreground: #ffffff;
+  --primary: #25D366; /* WhatsApp green for dark mode */
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary-foreground: #ffffff;
   --muted: oklch(0.269 0 0);
-  /* Brighter than default so secondary labels stay readable on dark backgrounds */
-  --muted-foreground: oklch(0.82 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --muted-foreground: #ffffff;
+  --accent: #25D366; /* WhatsApp green accent */
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --destructive-foreground: #ffffff;
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  --input-background: oklch(0.22 0 0);
+  --ring: #25D366; /* WhatsApp green ring */
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-1: #25D366; /* WhatsApp green for charts */
+  --chart-2: #1ebe5d; /* Hover green */
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #25D366; /* WhatsApp green */
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-accent-foreground: #ffffff;
   --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --sidebar-ring: #25D366; /* WhatsApp green */
 }
 
 @theme inline {
@@ -132,6 +143,20 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* WhatsApp-inspired custom colors */
+  --color-whatsapp-green: #25D366;
+  --color-whatsapp-green-hover: #1ebe5d;
+  --color-whatsapp-green-light: #E8F8F1;
+  --color-background-light: #F7FDF9;
+  --color-border-light: #E0F2EA;
+  --color-text-primary: var(--foreground);
+  --color-text-secondary: var(--muted-foreground);
+
+  /* Explore account theme */
+  --color-explore-primary: #7B61FF;
+  --color-explore-background: #F3F0FF;
+  --color-explore-secondary: #5DADE2;
 }
 
 @layer base {
@@ -140,7 +165,13 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    /* Viewport canvas: see app-canvas.css (gradient + orbs, matches SplashScreen). */
+    @apply text-foreground;
+  }
+
+  #root {
+    @apply relative z-[1] min-h-dvh;
   }
 
   /**
@@ -156,30 +187,39 @@
     font-size: var(--text-2xl);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    @apply text-foreground;
   }
 
   h2 {
     font-size: var(--text-xl);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    @apply text-foreground;
   }
 
   h3 {
     font-size: var(--text-lg);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    @apply text-foreground;
   }
 
   h4 {
     font-size: var(--text-base);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    @apply text-foreground;
+  }
+
+  p {
+    @apply text-foreground;
   }
 
   label {
     font-size: var(--text-base);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    @apply text-foreground;
   }
 
   button {

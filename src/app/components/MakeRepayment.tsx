@@ -65,7 +65,7 @@ export function MakeRepayment({
         color: "bg-green-50 text-green-600",
       },
       { id: "agent", label: "Payment Agent", icon: <UserCircle className="w-5 h-5" />, color: "bg-emerald-50 text-emerald-600" },
-      { id: "bank", label: "Partner Banks", icon: <Building2 className="w-5 h-5" />, color: "bg-slate-50 text-slate-600" },
+      { id: "bank", label: "Partner Banks", icon: <Building2 className="w-5 h-5" />, color: "bg-slate-50 text-muted-foreground" },
     ],
     [walletLabel]
   );
@@ -107,7 +107,7 @@ export function MakeRepayment({
     return (
       <div className="max-w-xl mx-auto flex flex-col items-center justify-center py-24 gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-emerald-600" />
-        <p className="text-slate-600 font-medium">Loading {cc} balances…</p>
+        <p className="text-muted-foreground font-medium">Loading {cc} balances…</p>
       </div>
     );
   }
@@ -133,8 +133,8 @@ export function MakeRepayment({
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <Card className="p-8">
-          <p className="font-black text-slate-900">Nothing outstanding in {cc}</p>
-          <p className="text-slate-600 mt-2">There is no active loan balance for this currency.</p>
+          <p className="font-black text-foreground">Nothing outstanding in {cc}</p>
+          <p className="text-muted-foreground mt-2">There is no active loan balance for this currency.</p>
           <Button className="mt-6" onClick={onBack}>
             Back
           </Button>
@@ -159,18 +159,18 @@ export function MakeRepayment({
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>
-                <h2 className="text-2xl font-black text-slate-900">Make Repayment</h2>
-                <p className="text-sm font-bold text-slate-500">{cc} only - no cross-currency settlement</p>
+                <h2 className="text-2xl font-black text-foreground">Make Repayment</h2>
+                <p className="text-sm font-bold text-muted-foreground">{cc} only - no cross-currency settlement</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="p-4 border-slate-100 bg-white shadow-sm">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Outstanding ({cc})</p>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Outstanding ({cc})</p>
                 <p className="text-2xl font-black text-red-500">{formatAmountWithCurrency(outstandingBalance, cc)}</p>
               </Card>
               <Card className="p-4 border-slate-100 bg-white shadow-sm">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-tight">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-tight">
                   {walletLabel}
                 </p>
                 <p className="text-2xl font-black text-green-600">{formatAmountWithCurrency(walletBalance, cc)}</p>
@@ -181,7 +181,7 @@ export function MakeRepayment({
               <div className="space-y-2">
                 <Label className="font-bold ml-1">Repayment amount ({cc})</Label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm max-w-[5rem] leading-tight">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-muted-foreground text-sm max-w-[5rem] leading-tight">
                     {sym}
                   </span>
                   <Input
@@ -232,9 +232,9 @@ export function MakeRepayment({
                         }`}
                       >
                         <div className={`p-3 rounded-xl mb-3 ${method.color}`}>{method.icon}</div>
-                        <span className="font-bold text-xs text-slate-700">{method.label}</span>
+                        <span className="font-bold text-xs text-foreground">{method.label}</span>
                         {isSavings && (
-                          <span className="text-[8px] font-black text-slate-400 mt-1">
+                          <span className="text-[8px] font-black text-muted-foreground mt-1">
                             {formatAmountWithCurrency(walletBalance, cc)} AVAILABLE
                           </span>
                         )}
@@ -281,10 +281,10 @@ export function MakeRepayment({
               <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <ShieldCheck className="w-10 h-10" />
               </div>
-              <h3 className="text-xl font-black text-slate-900">Confirm payment</h3>
-              <p className="text-slate-500 text-sm mt-2 mb-8">
+              <h3 className="text-xl font-black text-foreground">Confirm payment</h3>
+              <p className="text-muted-foreground text-sm mt-2 mb-8">
                 You are about to repay{" "}
-                <span className="font-black text-slate-900">{formatAmountWithCurrency(parseFloat(amount) || 0, cc)}</span>{" "}
+                <span className="font-black text-foreground">{formatAmountWithCurrency(parseFloat(amount) || 0, cc)}</span>{" "}
                 ({cc}) using{" "}
                 <span className="font-bold text-emerald-600">
                   {localMethods.find((m) => m.id === selectedMethod)?.label ?? selectedMethod}
@@ -303,7 +303,7 @@ export function MakeRepayment({
                 <Button
                   variant="ghost"
                   onClick={() => setShowConfirmation(false)}
-                  className="w-full h-12 rounded-xl text-slate-500 font-bold"
+                  className="w-full h-12 rounded-xl text-muted-foreground font-bold"
                 >
                   Cancel
                 </Button>

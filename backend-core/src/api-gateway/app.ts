@@ -23,6 +23,8 @@ import currenciesRoutes from "../services/ledger-service/currencies.routes.js";
 import ledgerSystemRoutes from "../services/ledger-service/ledger-system.routes.js";
 import adminAuthRoutes from "../services/admin-service/admin-auth.routes.js";
 import adminDashboardRoutes from "../services/admin-service/admin-dashboard.routes.js";
+import adminDocumentsRoutes from "../services/admin-service/admin-documents.routes.js";
+import memberDocumentsRoutes from "../services/member-documents/member-documents.routes.js";
 import { logger } from "../core/utils/logger.js";
 import { buildCorsOptions, buildHelmet, buildRateLimiter, corsMiddleware } from "../middleware/security/index.js";
 
@@ -59,7 +61,8 @@ app.use("/api/v1/partner-program", generalLimiter, partnerProgramRoutes);
 app.use("/api/v1/currencies", generalLimiter, currenciesRoutes);
 app.use("/api/v1/ledger", ledgerLimiter, ledgerSystemRoutes);
 app.use("/api/v1/admin/auth", authLimiter, adminAuthRoutes);
-app.use("/api/v1/admin", adminLimiter, adminDashboardRoutes);
+app.use("/api/v1/admin", adminLimiter, adminDocumentsRoutes, adminDashboardRoutes);
+app.use("/api/v1/member-documents", generalLimiter, memberDocumentsRoutes);
 
 app.get("/api/registration-data", generalLimiter, async (_req, res) => {
   try {

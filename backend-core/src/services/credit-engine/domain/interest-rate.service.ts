@@ -2,6 +2,8 @@
  * FinEra - Dynamic Interest Rate Engine
  */
 
+import type { LoanProductType } from "@prisma/client";
+
 export type SupportedCurrency = "USD" | "ZIG" | "ZAR" | "EUR" | "GBP";
 
 export interface InterestRateParams {
@@ -11,7 +13,11 @@ export interface InterestRateParams {
   loanTermMonths: number;
   financialDisciplineScore: number;
   existingLoansCount: number;
-  collateralPresent: boolean;
+  loanType: LoanProductType;
+}
+
+function isAssetOrCollateralBacked(loanType: LoanProductType): boolean {
+  return loanType === "ASSET_BACKED" || loanType === "COLLATERAL";
 }
 
 const BASE_RATES: Record<SupportedCurrency, { min: number; max: number }> = {
@@ -31,7 +37,7 @@ const SCORE_ADJUSTMENTS = [
 
 export class InterestRateEngine {
   calculateInterestRate(params: InterestRateParams): number {
-    const { currency, loanAmount, loanTermMonths, financialDisciplineScore, collateralPresent } = params;
+    const { currency, loanAmount, loanTermMonths, financialDisciplineScore, loanType } = params;
 
     const baseRange = BASE_RATES[currency] ?? BASE_RATES.USD;
     let baseRate: number;
@@ -50,7 +56,7 @@ export class InterestRateEngine {
 
     let finalRate = baseRate + adj;
 
-    if (collateralPresent) finalRate *= 0.85;
+    if (isAssetOrCollateralBacked(loanType)) finalRate *= 0.85;
     if (loanTermMonths > 24) finalRate *= 1.1;
     else if (loanTermMonths > 12) finalRate *= 1.05;
 

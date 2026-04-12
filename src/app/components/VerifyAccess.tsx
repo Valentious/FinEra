@@ -81,7 +81,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-transparent p-4">
       <div className="max-w-md w-full">
         <AnimatePresence mode="wait">
           {step === "intro" && (
@@ -96,8 +96,8 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                 <ShieldCheck className="w-12 h-12 text-white" />
               </div>
               <div className="space-y-2">
-                <h1 className="text-3xl font-black text-slate-900">Identity Verification</h1>
-                <p className="text-slate-500 font-medium">Enhanced biometric and OCR validation required.</p>
+                <h1 className="text-3xl font-black text-foreground">Identity Verification</h1>
+                <p className="text-muted-foreground font-medium">Enhanced biometric and OCR validation required.</p>
               </div>
 
               <Card className="p-6 border-slate-100 shadow-sm text-left space-y-4">
@@ -106,8 +106,8 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                     <Camera className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-slate-900">Liveness Face Capture</p>
-                    <p className="text-[10px] text-slate-500 font-bold">Biometric face recognition (85%+ match)</p>
+                    <p className="text-sm font-black text-foreground">Liveness Face Capture</p>
+                    <p className="text-[10px] text-muted-foreground font-bold">Biometric face recognition (85%+ match)</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -115,8 +115,8 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                     <Scan className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-slate-900">National ID Scan</p>
-                    <p className="text-[10px] text-slate-500 font-bold">OCR data extraction (Front & Back)</p>
+                    <p className="text-sm font-black text-foreground">National ID Scan</p>
+                    <p className="text-[10px] text-muted-foreground font-bold">OCR data extraction (Front & Back)</p>
                   </div>
                 </div>
               </Card>
@@ -135,8 +135,8 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
               className="space-y-6"
             >
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-black text-slate-900">Face Capture</h2>
-                <p className="text-slate-500 font-medium text-sm">Position your face within the frame</p>
+                <h2 className="text-2xl font-black text-foreground">Face Capture</h2>
+                <p className="text-muted-foreground font-medium text-sm">Position your face within the frame</p>
               </div>
               
               <CameraCapture
@@ -163,8 +163,8 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
               className="space-y-6"
             >
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-black text-slate-900">ID Front Scan</h2>
-                <p className="text-slate-500 font-medium text-sm">Upload or capture front of your National ID</p>
+                <h2 className="text-2xl font-black text-foreground">ID Front Scan</h2>
+                <p className="text-muted-foreground font-medium text-sm">Upload or capture front of your National ID</p>
               </div>
 
               <FileOrCameraInput
@@ -192,8 +192,8 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
               className="space-y-6"
             >
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-black text-slate-900">ID Back Scan</h2>
-                <p className="text-slate-500 font-medium text-sm">Upload or capture back of your National ID</p>
+                <h2 className="text-2xl font-black text-foreground">ID Back Scan</h2>
+                <p className="text-muted-foreground font-medium text-sm">Upload or capture back of your National ID</p>
               </div>
 
               <FileOrCameraInput
@@ -229,7 +229,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                     stroke="currentColor"
                     strokeWidth="8"
                     fill="transparent"
-                    className="text-slate-100"
+                    className="text-muted-foreground/30"
                   />
                   <circle
                     cx="64"
@@ -244,14 +244,14 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-2xl font-black text-slate-900">{progress}%</span>
+                  <span className="text-2xl font-black text-foreground">{progress}%</span>
                 </div>
               </div>
-              <h3 className="text-2xl font-black text-slate-900">Analyzing Biometrics</h3>
-              <p className="text-slate-500 font-medium mt-2 max-w-[240px]">Performing 1:1 cross-check between face and ID document.</p>
+              <h3 className="text-2xl font-black text-foreground">Analyzing Biometrics</h3>
+              <p className="text-muted-foreground font-medium mt-2 max-w-[240px]">Performing 1:1 cross-check between face and ID document.</p>
               
               <div className="mt-8 space-y-2 w-full max-w-[280px]">
-                <div className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase">
+                <div className="flex items-center justify-between text-[10px] font-black text-muted-foreground uppercase">
                   <span>Face Confidence</span>
                   <span className="text-green-500">92% MATCH</span>
                 </div>
@@ -273,8 +273,8 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                 <CheckCircle2 className="w-12 h-12" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-3xl font-black text-slate-900">Identity Verified</h2>
-                <p className="text-slate-500 font-medium">Auto-matching complete with 92% confidence.</p>
+                <h2 className="text-3xl font-black text-foreground">Identity Verified</h2>
+                <p className="text-muted-foreground font-medium">Auto-matching complete with 92% confidence.</p>
               </div>
               
               <Card className="p-4 border-slate-100 bg-white flex items-center gap-4 text-left">
@@ -282,14 +282,14 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                   <ShieldCheck className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase">Status</p>
-                  <p className="text-sm font-black text-slate-900">TIER 2 (ID Verified)</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase">Status</p>
+                  <p className="text-sm font-black text-foreground">TIER 2 (ID Verified)</p>
                 </div>
               </Card>
 
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start gap-3 text-left">
-                <AlertCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
+                <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                <p className="text-[10px] text-muted-foreground font-bold leading-relaxed">
                   Your transaction limits have been upgraded to $2,000 daily based on Tier 2 verification status.
                 </p>
               </div>

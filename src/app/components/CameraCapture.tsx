@@ -171,7 +171,7 @@ export function CameraCapture({
         {loading && !error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 gap-4">
             <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
-            <p className="text-slate-400 text-sm font-medium">Starting camera...</p>
+            <p className="text-muted-foreground text-sm font-medium">Starting camera...</p>
           </div>
         )}
 
@@ -179,7 +179,7 @@ export function CameraCapture({
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 p-6 text-center">
             <VideoOff className="w-16 h-16 text-amber-500 mb-4" />
             <p className="text-white font-semibold mb-2">Camera access required</p>
-            <p className="text-slate-400 text-sm mb-6 max-w-sm">{error}</p>
+            <p className="text-muted-foreground text-sm mb-6 max-w-sm">{error}</p>
             <Button
               variant="outline"
               onClick={() => {
@@ -214,7 +214,7 @@ export function CameraCapture({
         )}
       </div>
 
-      <p className="text-center text-slate-500 text-sm font-medium">{instructionText}</p>
+      <p className="text-center text-muted-foreground text-sm font-medium">{instructionText}</p>
 
       {!loading && !error && (
         <div className="flex flex-col sm:flex-row gap-3">

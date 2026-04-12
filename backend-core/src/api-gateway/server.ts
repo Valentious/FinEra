@@ -3,6 +3,8 @@
  */
 
 import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
+import { createServer as createNetServer } from "node:net";
 import app from "./app.js";
 import { loadConfig } from "../config/index.js";
 import { connectDatabase } from "../infrastructure/database/index.js";
@@ -34,12 +36,45 @@ async function main() {
 
   await startRabbitConsumer();
 
+  const findAvailablePort = async (startPort: number, attempts: number): Promise<number> => {
+    for (let i = 0; i < attempts; i += 1) {
+      const port = startPort + i;
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const probe = createNetServer();
+          probe.once("error", (err: NodeJS.ErrnoException) => {
+            probe.close();
+            reject(err);
+          });
+          probe.listen(port, () => {
+            probe.close(() => resolve());
+          });
+        });
+        return port;
+      } catch (err) {
+        const e = err as NodeJS.ErrnoException;
+        if (e.code === "EADDRINUSE") {
+          logger.warn({ port }, "Port in use, trying next port");
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw new Error(`No available port found from ${startPort} to ${startPort + attempts - 1}`);
+  };
+
   const server = createServer(app);
+  const targetPort = await findAvailablePort(config.PORT, 10);
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(targetPort, () => resolve());
+  });
   attachAdminWebSocket(server);
 
-  server.listen(config.PORT, () => {
-    logger.info({ port: config.PORT, env: config.NODE_ENV }, "FinEra Backend started");
-  });
+  const boundPort = targetPort;
+  const actualPort = (server.address() as AddressInfo | null)?.port ?? boundPort;
+  logger.info({ port: actualPort, env: config.NODE_ENV }, "FinEra Backend started");
+  logger.info({ port: actualPort }, "backend-core started");
 
   const shutdown = async () => {
     logger.info("Shutting down...");

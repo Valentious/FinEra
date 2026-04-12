@@ -56,7 +56,7 @@ export function ApplicationStatus({ status, onBackToDashboard, onViewApproval }:
           {getStatusBadge()}
         </div>
 
-        <p className="text-center text-slate-600 mb-8">
+        <p className="text-center text-muted-foreground mb-8">
           {getStatusText()}
         </p>
 

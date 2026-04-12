@@ -5,6 +5,16 @@
 
 import { z } from "zod";
 
+/**
+ * Treat empty env vars as "unset" so optional URLs can be left blank in .env
+ * (common in local development, e.g. RABBITMQ_URL=).
+ */
+const optionalUrl = z.preprocess((v) => {
+  if (typeof v !== "string") return v;
+  const t = v.trim();
+  return t === "" ? undefined : t;
+}, z.string().url().optional());
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "staging", "production"]).default("development"),
   PORT: z.coerce.number().default(4000),
@@ -24,7 +34,7 @@ const envSchema = z.object({
   RATE_LIMIT_LEDGER: z.coerce.number().default(60),
   RATE_LIMIT_ADMIN: z.coerce.number().default(120),
   /** amqp://user:pass@host:5672/vhost - when set, domain events use RabbitMQ (durable + DLQ). */
-  RABBITMQ_URL: z.string().url().optional(),
+  RABBITMQ_URL: optionalUrl,
   /** Consumer attempts before DLQ (attempt 0 … max-1, then poison). */
   RABBITMQ_RETRY_MAX: z.coerce.number().min(1).max(20).default(3),
   /** Retry queue TTL (ms) before message is dead-lettered back to `replay`. */
@@ -34,6 +44,8 @@ const envSchema = z.object({
    * Forced off when NODE_ENV is production.
    */
   ADMIN_PROTO_LOGIN: z.preprocess((v) => v === true || v === "true", z.boolean()).default(false),
+  /** Consecutive missed installments (per loan delinquencyStage) before default + employer notification. */
+  MISSED_REPAYMENTS_FOR_DEFAULT: z.coerce.number().min(1).max(24).default(3),
 });
 
 export type Config = z.infer<typeof envSchema>;

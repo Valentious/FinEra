@@ -4,6 +4,11 @@ import { Card } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { ArrowLeft, AlertTriangle, CheckCircle, Info, Loader2 } from "lucide-react";
+import { LoanApplicationFlow } from "@/app/components/LoanApplicationFlow";
+import type { LoanType } from "@/loan/loanTypes";
+import { requiresCollateralStep, requiresWalletDisciplineForAmount } from "@/loan/loanTypes";
+import { CreditEvaluationService } from "@/services/creditEvaluation";
+import { toast } from "sonner";
 import { Progress } from "@/app/components/ui/progress";
 import {
   CURRENCY_AMOUNT_SYMBOLS,
@@ -20,12 +25,13 @@ interface CreditDetailsProps {
   creditLimitLoading: boolean;
   creditLimitError: boolean;
   limitsReady: boolean;
+  loanType: LoanType;
   creditType: string;
   maxAmount: number;
   repaymentCycle: string;
   savingsRequirement: number;
   currentSavings: number;
-  onContinue: (amount: number) => void;
+  onContinue: (amount: number) => void | Promise<void>;
   onBack: () => void;
 }
 
@@ -37,6 +43,7 @@ export function CreditDetails({
   creditLimitLoading,
   creditLimitError,
   limitsReady,
+  loanType,
   creditType,
   maxAmount,
   repaymentCycle,
@@ -46,6 +53,7 @@ export function CreditDetails({
   onBack,
 }: CreditDetailsProps) {
   const [amount, setAmount] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const cc = currencyCode.toUpperCase();
   const sym = CURRENCY_AMOUNT_SYMBOLS[cc] ?? cc;
   const inputPadClass = sym.length > 2 ? "pl-24" : "pl-10";
@@ -54,7 +62,9 @@ export function CreditDetails({
   const requiredSavings = requestedAmount * 0.2;
   const maxAllowedLoan = currentSavings / 0.2;
 
-  const savingsCheckApplies = creditType === "essential" || creditType === "business";
+  const savingsCheckApplies = requiresWalletDisciplineForAmount(loanType, creditType);
+  const collateralFlow = requiresCollateralStep(loanType);
+  const pageBg = collateralFlow ? "min-h-dvh bg-transparent p-4 pb-24" : "min-h-dvh bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 pb-24";
 
   const creditTypeLabel =
     creditType === "emergency"
@@ -74,25 +84,36 @@ export function CreditDetails({
     savingsMet &&
     !amountExceedsLimit;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (canProceed) {
-      onContinue(requestedAmount);
+    if (!canProceed || submitting) return;
+    setSubmitting(true);
+    try {
+      const evaluated = await CreditEvaluationService.evaluateForLoanType(loanType, requestedAmount, cc);
+      if (!evaluated.ok) {
+        toast.error(evaluated.message);
+        return;
+      }
+      await Promise.resolve(onContinue(requestedAmount));
+    } finally {
+      setSubmitting(false);
     }
   };
 
   if (isWalletLoading || creditLimitLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 flex flex-col items-center justify-center gap-4">
+      <div
+        className={`${collateralFlow ? "bg-transparent" : "bg-gradient-to-br from-emerald-50 to-emerald-100"} flex min-h-dvh flex-col items-center justify-center gap-4 p-4`}
+      >
         <Loader2 className="w-12 h-12 animate-spin text-emerald-600" />
-        <p className="text-slate-600 font-medium">Loading {cc} credit limits…</p>
+        <p className="text-muted-foreground font-medium">Loading {cc} credit limits…</p>
       </div>
     );
   }
 
   if (walletError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 pb-24">
+      <div className={pageBg}>
         <div className="max-w-2xl mx-auto space-y-6 pt-6">
           <Button variant="ghost" onClick={onBack}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -109,7 +130,7 @@ export function CreditDetails({
 
   if (creditLimitError || !limitsReady) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 pb-24">
+      <div className={pageBg}>
         <div className="max-w-2xl mx-auto space-y-6 pt-6">
           <Button variant="ghost" onClick={onBack}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -125,42 +146,44 @@ export function CreditDetails({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 pb-24">
+    <div className={pageBg}>
       <div className="max-w-2xl mx-auto space-y-6 pt-6">
-        <Button variant="ghost" onClick={onBack}>
+        <Button variant="ghost" onClick={onBack} disabled={submitting}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
 
+        <LoanApplicationFlow loanType={loanType} step="amount" />
+
         <div>
-          <h1 className="text-3xl font-black text-slate-900">Credit Details ({cc})</h1>
-          <p className="text-slate-500 font-medium mt-1">Loan amounts and limits are in {cc} only</p>
+          <h1 className="text-3xl font-black text-foreground">Credit Details ({cc})</h1>
+          <p className="text-muted-foreground font-medium mt-1">Loan amounts and limits are in {cc} only</p>
         </div>
 
         <Card className="p-6 border-slate-200">
           <div className="space-y-4 mb-6">
             <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-slate-600 font-medium">Credit Type</span>
+              <span className="text-muted-foreground font-medium">Credit Type</span>
               <span className="font-black">{creditTypeLabel}</span>
             </div>
 
             <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-slate-600 font-medium">Maximum Eligible Amount</span>
+              <span className="text-muted-foreground font-medium">Maximum Eligible Amount</span>
               <span className="font-black">{formatAmountWithCurrency(maxAmount, cc)}</span>
             </div>
 
             <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-slate-600 font-medium">Repayment Cycle</span>
+              <span className="text-muted-foreground font-medium">Repayment Cycle</span>
               <span className="font-black">{repaymentCycle}</span>
             </div>
 
             <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-slate-600 font-medium">Wallet balance rule</span>
+              <span className="text-muted-foreground font-medium">Wallet balance rule</span>
               <span className="font-black">{savingsCheckApplies ? "20% of loan" : "Not required"}</span>
             </div>
 
             <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-slate-600 font-medium">Your {walletLabel} ({cc})</span>
+              <span className="text-muted-foreground font-medium">Your {walletLabel} ({cc})</span>
               <span className="font-black text-green-600">{formatAmountWithCurrency(currentSavings, cc)}</span>
             </div>
           </div>
@@ -171,7 +194,7 @@ export function CreditDetails({
                 Requested Loan Amount ({cc})
               </Label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm max-w-[5rem] leading-tight">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-muted-foreground text-sm max-w-[5rem] leading-tight">
                   {sym}
                 </span>
                 <Input
@@ -187,7 +210,7 @@ export function CreditDetails({
                   required
                 />
               </div>
-              <p className="text-sm text-slate-500 font-medium">
+              <p className="text-sm text-muted-foreground font-medium">
                 Maximum allowed: {formatAmountWithCurrency(maxAmount, cc)}
                 {savingsCheckApplies &&
                   ` (Based on ${walletLabel}: ${formatAmountWithCurrency(Math.min(maxAllowedLoan, maxAmount), cc)})`}
@@ -210,24 +233,24 @@ export function CreditDetails({
                       )}
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-black text-slate-900 mb-2">
+                      <h4 className="font-black text-foreground mb-2">
                         {savingsMet && !amountExceedsLimit ? "Wallet balance check passed ✓" : "Wallet balance requirement"}
                       </h4>
 
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <div className="flex justify-between text-sm">
-                            <span className="text-slate-600 font-medium">Requested Amount:</span>
+                            <span className="text-muted-foreground font-medium">Requested Amount:</span>
                             <span className="font-black">{formatAmountWithCurrency(requestedAmount, cc)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-slate-600 font-medium">Required in wallet (20%):</span>
+                            <span className="text-muted-foreground font-medium">Required in wallet (20%):</span>
                             <span className="font-black text-emerald-600">
                               {formatAmountWithCurrency(requiredSavings, cc)}
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-slate-600 font-medium">Your current balance:</span>
+                            <span className="text-muted-foreground font-medium">Your current balance:</span>
                             <span
                               className={`font-black ${currentSavings >= requiredSavings ? "text-green-600" : "text-red-600"}`}
                             >
@@ -237,7 +260,7 @@ export function CreditDetails({
                         </div>
 
                         <div>
-                          <div className="flex justify-between text-xs font-bold text-slate-600 mb-1">
+                          <div className="flex justify-between text-xs font-bold text-muted-foreground mb-1">
                             <span>Progress toward 20%</span>
                             <span>{Math.min((currentSavings / requiredSavings) * 100, 100).toFixed(0)}%</span>
                           </div>
@@ -299,8 +322,24 @@ export function CreditDetails({
               </Card>
             )}
 
-            <Button type="submit" className="w-full h-14 text-lg font-black rounded-xl" size="lg" disabled={!canProceed}>
-              {!canProceed && requestedAmount > 0 ? "Cannot Proceed - Check Requirements" : "Continue to Collateral Selection"}
+            <Button
+              type="submit"
+              className="w-full h-14 text-lg font-black rounded-xl inline-flex items-center justify-center gap-2"
+              size="lg"
+              disabled={!canProceed || submitting}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin shrink-0" />
+                  Evaluating eligibility…
+                </>
+              ) : !canProceed && requestedAmount > 0 ? (
+                "Cannot Proceed - Check Requirements"
+              ) : requiresCollateralStep(loanType) ? (
+                "Continue to asset & collateral"
+              ) : (
+                "Continue to review"
+              )}
             </Button>
           </form>
         </Card>

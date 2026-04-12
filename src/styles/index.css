@@ -1,6 +1,8 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+@import './app-canvas.css';
+@import './financial.css';
 
 /* react-phone-input-2 full-width */
 .react-tel-input {

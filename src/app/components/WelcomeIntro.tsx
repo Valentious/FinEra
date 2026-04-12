@@ -51,13 +51,13 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.3 + index * 0.1 }}
             >
-              <Card className="p-5 flex gap-4 border-none shadow-xl bg-white/95 text-slate-900 backdrop-blur-sm rounded-2xl dark:bg-white/98 dark:text-slate-900">
+              <Card className="p-5 flex gap-4 border-none shadow-xl bg-white/95 text-foreground backdrop-blur-sm rounded-2xl dark:bg-white/98 dark:text-foreground">
                 <div className="flex-shrink-0 w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center dark:bg-slate-100">
                   {step.icon}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900">{step.title}</h3>
-                  <p className="text-sm text-slate-600 leading-tight mt-1 dark:text-slate-700">{step.description}</p>
+                  <h3 className="font-bold text-foreground">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-tight mt-1 dark:text-foreground">{step.description}</p>
                 </div>
               </Card>
             </motion.div>

@@ -16,7 +16,7 @@ export function PaymentConfirmed({ onReturnToDashboard }: PaymentConfirmedProps)
         
         <h1 className="text-3xl text-center mb-4">Payment Received</h1>
         
-        <p className="text-center text-slate-600 mb-8">
+        <p className="text-center text-muted-foreground mb-8">
           Your repayment is being processed. Your account will be updated once the payment is verified.
         </p>
 

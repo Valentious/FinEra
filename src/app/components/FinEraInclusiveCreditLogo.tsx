@@ -71,7 +71,7 @@ export const FinEraInclusiveCreditLogo = forwardRef<
           className={`
             inclusive-text font-extrabold tracking-wide mt-2 mb-0
             ${config.subtitleSize}
-            ${dark ? "text-slate-300" : "text-slate-600"}
+            ${dark ? "text-muted-foreground" : "text-muted-foreground"}
           `}
         >
           INCLUSIVE CREDIT
@@ -80,7 +80,7 @@ export const FinEraInclusiveCreditLogo = forwardRef<
           className={`
             mt-1 font-medium
             ${config.subtitleSize}
-            ${dark ? "text-slate-400" : "text-slate-500"}
+            ${dark ? "text-muted-foreground" : "text-muted-foreground"}
           `}
         >
           Formal Institutions Hub

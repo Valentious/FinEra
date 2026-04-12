@@ -14,21 +14,22 @@
 
 import { fetchWithRetry } from "@/utils/fetchWithRetry";
 import { getWalletLabel } from "@/types/wallet";
+import type { LoanType } from "@/loan/loanTypes";
 
 /**
  * API base URL.
- * - Local dev (default): `http://localhost:4000/api/v1`
+ * - Local dev (Docker backend default): `http://localhost:4010/api/v1`
  * - Docker single-port build: set `VITE_API_URL=/api/v1` so requests go through nginx on the same origin.
  */
 export const API_BASE_URL =
-  (import.meta.env?.VITE_API_URL as string) || "http://localhost:4000/api/v1";
+  (import.meta.env?.VITE_API_URL as string) || "http://localhost:4010/api/v1";
 
 const BASE_URL = API_BASE_URL;
 
 /** Health check URL (backend `/health`). Relative `/health` when API is same-origin (Docker gateway). */
 export const HEALTH_URL = BASE_URL.startsWith("/")
   ? "/health"
-  : `${BASE_URL.replace(/\/api\/v1\/?$/, "") || "http://localhost:4000"}/health`;
+  : `${BASE_URL.replace(/\/api\/v1\/?$/, "") || "http://localhost:4010"}/health`;
 
 /**
  * Check if backend is available. Uses retry for resilience.
@@ -133,7 +134,8 @@ export interface Transaction {
 export interface CreditApplication {
   creditType: 'essential' | 'emergency' | 'business';
   amount: number;
-  withCollateral: boolean;
+  /** Product chosen on the dashboard before the application flow */
+  loanType: LoanType;
   collateralDetails?: any;
   /** Currency for the credit (wallet isolation) - required for correct wallet targeting */
   currency?: string;
@@ -423,7 +425,7 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** Fetch all registration data with retry. Returns fallback on failure - never throws. */
 export async function getRegistrationData(): Promise<RegistrationData> {
-  const base = (import.meta.env?.VITE_API_URL as string) || "http://localhost:4000/api/v1";
+  const base = (import.meta.env?.VITE_API_URL as string) || "http://localhost:4010/api/v1";
   const url = `${base}/reference/registration-data`;
 
   try {
@@ -969,7 +971,7 @@ export async function applyCreditApplication(data: CreditApplication): Promise<{
     body: JSON.stringify({
       amount: data.amount,
       creditType: data.creditType,
-      withCollateral: data.withCollateral ?? false,
+      loanType: data.loanType,
       currency: data.currency ?? 'USD',
     }),
   });
@@ -1587,6 +1589,116 @@ export async function bankDeposit(data: BankDepositRequest): Promise<ApiResponse
   } catch (e) {
     return { success: false, message: e instanceof Error ? e.message : 'Bank deposit failed' };
   }
+}
+
+// ==================== MEMBER DOCUMENTS & CONSENT ====================
+
+function authToken(): string | null {
+  return localStorage.getItem("auth_token") || localStorage.getItem("accessToken");
+}
+
+export type MemberDocVerificationStatus = "PENDING" | "VERIFIED" | "REJECTED";
+
+export interface MemberDocumentsStatusPayload {
+  memberDocument: {
+    loanProductType: string;
+    agreementStatus: MemberDocVerificationStatus;
+    consentStatus: MemberDocVerificationStatus | null;
+    hasAgreementUpload: boolean;
+    hasConsentUpload: boolean;
+    adminNotes: string | null;
+    assetDocumentationNote: string | null;
+    uploadedAt: string;
+    updatedAt: string;
+  } | null;
+  employment: {
+    employerName: string;
+    employerContact: string;
+    jobTitle: string;
+    salaryEstimate: number;
+    verified: boolean;
+  } | null;
+  compliance: {
+    defaultFlagged: boolean;
+    payrollEnforcementEligible: boolean;
+    consecutiveMissedRepayments: number;
+  } | null;
+}
+
+export async function getMemberDocumentsStatus(): Promise<{ success: boolean; data: MemberDocumentsStatusPayload }> {
+  return apiCall("/member-documents/status", { method: "GET" });
+}
+
+export async function putMemberDocumentsContext(loanProductType: string): Promise<{ success: boolean }> {
+  return apiCall("/member-documents/context", {
+    method: "PUT",
+    body: JSON.stringify({ loanProductType }),
+  });
+}
+
+export async function uploadMemberSignedDocument(params: {
+  kind: "agreement" | "consent";
+  loanProductType: string;
+  file: File;
+}): Promise<{ success: boolean }> {
+  const form = new FormData();
+  form.append("file", params.file);
+  form.append("kind", params.kind);
+  form.append("loanProductType", params.loanProductType);
+  const token = authToken();
+  const res = await fetch(`${BASE_URL}/member-documents/upload`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: "include",
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { message?: string }).message || `Upload failed (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function putEmploymentDetails(body: {
+  employerName: string;
+  employerContact: string;
+  jobTitle: string;
+  salaryEstimate: number;
+}): Promise<{ success: boolean }> {
+  return apiCall("/member-documents/employment", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function patchAssetDocumentationNote(
+  assetDocumentationNote: string,
+  loanProductType?: string
+): Promise<{ success: boolean }> {
+  return apiCall("/member-documents/asset-note", {
+    method: "PATCH",
+    body: JSON.stringify({ assetDocumentationNote, ...(loanProductType ? { loanProductType } : {}) }),
+  });
+}
+
+export async function downloadMemberTemplate(docType: "AGREEMENT" | "PAYROLL_CONSENT", filename: string): Promise<void> {
+  const token = authToken();
+  const res = await fetch(`${BASE_URL}/member-documents/templates/${docType}/download`, {
+    method: "GET",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { message?: string }).message || `Download failed (${res.status})`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ==================== HELPER: Mock Mode for Development ====================

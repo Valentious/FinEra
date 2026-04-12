@@ -5,6 +5,7 @@ import {
   Users,
   Wallet,
   Brain,
+  FileStack,
   Shield,
   Activity,
   ArrowLeftRight,
@@ -17,6 +18,7 @@ const items: { id: AdminNavId; to: string; label: string; icon: typeof LayoutDas
   { id: "users", to: "users", label: "Users", icon: Users },
   { id: "wallets", to: "wallets", label: "Wallets", icon: Wallet },
   { id: "credit", to: "credit-intelligence", label: "Credit Intelligence", icon: Brain },
+  { id: "documents", to: "documents", label: "Agreements & consent", icon: FileStack },
   { id: "agents", to: "agent-governance", label: "Agent Governance (FVAR)", icon: Shield },
   { id: "risk", to: "risk-monitor", label: "Risk Monitor", icon: Activity },
   { id: "transactions", to: "transactions", label: "Transactions", icon: ArrowLeftRight },
@@ -46,7 +48,7 @@ export function AdminSidebar() {
             end={item.id === "dashboard"}
             className={({ isActive }) =>
               `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"
+                isActive ? "bg-slate-900 text-white" : "text-foreground hover:bg-slate-100"
               }`
             }
           >

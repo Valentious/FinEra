@@ -23,7 +23,7 @@ export function AccountSwitchOverlay() {
         >
           <div className="flex flex-col items-center gap-2">
             <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm font-medium text-slate-600">
+            <p className="text-sm font-medium text-muted-foreground">
               Switching account...
             </p>
           </div>

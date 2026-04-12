@@ -46,6 +46,7 @@ import {
   type ProgressItem,
 } from "@/services/api";
 import type { UserData } from "@/services/api";
+import { FineraGradientBackdrop } from "@/app/components/FineraGradientBackdrop";
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   Target: <Target className="w-5 h-5" />,
@@ -180,40 +181,48 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
 
   if (loading && modules.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Loader2 className="w-12 h-12 animate-spin text-emerald-600" />
-        <p className="text-slate-600 font-medium">Loading Learning Hub...</p>
+      <div className="relative isolate flex min-h-[400px] flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl">
+        <FineraGradientBackdrop clip="card" />
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="font-medium text-foreground">Loading Learning Hub...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
+    <div className="relative isolate min-h-[min(100%,calc(100dvh-6rem))] overflow-x-hidden pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <FineraGradientBackdrop />
+      <div className="relative z-10 space-y-8">
+      {/* Header — same stack as SplashScreen (intense green bottom-right) */}
+      <div className="relative overflow-hidden rounded-3xl p-8 text-white shadow-2xl">
+        <FineraGradientBackdrop clip="card" />
         <div className="relative z-10 max-w-2xl">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
-              <GraduationCap className="w-6 h-6 text-emerald-400" />
+          <div className="mb-4 flex items-center gap-2">
+            <div className="rounded-lg border border-white/20 bg-white/10 p-2 backdrop-blur-md">
+              <GraduationCap className="h-6 w-6 text-emerald-100" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300">
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/85">
               Learning & Growth Hub
             </span>
           </div>
-          <h1 className="text-4xl font-black mb-4 leading-tight">
-            Empower Your Financial Future.
-          </h1>
+          <h1 className="mb-4 text-4xl font-black leading-tight">Empower Your Financial Future.</h1>
         </div>
-
-        <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[140%] bg-emerald-500/20 rounded-full blur-[80px]" />
       </div>
 
       {error && (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="flex items-center justify-between py-4">
-            <span className="text-amber-800">{error}</span>
-            <Button variant="outline" size="sm" onClick={fetchData}>
-              <RefreshCw className="w-4 h-4 mr-2" /> Retry
+        <Card className="relative overflow-hidden border-white/25 shadow-md">
+          <FineraGradientBackdrop clip="panel" />
+          <CardContent className="relative z-10 flex items-center justify-between py-4 text-white">
+            <span className="text-sm text-white/95">{error}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-white/50 bg-white/15 text-white hover:bg-white/25"
+              onClick={fetchData}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Retry
             </Button>
           </CardContent>
         </Card>
@@ -231,23 +240,20 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
               {/* Recommendations */}
               {recommendations.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-black text-slate-900">For You</h3>
+                  <h3 className="font-black text-foreground">For You</h3>
                   {recommendations.map((r, i) => (
                     <Card
                       key={i}
-                      className={`p-4 ${
-                        r.type === "WARNING"
-                          ? "border-amber-200 bg-amber-50"
-                          : "border-slate-100"
-                      }`}
+                      className={`relative overflow-hidden p-4 ${r.type === "WARNING" ? "border-white/25 text-white" : "border-slate-100"}`}
                     >
-                      <div className="flex gap-3">
+                      {r.type === "WARNING" && <FineraGradientBackdrop clip="panel" />}
+                      <div className={`flex gap-3 ${r.type === "WARNING" ? "relative z-10" : ""}`}>
                         {r.type === "WARNING" && (
-                          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                          <AlertTriangle className="h-5 w-5 shrink-0 text-white/95" />
                         )}
                         <div>
-                          <div className="font-bold text-slate-900">{r.title}</div>
-                          <div className="text-sm text-slate-600">{r.message}</div>
+                          <div className={`font-bold ${r.type === "WARNING" ? "text-white" : "text-foreground"}`}>{r.title}</div>
+                          <div className={`text-sm ${r.type === "WARNING" ? "text-white/88" : "text-muted-foreground"}`}>{r.message}</div>
                         </div>
                       </div>
                     </Card>
@@ -256,15 +262,15 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
               )}
 
               <div className="space-y-6">
-                <h2 className="text-3xl font-black text-slate-900">Financial Growth Academy</h2>
+                <h2 className="text-3xl font-black text-foreground">Financial Growth Academy</h2>
 
                 <div className="flex bg-slate-50 p-1 rounded-2xl border border-slate-200 w-fit">
                   <button
                     onClick={() => setLearningTab("free")}
                     className={`px-8 py-3 rounded-xl text-sm font-black transition-all ${
                       learningTab === "free"
-                        ? "bg-white text-slate-900 shadow-md"
-                        : "text-slate-500 hover:text-slate-900"
+                        ? "bg-white text-foreground shadow-md"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     FREE LESSONS
@@ -274,7 +280,7 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
                     className={`px-8 py-3 rounded-xl text-sm font-black transition-all ${
                       learningTab === "premium"
                         ? "bg-emerald-600 text-white shadow-md"
-                        : "text-slate-500 hover:text-slate-900"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     PREMIUM LEARNING
@@ -283,7 +289,7 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
 
                 {learningTab === "free" && (
                   <div className="space-y-4">
-                    <p className="text-slate-600 font-medium">
+                    <p className="text-muted-foreground font-medium">
                       Build strong financial discipline before accessing advanced financial tools.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -303,16 +309,16 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
                             >
                               {ICON_MAP[m.icon || "Target"] ?? <Target className="w-5 h-5" />}
                             </div>
-                            <h3 className="font-black text-slate-900 mb-1">{m.title}</h3>
+                            <h3 className="font-black text-foreground mb-1">{m.title}</h3>
                             {m.description && (
-                              <div className="text-sm text-slate-600 mb-3">
+                              <div className="text-sm text-muted-foreground mb-3">
                                 <TermHighlight terms={terms} context={`module_${m.slug}`}>
                                   {m.description}
                                 </TermHighlight>
                               </div>
                             )}
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase">
                                 <Clock className="w-3 h-3" />
                                 {m.durationMinutes ? `${m.durationMinutes} min` : "Self-paced"}
                               </div>
@@ -338,7 +344,7 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
 
                 {learningTab === "premium" && (
                   <div className="space-y-4">
-                    <p className="text-slate-600 font-medium mb-4">
+                    <p className="text-muted-foreground font-medium mb-4">
                       Advanced financial intelligence for serious wealth builders.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -361,16 +367,16 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
                             >
                               {ICON_MAP[m.icon || "Crown"] ?? <Crown className="w-5 h-5" />}
                             </div>
-                            <h3 className="font-black text-slate-900 mb-1 pr-6">{m.title}</h3>
+                            <h3 className="font-black text-foreground mb-1 pr-6">{m.title}</h3>
                             {m.description && (
-                              <div className="text-sm text-slate-600 mb-3">
+                              <div className="text-sm text-muted-foreground mb-3">
                                 <TermHighlight terms={terms} context={`module_${m.slug}`}>
                                   {m.description}
                                 </TermHighlight>
                               </div>
                             )}
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase">
                                 <Clock className="w-3 h-3" />
                                 {m.durationMinutes ? `${m.durationMinutes} min` : "Self-paced"}
                               </div>
@@ -407,7 +413,9 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
 
             {/* Sidebar */}
             <div className="space-y-6">
-              <Card className="p-6 bg-gradient-to-br from-emerald-600 to-emerald-800 text-white border-none shadow-2xl">
+              <Card className="relative overflow-hidden border-none p-6 text-white shadow-2xl">
+                <FineraGradientBackdrop clip="card" />
+                <div className="relative z-10">
                 <Trophy className="w-12 h-12 text-amber-400 mb-4" />
                 <h3 className="text-xl font-black mb-2">Academic Rewards</h3>
                 <p className="text-emerald-100 text-xs font-medium mb-6 opacity-80">
@@ -425,10 +433,11 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
                     className="h-2 bg-white/20"
                   />
                 </div>
+                </div>
               </Card>
 
               <Card className="p-6 border-slate-100">
-                <h4 className="font-black text-slate-900 mb-4 flex items-center gap-2">
+                <h4 className="font-black text-foreground mb-4 flex items-center gap-2">
                   <Award className="w-4 h-4 text-amber-500" />
                   Unlocked Badges
                 </h4>
@@ -451,10 +460,10 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
                   {completedCount < 1 && (
                     <>
                       <div className="p-2 bg-slate-50 rounded-xl border border-slate-100 opacity-30">
-                        <Target className="w-5 h-5 text-slate-400" />
+                        <Target className="w-5 h-5 text-muted-foreground" />
                       </div>
                       <div className="p-2 bg-slate-50 rounded-xl border border-slate-100 opacity-30">
-                        <Users className="w-5 h-5 text-slate-400" />
+                        <Users className="w-5 h-5 text-muted-foreground" />
                       </div>
                     </>
                   )}
@@ -463,6 +472,7 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
             </div>
           </motion.div>
       </AnimatePresence>
+      </div>
     </div>
   );
 }

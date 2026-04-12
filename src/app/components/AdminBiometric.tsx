@@ -19,7 +19,7 @@ export function AdminBiometric({ onVerify, onBack }: AdminBiometricProps) {
 
         <h1 className="text-3xl mb-4">Biometric Verification</h1>
         
-        <p className="text-slate-600 mb-8">
+        <p className="text-muted-foreground mb-8">
           Confirm identity using Face ID
         </p>
 

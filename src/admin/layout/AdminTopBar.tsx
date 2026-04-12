@@ -17,7 +17,7 @@ export function AdminTopBar({ currency, onCurrencyChange, wsConnected, onLogout 
       style={{ borderColor: adminColors.border }}
     >
       <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-slate-600">Currency context</span>
+        <span className="text-sm font-medium text-muted-foreground">Currency context</span>
         <div className="flex gap-1">
           {currencies.map((c) => (
             <button
@@ -45,8 +45,8 @@ export function AdminTopBar({ currency, onCurrencyChange, wsConnected, onLogout 
             </>
           )}
         </div>
-        <div className="flex items-center gap-1 text-xs text-slate-600">
-          <ShieldCheck className="h-4 w-4 text-slate-500" />
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <ShieldCheck className="h-4 w-4 text-muted-foreground" />
           RBAC enforced server-side
         </div>
         <button

@@ -100,7 +100,7 @@ export function MakePayment({
         <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h2 className="text-2xl font-black text-slate-900">Make Payment</h2>
+        <h2 className="text-2xl font-black text-foreground">Make Payment</h2>
       </div>
 
       <AnimatePresence mode="wait">
@@ -112,7 +112,7 @@ export function MakePayment({
             exit={{ opacity: 0, y: -20 }}
             className="space-y-4"
           >
-            <p className="text-slate-600 font-medium">Select payment type</p>
+            <p className="text-muted-foreground font-medium">Select payment type</p>
             <div className="grid grid-cols-1 gap-3">
               {options.categories.map((c) => (
                 <Card
@@ -125,8 +125,8 @@ export function MakePayment({
                       {CATEGORY_ICONS[c.id] || <Wallet className="w-5 h-5" />}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900">{c.label}</p>
-                      <p className="text-xs text-slate-500">{c.items.length} option(s)</p>
+                      <p className="font-bold text-foreground">{c.label}</p>
+                      <p className="text-xs text-muted-foreground">{c.items.length} option(s)</p>
                     </div>
                   </div>
                 </Card>
@@ -146,7 +146,7 @@ export function MakePayment({
             <Button variant="ghost" size="sm" onClick={() => setStep("category")}>
               ← Back
             </Button>
-            <p className="font-bold text-slate-900">{cat.label}</p>
+            <p className="font-bold text-foreground">{cat.label}</p>
             <div className="grid grid-cols-1 gap-2">
               {cat.items.map((i) => (
                 <Button
@@ -174,8 +174,8 @@ export function MakePayment({
               ← Back
             </Button>
             <div>
-              <p className="text-slate-500 text-sm">{cat?.label}</p>
-              <p className="font-black text-slate-900">{item.label}</p>
+              <p className="text-muted-foreground text-sm">{cat?.label}</p>
+              <p className="font-black text-foreground">{item.label}</p>
             </div>
 
             <div className="space-y-2">
@@ -237,7 +237,7 @@ export function MakePayment({
             className="flex flex-col items-center justify-center py-16"
           >
             <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="font-bold text-slate-700">Processing payment...</p>
+            <p className="font-bold text-foreground">Processing payment...</p>
           </motion.div>
         )}
 
@@ -251,8 +251,8 @@ export function MakePayment({
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
               <Wallet className="w-10 h-10" />
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2">Payment Initiated</h3>
-            <p className="text-slate-600 mb-6">You will receive a confirmation shortly.</p>
+            <h3 className="text-xl font-black text-foreground mb-2">Payment Initiated</h3>
+            <p className="text-muted-foreground mb-6">You will receive a confirmation shortly.</p>
             <Button onClick={onBack} className="w-full h-14 rounded-2xl font-black">
               Back to Dashboard
             </Button>

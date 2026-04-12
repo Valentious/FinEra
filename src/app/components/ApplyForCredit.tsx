@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatAmountWithCurrency } from "@/types/wallet";
+import { LoanApplicationFlow } from "@/app/components/LoanApplicationFlow";
+import type { LoanType } from "@/loan/loanTypes";
 
 interface ApplyForCreditProps {
   currencyCode: string;
@@ -21,8 +23,17 @@ interface ApplyForCreditProps {
   walletBalance: number;
   walletLabel: string;
   hasActiveLoan: boolean;
+  loanType: LoanType;
   onSelectCreditType: (type: "essential" | "emergency" | "business") => void;
   onBack: () => void;
+}
+
+function purposeRule(loanType: LoanType, id: string): string {
+  if (id === "emergency") return "Wallet discipline rule waived when criteria are satisfied";
+  if (loanType === "NON_COLLATERAL" && (id === "essential" || id === "business")) {
+    return "Requires 20% wallet balance discipline";
+  }
+  return "Verified against asset valuation, payroll, or internal policy";
 }
 
 const CREDIT_TYPES = [
@@ -32,7 +43,6 @@ const CREDIT_TYPES = [
     desc: "For daily needs and campus essentials.",
     icon: <PiggyBank className="w-6 h-6" />,
     color: "emerald",
-    rule: "Requires 20% wallet balance discipline",
   },
   {
     id: "emergency",
@@ -40,7 +50,6 @@ const CREDIT_TYPES = [
     desc: "Approved liquidity when schedules slip: documented eligibility replaces the standard wallet hold rule.",
     icon: <Clock className="w-6 h-6" />,
     color: "amber",
-    rule: "Wallet discipline rule waived when criteria are satisfied",
   },
   {
     id: "business",
@@ -48,7 +57,6 @@ const CREDIT_TYPES = [
     desc: "Startup capital for student entrepreneurs.",
     icon: <Briefcase className="w-6 h-6" />,
     color: "purple",
-    rule: "Requires 20% wallet balance discipline",
   },
 ];
 
@@ -59,6 +67,7 @@ export function ApplyForCredit({
   walletBalance,
   walletLabel,
   hasActiveLoan,
+  loanType,
   onSelectCreditType,
   onBack,
 }: ApplyForCreditProps) {
@@ -68,8 +77,8 @@ export function ApplyForCredit({
   if (isWalletLoading) {
     return (
       <div className="max-w-2xl mx-auto flex flex-col items-center justify-center py-24 gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-emerald-600" />
-        <p className="text-slate-600 font-medium">Loading {cc} wallet…</p>
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-muted-foreground font-medium">Loading {cc} wallet…</p>
       </div>
     );
   }
@@ -93,18 +102,20 @@ export function ApplyForCredit({
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500">
+      <LoanApplicationFlow loanType={loanType} step="purpose" className="mb-2" />
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h2 className="text-3xl font-black text-slate-900">GET LOAN</h2>
-            <p className="text-sm font-bold text-slate-500 mt-1">{cc} dashboard - amounts in {cc}</p>
+            <h2 className="text-3xl font-black text-foreground">GET LOAN</h2>
+            <p className="text-sm font-bold text-muted-foreground mt-1">{cc} dashboard - amounts in {cc}</p>
           </div>
         </div>
         <div className="bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm text-right max-w-[min(100%,14rem)]">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-tight">{walletLabel}</p>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-tight">{walletLabel}</p>
           <p className={`text-sm font-black ${isWalletTooLow ? "text-red-500" : "text-green-600"}`}>
             {formatAmountWithCurrency(walletBalance, cc)}
           </p>
@@ -169,16 +180,18 @@ export function ApplyForCredit({
                     {type.icon}
                   </div>
                   <div className="text-left">
-                    <h3 className="text-xl font-black text-slate-900">{type.title}</h3>
-                    <p className="text-sm text-slate-500 font-medium">{type.desc}</p>
+                    <h3 className="text-xl font-black text-foreground">{type.title}</h3>
+                    <p className="text-sm text-muted-foreground font-medium">{type.desc}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <CheckCircle2 className={`w-3 h-3 text-${type.color}-600`} />
-                      <span className={`text-[10px] font-black uppercase text-${type.color}-600`}>{type.rule}</span>
+                      <span className={`text-[10px] font-black uppercase text-${type.color}-600`}>
+                        {purposeRule(loanType, type.id)}
+                      </span>
                     </div>
                   </div>
                 </div>
                 {!isDisabled && (
-                  <ArrowRight className="w-6 h-6 text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                 )}
               </button>
             </motion.div>
@@ -186,15 +199,15 @@ export function ApplyForCredit({
         })}
       </div>
 
-      <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
-        <h4 className="text-sm font-black text-slate-900 mb-2">Member Policy Note</h4>
+      <div className="p-6 bg-muted rounded-3xl border border-border">
+        <h4 className="text-sm font-black text-foreground mb-2">Member Policy Note</h4>
         <ul className="space-y-2">
-          <li className="flex gap-2 text-xs text-slate-500 font-medium">
-            <div className="w-1 h-1 rounded-full bg-slate-400 mt-1.5" />
+          <li className="flex gap-2 text-xs text-muted-foreground font-medium">
+            <div className="w-1 h-1 rounded-full bg-muted-foreground/50 mt-1.5" />
             One active loan per currency at a time.
           </li>
-          <li className="flex gap-2 text-xs text-slate-500 font-medium">
-            <div className="w-1 h-1 rounded-full bg-slate-400 mt-1.5" />
+          <li className="flex gap-2 text-xs text-muted-foreground font-medium">
+            <div className="w-1 h-1 rounded-full bg-muted-foreground/50 mt-1.5" />
             No third-party transactions allowed for repayments.
           </li>
         </ul>

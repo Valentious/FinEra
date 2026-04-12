@@ -111,12 +111,12 @@ export function PeerTransferFlow({
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100">{t("transfer.title")}</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{t("transfer.subtitle", { currency: cc })}</p>
+          <h1 className="text-2xl font-black text-foreground">{t("transfer.title")}</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">{t("transfer.subtitle", { currency: cc })}</p>
         </div>
       </div>
 
-      <div className="flex gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
+      <div className="flex gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
         <span className={step === "recipient" ? "text-emerald-600" : ""}>1 {t("transfer.recipientStep")}</span>
         <span>→</span>
         <span className={step === "amount" || step === "confirm" ? "text-emerald-600" : ""}>2 {t("transfer.amountStep")}</span>
@@ -154,8 +154,8 @@ export function PeerTransferFlow({
         <Card className="p-6 border-slate-100 shadow-xl space-y-4">
           <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-4 border border-emerald-100 dark:border-emerald-900">
             <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase">{t("transfer.recipientOk")}</p>
-            <p className="text-sm font-black text-slate-900 dark:text-slate-100 mt-1">{hint}</p>
-            <p className="text-xs text-slate-600 mt-1">
+            <p className="text-sm font-black text-foreground mt-1">{hint}</p>
+            <p className="text-xs text-muted-foreground mt-1">
               {t("transfer.walletLabel")}: {walletLabel}
             </p>
           </div>
@@ -169,7 +169,7 @@ export function PeerTransferFlow({
               value={amountStr}
               onChange={(e) => setAmountStr(e.target.value)}
             />
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               {t("transfer.available")}: {formatAmountWithCurrency(availableBalance, cc)}
             </p>
           </div>
@@ -187,7 +187,7 @@ export function PeerTransferFlow({
       {step === "confirm" && toUserId && (
         <Card className="p-6 border-slate-100 shadow-xl space-y-4">
           <h3 className="font-black text-lg">{t("transfer.review")}</h3>
-          <ul className="text-sm space-y-2 text-slate-700 dark:text-slate-300">
+          <ul className="text-sm space-y-2 text-foreground dark:text-muted-foreground">
             <li className="flex justify-between">
               <span>{t("transfer.nameHint")}</span>
               <span className="font-bold">{hint}</span>
@@ -199,7 +199,7 @@ export function PeerTransferFlow({
                 {parseAmount().toFixed(2)}
               </span>
             </li>
-            <li className="flex justify-between text-xs text-slate-500">
+            <li className="flex justify-between text-xs text-muted-foreground">
               <span>{t("transfer.walletLabel")}</span>
               <span>{walletLabel}</span>
             </li>
@@ -223,8 +223,8 @@ export function PeerTransferFlow({
       {step === "success" && (
         <Card className="p-8 border-emerald-100 shadow-xl text-center space-y-4">
           <CheckCircle2 className="w-14 h-14 text-emerald-600 mx-auto" />
-          <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">{t("transfer.success")}</h2>
-          <p className="text-sm text-slate-600">
+          <h2 className="text-xl font-black text-foreground">{t("transfer.success")}</h2>
+          <p className="text-sm text-muted-foreground">
             {t("transfer.reference")}: <span className="font-mono font-bold">{reference}</span>
           </p>
           <Button className="w-full rounded-xl font-black bg-slate-900 text-white dark:bg-emerald-600" onClick={onBack}>

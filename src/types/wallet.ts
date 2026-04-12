@@ -102,24 +102,36 @@ export function currencyAmountPlaceholder(currency: string): string {
 }
 
 /**
+ * Core numeric formatting: grouped thousands + two decimal places (banking-style parity).
+ */
+export function formatMoneyNumber(amount: number): string {
+  const n = Number.isFinite(Number(amount)) ? Number(amount) : 0;
+  return n.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/**
  * Format an amount for display using ISO currency code (single source of truth for credit UI).
- * USD → $1,234  |  ZAR → R 1,234  |  ZiG → ZiG 1,234
+ * USD → $1,234.56  |  ZAR → R 1,234.56  |  ZiG → ZiG 1,234.56
  */
 export function formatAmountWithCurrency(amount: number, currency: string): string {
   const c = currency.toUpperCase();
+  const num = formatMoneyNumber(amount);
   switch (c) {
     case "USD":
-      return `$${amount.toLocaleString()}`;
+      return `$${num}`;
     case "ZAR":
-      return `R ${amount.toLocaleString()}`;
+      return `R ${num}`;
     case "ZIG":
-      return `ZiG ${amount.toLocaleString()}`;
+      return `ZiG ${num}`;
     case "EUR":
-      return `€${amount.toLocaleString()}`;
+      return `€${num}`;
     case "GBP":
-      return `£${amount.toLocaleString()}`;
+      return `£${num}`;
     default:
-      return `${amount.toLocaleString()} (${c})`;
+      return `${num} ${c}`;
   }
 }
 
@@ -135,5 +147,7 @@ export function formatAmountWithSymbol(symbol: string, amount: number): string {
   const code = bySymbol[symbol];
   if (code) return formatAmountWithCurrency(amount, code);
   if (symbol === "ZiG") return formatAmountWithCurrency(amount, "ZIG");
-  return `${symbol}${amount.toLocaleString()}`;
+  const num = formatMoneyNumber(amount);
+  if (symbol.length <= 2) return `${symbol}${num}`;
+  return `${symbol} ${num}`;
 }

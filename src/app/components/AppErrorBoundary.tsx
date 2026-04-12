@@ -29,8 +29,8 @@ export class AppErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="min-h-[50vh] flex flex-col items-center justify-center gap-4 p-8 text-center">
-          <p className="text-lg font-bold text-slate-900">We hit a snag loading this screen</p>
-          <p className="text-sm text-slate-600 max-w-md">{this.state.message}</p>
+          <p className="text-lg font-bold text-foreground">We hit a snag loading this screen</p>
+          <p className="text-sm text-muted-foreground max-w-md">{this.state.message}</p>
           <Button
             type="button"
             onClick={() => {

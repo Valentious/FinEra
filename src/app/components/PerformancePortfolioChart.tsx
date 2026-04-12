@@ -7,6 +7,8 @@
 import { useRef, useEffect, useMemo, useState } from "react";
 import { createChart, ColorType, LineSeries } from "lightweight-charts";
 import { TrendingUp, DollarSign } from "lucide-react";
+import { formatMoneyNumber } from "@/types/wallet";
+import { finAmountLedger } from "@/lib/financialTypography";
 
 export interface TransactionInput {
   id: string;
@@ -129,8 +131,7 @@ export function PerformancePortfolioChart({
           attributionLogo: false,
         },
         localization: {
-          priceFormatter: (price: number) =>
-            `${sym}${price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`,
+          priceFormatter: (price: number) => `${sym}${formatMoneyNumber(price)}`,
         },
         grid: {
           vertLines: { color: "rgba(148,163,184,0.1)" },
@@ -204,32 +205,34 @@ export function PerformancePortfolioChart({
 
   if (timeline.length === 0) {
     return (
-      <div className="rounded-2xl bg-slate-900 p-8 text-center">
-        <p className="text-slate-200 font-medium">No portfolio data yet.</p>
-        <p className="text-slate-300 text-sm mt-2">Cash in and cash out will populate the chart.</p>
+      <div className="rounded-2xl border border-border bg-muted/40 p-8 text-center dark:bg-slate-950/90">
+        <p className="font-medium text-foreground">No portfolio data yet.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Cash in and cash out will populate the chart.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl bg-slate-900 border border-slate-700/50 overflow-hidden">
+    <div className="overflow-hidden rounded-2xl border border-border bg-muted/30 dark:border-slate-700/50 dark:bg-slate-900">
       {/* Metrics overlay */}
-      <div className="flex flex-wrap gap-6 px-4 py-3 border-b border-slate-700/50 bg-slate-900/50">
+      <div className="flex flex-wrap gap-6 border-b border-border bg-background/90 px-4 py-3 dark:border-slate-700/50 dark:bg-slate-900/50">
         <div className="flex items-center gap-2">
           <TrendingUp className={`w-4 h-4 ${metrics.growthPct >= 0 ? "text-emerald-500" : "text-red-500"}`} />
-          <span className="text-slate-400 text-sm">Growth</span>
+          <span className="text-sm text-muted-foreground">Growth</span>
           <span className={`font-black ${metrics.growthPct >= 0 ? "text-emerald-400" : "text-red-400"}`}>
             {metrics.growthPct >= 0 ? "+" : ""}
             {metrics.growthPct.toFixed(1)}%
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-slate-300" />
-          <span className="text-slate-200 text-sm">Net cash in</span>
-          <span className={`font-black ${metrics.netDeposits >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Net cash in</span>
+          <span
+            className={`font-semibold ${finAmountLedger} ${metrics.netDeposits >= 0 ? "text-emerald-400" : "text-red-400"}`}
+          >
             {metrics.netDeposits >= 0 ? "+" : ""}
             {currencySymbol}
-            {metrics.netDeposits.toLocaleString()}
+            {formatMoneyNumber(metrics.netDeposits)}
           </span>
         </div>
       </div>

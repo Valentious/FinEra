@@ -28,13 +28,13 @@ export function CreditApproved({ currencyCode, approvedAmount, repaymentSchedule
         </div>
         
         <h1 className="text-3xl text-center mb-2">Credit Approved!</h1>
-        <p className="text-center text-slate-600 mb-8 font-medium">
+        <p className="text-center text-muted-foreground mb-8 font-medium">
           Your credit ({cc}) has been added to your Approved Credit Wallet for this currency
         </p>
         
         <div className="space-y-6 mb-8">
           <div className="p-6 bg-green-50 rounded-lg border border-green-200">
-            <p className="text-sm text-slate-600 mb-2 font-medium">Approved Principal Amount ({cc})</p>
+            <p className="text-sm text-muted-foreground mb-2 font-medium">Approved Principal Amount ({cc})</p>
             <p className="text-4xl text-green-700 font-black">{fmt(principal)}</p>
             <p className="text-xs text-green-700 mt-2 font-bold">
               ✓ Now available in your Approved Credit Wallet
@@ -43,36 +43,36 @@ export function CreditApproved({ currencyCode, approvedAmount, repaymentSchedule
 
           {/* Fee Breakdown */}
           <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 space-y-3">
-            <p className="font-semibold text-sm text-slate-700">Loan Cost Breakdown</p>
+            <p className="font-semibold text-sm text-foreground">Loan Cost Breakdown</p>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Principal</span>
+                <span className="text-sm text-muted-foreground">Principal</span>
                 <span className="font-semibold">{fmt(principal)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Commission (2%)</span>
+                <span className="text-sm text-muted-foreground">Commission (2%)</span>
                 <span className="font-semibold">{fmt(commission)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Interest (18%)</span>
+                <span className="text-sm text-muted-foreground">Interest (18%)</span>
                 <span className="font-semibold">{fmt(interest)}</span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-emerald-300">
-                <span className="font-semibold text-slate-700">Active Credit Balance</span>
+                <span className="font-semibold text-foreground">Active Credit Balance</span>
                 <span className="font-bold text-emerald-700">{fmt(totalCost)}</span>
               </div>
             </div>
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               Loan balance includes principal + 2% commission + 18% interest.
             </p>
           </div>
 
           <div className="p-4 bg-slate-50 rounded-lg">
             <div className="flex items-start gap-3">
-              <Calendar className="w-5 h-5 text-slate-600 mt-0.5" />
+              <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div>
                 <p className="font-semibold text-sm mb-1">Repayment Schedule</p>
-                <p className="text-sm text-slate-600">{repaymentSchedule}</p>
+                <p className="text-sm text-muted-foreground">{repaymentSchedule}</p>
               </div>
             </div>
           </div>
