@@ -15,6 +15,7 @@ export type MessageBundle = Record<string, string>;
 
 const en: MessageBundle = {
   "nav.dashboard": "Dashboard",
+  "nav.agreementsConsent": "Agreements & Consent",
   "nav.quickActions": "Quick Actions",
   "nav.finCashWallet": "FinCash Wallet",
   "nav.learningHub": "Learning Hub",

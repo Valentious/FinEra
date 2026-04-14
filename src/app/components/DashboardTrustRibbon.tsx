@@ -1,3 +1,5 @@
+import { cn } from "@/app/components/ui/utils";
+
 /**
  * Fixed bottom trust ribbon across member and admin shells.
  * Text is static (no opacity cycling).
@@ -7,21 +9,23 @@ export function DashboardTrustRibbon({
   insetForSidebar = true,
   /** Tailwind left offset on md+ when `insetForSidebar` (e.g. `md:left-56` for admin sidebar). */
   sidebarInsetClassName = "md:left-64",
+  /** Vertical offset from viewport bottom (e.g. clear a fixed mobile tab bar). */
+  bottomOffsetClassName = "bottom-0",
 }: {
   accountMode?: "real" | "demo";
   /** When true, indents on md+ to clear the sidebar (member dashboard / admin layout). */
   insetForSidebar?: boolean;
   sidebarInsetClassName?: string;
+  bottomOffsetClassName?: string;
 }) {
   const isDemo = accountMode === "demo";
   return (
     <div
-      className={[
-        "pointer-events-none fixed bottom-0 left-0 right-0 z-20",
+      className={cn(
+        "pointer-events-none fixed left-0 right-0 z-20",
+        bottomOffsetClassName,
         insetForSidebar ? sidebarInsetClassName : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      )}
       role="status"
       aria-live="polite"
     >

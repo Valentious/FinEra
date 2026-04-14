@@ -299,10 +299,10 @@ export function DashboardV2({
         <div className="finera-gradient-plate finera-gradient-plate--ribbon pointer-events-none" aria-hidden />
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
-            <h1 className={`text-2xl font-semibold tracking-tight sm:text-3xl ${onDisciplineGradientText}`}>
+            <h1 className="text-2xl font-semibold tracking-tight text-black sm:text-3xl">
               Welcome, {userName}
             </h1>
-            <p className={`mt-1 text-sm font-medium ${onDisciplineGradientMuted}`}>
+            <p className="mt-1 text-sm font-medium text-black">
               Empowering your financial literacy journey.
             </p>
             {displayAccountNumber ? (

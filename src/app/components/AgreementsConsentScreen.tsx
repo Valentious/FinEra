@@ -445,25 +445,22 @@ export function AgreementsConsentScreen({
           </div>
         )}
 
-        <div className="relative overflow-hidden rounded-2xl border border-white/25 p-4 text-sm text-white shadow-lg">
-          <FineraGradientBackdrop clip="panel" />
-          <div className="relative z-10">
-            <p className="font-bold text-white">Acknowledgment</p>
-            <p className="mt-2 text-xs leading-relaxed text-white/90">
-              You understand that repayment compliance is monitored and that repeated missed repayments may trigger default handling and, for payroll-linked
-              products, employer coordination (without automatic payroll deduction by FinEra).
-            </p>
-            <div className="mt-4 flex items-center gap-3">
-              <Checkbox
-                id="agree-consent-flow"
-                checked={agreed}
-                onCheckedChange={(c) => setAgreed(Boolean(c))}
-                className="border-2 border-white/50 data-[state=checked]:border-white data-[state=checked]:bg-primary"
-              />
-              <label htmlFor="agree-consent-flow" className="cursor-pointer text-sm font-semibold text-white">
-                I understand and agree
-              </label>
-            </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
+          <p className="font-bold text-black">Acknowledgment</p>
+          <p className="mt-2 text-xs leading-relaxed text-black">
+            You understand that repayment compliance is monitored and that repeated missed repayments may trigger default handling and, for payroll-linked
+            products, employer coordination (without automatic payroll deduction by FinEra).
+          </p>
+          <div className="mt-4 flex items-center gap-3">
+            <Checkbox
+              id="agree-consent-flow"
+              checked={agreed}
+              onCheckedChange={(c) => setAgreed(Boolean(c))}
+              className="border-2 border-slate-400 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+            />
+            <label htmlFor="agree-consent-flow" className="cursor-pointer text-sm font-semibold text-black">
+              I understand and agree
+            </label>
           </div>
         </div>
 

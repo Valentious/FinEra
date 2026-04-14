@@ -6,11 +6,13 @@
   "scripts": {
     "build": "vite build",
     "dev": "concurrently -n fe,be \"vite\" \"npm run dev:backend\"",
+    "start:dev": "sh start-dev.sh",
     "dev:frontend": "vite",
     "dev:backend": "cd backend-core && npm run dev",
     "docker:up": "docker-compose up -d --build",
     "docker:down": "docker-compose down",
     "dev:docker": "docker compose -f docker-compose.dev.yml up --build",
+    "dev:docker:reset": "sh scripts/docker-dev-reset.sh",
     "health": "node scripts/check-health.js"
   },
   "dependencies": {

@@ -5,6 +5,11 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { forbiddenError } from "../../middlewares/errorHandler.js";
 
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set");
+}
+
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 function transactionIdFromWhere(where: unknown): string | undefined {
@@ -16,6 +21,11 @@ function transactionIdFromWhere(where: unknown): string | undefined {
 function createClient(): PrismaClient {
   const client = new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    datasources: {
+      db: {
+        url: DATABASE_URL,
+      },
+    },
   });
 
   client.$use(async (params, next) => {

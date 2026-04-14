@@ -2,9 +2,13 @@ import { Button } from "@/app/components/ui/button";
 import { Building2, GraduationCap, Landmark, Wallet } from "lucide-react";
 import type { AppAccountType, LoanType } from "@/loan/loanTypes";
 
-/** Same primary CTA treatment as Dashboard GET LOAN */
+/** Primary CTA — staff/alumni (white on brand green) */
 const loanCtaClassName =
   "w-full h-14 rounded-2xl font-black text-lg gap-2 bg-primary text-white hover:bg-primary-hover shadow-[0_20px_50px_rgba(37,211,102,0.18)] active:scale-[0.98] transition-all";
+
+/** Student collateral / non-collateral — black label for readability */
+const loanCtaBlackTextClassName =
+  "w-full h-14 rounded-2xl font-black text-lg gap-2 border-2 border-primary bg-white text-black hover:bg-neutral-50 active:scale-[0.98] transition-all shadow-sm";
 
 export interface LoanTypeSelectorProps {
   accountType: AppAccountType;
@@ -32,12 +36,12 @@ export function LoanTypeSelector({ accountType, onSelectLoanType, disabled }: Lo
 
   return (
     <div className="flex w-full flex-col gap-3">
-      <Button type="button" disabled={disabled} onClick={() => onSelectLoanType("COLLATERAL")} className={loanCtaClassName}>
-        <Building2 className="h-5 w-5 shrink-0" />
+      <Button type="button" disabled={disabled} onClick={() => onSelectLoanType("COLLATERAL")} className={loanCtaBlackTextClassName}>
+        <Building2 className="h-5 w-5 shrink-0 text-black" />
         Get Collateral Loan
       </Button>
-      <Button type="button" disabled={disabled} onClick={() => onSelectLoanType("NON_COLLATERAL")} className={loanCtaClassName}>
-        <GraduationCap className="h-5 w-5 shrink-0" />
+      <Button type="button" disabled={disabled} onClick={() => onSelectLoanType("NON_COLLATERAL")} className={loanCtaBlackTextClassName}>
+        <GraduationCap className="h-5 w-5 shrink-0 text-black" />
         Get Non-Collateral Loan
       </Button>
     </div>

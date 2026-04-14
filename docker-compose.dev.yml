@@ -3,23 +3,24 @@
 # Or: npm run dev:docker
 #
 # Starts: Postgres + Backend (hot reload) + Frontend (hot reload)
-# Standardized: finera:finera_secure everywhere
+# Postgres (dev): postgres:password, database finera
+# Host port 5433 -> container 5432 (avoids clash with a local PostgreSQL on 5432)
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: finera-postgres
-    restart: unless-stopped
+    restart: always
     environment:
-      POSTGRES_USER: finera
-      POSTGRES_PASSWORD: finera_secure
-      POSTGRES_DB: finera_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: finera
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U finera -d finera_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d finera"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -37,7 +38,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 4000
-      DATABASE_URL: postgresql://finera:finera_secure@postgres:5432/finera_db
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/finera
       REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-jwt-secret-min-32-characters-required
       JWT_REFRESH_SECRET: dev-refresh-secret-min-32-chars-required

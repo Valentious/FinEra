@@ -9,7 +9,6 @@ import type { AccountOperatingMode } from "@/app/components/AccountTypeSelection
 import { VerifyAccess } from "@/app/components/VerifyAccess";
 import { ProfileDetails } from "@/app/components/ProfileDetails";
 import { DashboardV2 } from "@/app/components/DashboardV2";
-import { SavingsWallet } from "@/app/components/SavingsWallet";
 import { WalletManagement } from "@/app/components/WalletManagement";
 import { ApplyForCredit } from "@/app/components/ApplyForCredit";
 import { CreditDetails } from "@/app/components/CreditDetails";
@@ -24,12 +23,10 @@ import { PartnerProgram } from "@/app/components/PartnerProgram";
 import { WithdrawFlow } from "@/app/components/WithdrawFlow";
 import { DepositFlow } from "@/app/components/DepositFlow";
 import { ProfileSettings } from "@/app/components/ProfileSettings";
-import { AdminOverview } from "@/app/components/AdminOverview";
 import { AgreementsConsentScreen } from "@/app/components/AgreementsConsentScreen";
 import { MakeRepayment } from "@/app/components/MakeRepayment";
 import { MakePayment } from "@/app/components/MakePayment";
 import { AccountCreationSuccess } from "@/app/components/AccountCreationSuccess";
-import { QuickActionsScreen } from "@/app/components/QuickActionsScreen";
 import { Toaster, toast } from "sonner";
 import { apiService, checkBackendHealth, USE_MOCK_DATA, type UserData, type Transaction, type CreditApplication, type FinEraAccountNumbers, type CurrencyConfig } from "@/services/index";
 import type { LoanType } from "@/loan/loanTypes";
@@ -50,6 +47,8 @@ import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
 import { PeerTransferFlow } from "@/app/components/PeerTransferFlow";
 import { useI18n } from "@/app/providers/I18nProvider";
 import { isAppLocale } from "@/i18n/locales";
+import { cn } from "@/app/components/ui/utils";
+import { MobileBottomNav } from "@/app/navigation/memberNav";
 
 type Screen =
   | "splash"
@@ -61,7 +60,6 @@ type Screen =
   | "verify"
   | "profileDetails"
   | "dashboard"
-  | "savingsWallet"
   | "walletManagement"
   | "withdrawFlow"
   | "depositFlow"
@@ -79,10 +77,8 @@ type Screen =
   | "financialEducation"
   | "profileSettings"
   | "partnerProgram"
-  | "adminOverview"
   | "makeRepayment"
   | "makePayment"
-  | "quickActions"
   | "peerTransfer";
 
 // NOTE: These limits are now defined in the backend
@@ -392,7 +388,6 @@ export default function App() {
     if (
       ![
         "dashboard",
-        "savingsWallet",
         "walletManagement",
         "depositFlow",
         "withdrawFlow",
@@ -660,10 +655,26 @@ export default function App() {
   };
 
   const isAuthScreen = [
-    "dashboard", "quickActions", "savingsWallet", "walletManagement", "withdrawFlow", "depositFlow", "applyForCredit",
-    "creditDetails", "collateralDetails", "confirmApplication",
-    "buyBackAgreement", "applicationStatus", "creditApproved", "walletCredited", "repaymentDashboard", "financialEducation",
-    "profileSettings", "partnerProgram", "adminOverview", "memberAgreement", "agreementsConsent", "makeRepayment", "makePayment",
+    "dashboard",
+    "walletManagement",
+    "withdrawFlow",
+    "depositFlow",
+    "applyForCredit",
+    "creditDetails",
+    "collateralDetails",
+    "confirmApplication",
+    "buyBackAgreement",
+    "applicationStatus",
+    "creditApproved",
+    "walletCredited",
+    "repaymentDashboard",
+    "financialEducation",
+    "profileSettings",
+    "partnerProgram",
+    "memberAgreement",
+    "agreementsConsent",
+    "makeRepayment",
+    "makePayment",
     "peerTransfer",
   ].includes(currentScreen);
 
@@ -736,6 +747,10 @@ export default function App() {
 
   const handleMemberNavigate = useCallback(
     (s: string) => {
+      if (s === "quickActions" || s === "savingsWallet") {
+        setCurrentScreen("dashboard");
+        return;
+      }
       const screen = s as Screen;
       if (screen === "agreementsConsent") {
         setAgreementsLoanType(creditApplication.loanType);
@@ -746,10 +761,15 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-dvh bg-transparent text-foreground font-sans selection:bg-primary/20 selection:text-primary">
+    <div
+      className={cn(
+        "min-h-dvh bg-transparent text-foreground font-sans selection:bg-primary/20 selection:text-primary",
+        isAuthScreen && "flex min-h-dvh flex-col",
+      )}
+    >
       <Toaster position="top-center" richColors />
       {!USE_MOCK_DATA && !backendAvailable && <BackendUnavailableBanner />}
-      
+
       {isAuthScreen && (
         <MainNavigation
           activeScreen={currentScreen}
@@ -758,9 +778,6 @@ export default function App() {
           userName={userData.fullName || "User"}
           accountNumber={displayAccountNumber}
           walletNumericId={displayWalletNumericId}
-          isAdmin={userData.accountType === "staff"}
-          onCreateWallet={() => setCurrentScreen("depositFlow")}
-          disciplineScore={userData.disciplineScore ?? 50}
         />
       )}
 
@@ -768,22 +785,23 @@ export default function App() {
         <DashboardTrustRibbon
           accountMode={userData.accountMode ?? preSelectedAccountMode}
           insetForSidebar={isAuthScreen}
+          bottomOffsetClassName={isAuthScreen ? "bottom-16 md:bottom-0" : "bottom-0"}
         />
       )}
 
       <AccountSwitchOverlay />
 
-      <main
-        className={
-          isAuthScreen
-            ? // Fixed header is h-16 (4rem). Extra bottom padding for fixed trust ribbon + safe area.
-              "pt-[max(calc(4rem+1.5rem),calc(env(safe-area-inset-top,0px)+4rem+1rem))] md:pl-64 px-4 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))] md:px-8 md:pb-[max(2rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]"
-            : showTrustRibbon
-              ? // Pre-login / onboarding: reserve space for the same fixed trust ribbon.
-                "pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]"
-              : ""
-        }
-      >
+      <div className={isAuthScreen ? "flex min-h-0 flex-1 flex-col md:pl-64" : "contents"}>
+        <main
+          className={
+            isAuthScreen
+              ? // Header h-16; mobile: pb-20 clears fixed tab bar; md: ribbon + sidebar inset on wrapper.
+                "flex-1 overflow-y-auto overflow-x-hidden px-4 pt-[max(calc(4rem+1.5rem),calc(env(safe-area-inset-top,0px)+4rem+1rem))] pb-20 md:px-8 md:pb-[max(2rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]"
+              : showTrustRibbon
+                ? "pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]"
+                : ""
+          }
+        >
         <AppErrorBoundary onReset={() => setCurrentScreen("dashboard")}>
         {currentScreen === "splash" && <SplashScreen onComplete={() => setCurrentScreen("accountType")} />}
         {currentScreen === "accountType" && (
@@ -862,21 +880,11 @@ export default function App() {
             onContinue={() => setCurrentScreen("dashboard")}
           />
         )}
-        {currentScreen === "quickActions" && (
-          <QuickActionsScreen
-            onAddSavings={() => setCurrentScreen("depositFlow")}
-            onViewRepayment={() => setCurrentScreen("repaymentDashboard")}
-            onWithdrawFunds={() => setCurrentScreen("withdrawFlow")}
-            onMakePayment={() => setCurrentScreen("makePayment")}
-            onPeerTransfer={() => setCurrentScreen("peerTransfer")}
-            onBack={() => setCurrentScreen("dashboard")}
-          />
-        )}
         {currentScreen === "peerTransfer" && (
           <PeerTransferFlow
             currency={selectedCurrency}
             availableBalance={walletForCurrency?.balance ?? userData.walletBalance ?? 0}
-            onBack={() => setCurrentScreen("quickActions")}
+            onBack={() => setCurrentScreen("dashboard")}
             onSuccess={refreshUserData}
           />
         )}
@@ -935,24 +943,6 @@ export default function App() {
               setCreditApplication((p) => ({ ...p, loanType: lt }));
             }}
             onContinue={() => setCurrentScreen("dashboard")}
-            onBack={() => setCurrentScreen("dashboard")}
-          />
-        )}
-
-        {currentScreen === "savingsWallet" && (
-          <SavingsWallet
-            currencyCode={selectedCurrency}
-            walletLabel={walletForCurrency?.walletLabel ?? getWalletLabel(selectedCurrency)}
-            totalSavings={walletForCurrency?.balance ?? userData.walletBalance}
-            lockedSavings={activeCreditForTab > 0 ? (walletForCurrency?.balance ?? userData.walletBalance) * 0.2 : 0}
-            availableSavings={activeCreditForTab > 0 ? (walletForCurrency?.balance ?? userData.walletBalance) * 0.8 : (walletForCurrency?.balance ?? userData.walletBalance)}
-            disciplineScore={userData.disciplineScore}
-            onAddSavings={() => setCurrentScreen("depositFlow")}
-            onWithdraw={() => {
-              const bal = walletForCurrency?.balance ?? userData.walletBalance;
-              if (bal > 0) setCurrentScreen("withdrawFlow");
-              else toast.error("Insufficient balance");
-            }}
             onBack={() => setCurrentScreen("dashboard")}
           />
         )}
@@ -1247,7 +1237,16 @@ export default function App() {
         {currentScreen === "profileSettings" && <ProfileSettings userData={userData} onLogout={handleLogout} onUpdate={(d) => updateAndSave({ ...userData, ...d })} />}
         {currentScreen === "partnerProgram" && <PartnerProgram />}
         </AppErrorBoundary>
-      </main>
+        </main>
+      </div>
+
+      {isAuthScreen && (
+        <MobileBottomNav
+          className="md:hidden"
+          activeScreen={currentScreen}
+          onNavigate={handleMemberNavigate}
+        />
+      )}
     </div>
   );
 }
