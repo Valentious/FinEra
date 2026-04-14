@@ -43,8 +43,6 @@ import {
   onDisciplineGradientPill,
   onDisciplineGradientText,
   onDisciplineGradientShellShadow,
-  onDisciplineGradientTrack,
-  onDisciplineGradientTrackFill,
 } from "@/lib/disciplineGradient";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 
@@ -232,7 +230,7 @@ export function DashboardV2({
   onAddSavings,
   onViewRepayment,
   onWithdrawFunds,
-  onMakeRepayment,
+  onMakeRepayment: _onMakeRepayment,
   onMakePayment,
   onPeerTransfer,
   transactions,
@@ -245,15 +243,6 @@ export function DashboardV2({
   const safeDisciplineScore = Number.isFinite(Number(disciplineScore)) ? Number(disciplineScore) : 50;
   const safeCreditScore = Number.isFinite(Number(creditScore)) ? Number(creditScore) : 82;
   const safeLoyaltyProgress = Number.isFinite(Number(loyaltyProgressRaw)) ? Number(loyaltyProgressRaw) : 0;
-  const hasActiveLoan = safeActiveCredit > 0;
-
-  const handleCashOut = () => {
-    if (safeWalletBalance <= 0) {
-      toast.error(`Insufficient balance in ${walletLabel}`);
-      return;
-    }
-    onWithdrawFunds();
-  };
 
   const [showDisciplineDetails, setShowDisciplineDetails] = useState(false);
   const [showCreditScoreBreakdown, setShowCreditScoreBreakdown] = useState(false);
@@ -290,8 +279,13 @@ export function DashboardV2({
   const circumference = 2 * Math.PI * 70; // radius = 70
   const strokeDashoffset = circumference - (safeDisciplineScore / 100) * circumference;
 
+  /** Wallet / debt cards: vw-aware padding so layout scales from phone to desktop without clipping. */
+  const fluidGreenCardPadding =
+    "px-[clamp(1rem,4vw,1.75rem)] pt-[clamp(1rem,3.5vw,1.625rem)] pb-[clamp(2rem,5.5vw,2.75rem)]";
+  const balanceAmountClassName = `m-0 inline-block whitespace-nowrap text-[clamp(1.375rem,calc(0.75rem+2.25vw),2.5rem)] leading-none ${finAmountPrimary}`;
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-12">
+    <div className="mx-auto w-full max-w-[min(100%,90rem)] space-y-6 animate-in fade-in duration-700 pb-10 sm:space-y-8 sm:pb-12 lg:space-y-10">
       {/* Top ribbon — same canvas as splash (intense green bottom-right → soft top-left). */}
       <div
         className={`relative overflow-hidden rounded-2xl border border-white/25 p-6 sm:p-8 ${onDisciplineGradientShellShadow} ${onDisciplineGradientText}`}
@@ -299,12 +293,9 @@ export function DashboardV2({
         <div className="finera-gradient-plate finera-gradient-plate--ribbon pointer-events-none" aria-hidden />
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-semibold tracking-tight text-black sm:text-3xl">
+            <h1 className="text-[12pt] font-semibold tracking-tight text-black">
               Welcome, {userName}
             </h1>
-            <p className="mt-1 text-sm font-medium text-black">
-              Empowering your financial literacy journey.
-            </p>
             {displayAccountNumber ? (
               <p className={`mt-2 text-xs font-medium ${onDisciplineGradientMuted}`}>
                 {/^\d{10}$/.test(String(displayAccountNumber).replace(/\s/g, ""))
@@ -315,17 +306,17 @@ export function DashboardV2({
           </div>
 
           {onCurrencyChange ? (
-            <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:min-w-[min(100%,280px)] sm:items-end">
+            <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:min-w-[min(100%,17.5rem)] sm:items-end">
               <span
                 id="dash-ribbon-currency-label"
-                className={`text-[10px] font-semibold uppercase tracking-widest ${onDisciplineGradientMuted} sm:text-right`}
+                className="text-balance text-left text-xs font-extrabold uppercase leading-snug tracking-wide text-black sm:text-right sm:text-sm"
               >
-                Currency
+                CHANGE DASHBOARD CURRENCY
               </span>
               <Select value={selectCurrency} onValueChange={(v) => onCurrencyChange(v as CurrencyOption)}>
                 <SelectTrigger
                   aria-labelledby="dash-ribbon-currency-label"
-                  className={`h-10 border font-semibold text-sm shadow-none sm:min-w-[220px] ${onDisciplineGradientGlass} ${onDisciplineGradientText}`}
+                  className={`h-10 border font-semibold text-sm shadow-none sm:min-w-[13.75rem] lg:min-w-[15rem] ${onDisciplineGradientGlass} ${onDisciplineGradientText}`}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-2">
                     <Coins className={`h-4 w-4 shrink-0 ${onDisciplineGradientIcon}`} aria-hidden />
@@ -345,11 +336,11 @@ export function DashboardV2({
         </div>
       </div>
 
-      {/* Primary row: potential credit (left) | wallet + active loan stacked (right), equal small frames matching left column height */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-stretch">
-        <motion.div whileHover={{ y: -4 }} className="order-1 flex min-h-0">
+      {/* Primary row: stacks on small screens; two balanced columns md+ with fluid gap */}
+      <div className="grid w-full grid-cols-1 items-stretch gap-[clamp(1rem,3.5vw,2rem)] sm:gap-6 lg:gap-8 md:grid-cols-2">
+        <motion.div whileHover={{ y: -4 }} className="order-1 flex min-h-0 w-full min-w-0">
           <Card
-            className={`relative flex h-full min-h-[22rem] w-full flex-col overflow-hidden rounded-[28px] border-none p-6 ${onDisciplineGradientShellShadow} ${onDisciplineGradientText}`}
+            className={`relative flex h-full min-h-[18rem] w-full min-w-0 flex-col overflow-hidden rounded-[1.75rem] border-none p-[clamp(1.25rem,3vw,1.75rem)] sm:min-h-[20rem] sm:p-6 lg:min-h-[22rem] lg:p-7 ${onDisciplineGradientShellShadow} ${onDisciplineGradientText}`}
           >
             <div className="finera-gradient-plate finera-gradient-plate--card pointer-events-none" aria-hidden />
             <div className="relative z-10 flex min-h-0 flex-1 flex-col">
@@ -375,18 +366,23 @@ export function DashboardV2({
           </Card>
         </motion.div>
 
-        <div className="order-2 grid min-h-[22rem] grid-rows-2 gap-6 md:flex md:h-full md:min-h-0 md:flex-col">
-          <motion.div whileHover={{ y: -4 }} className="flex min-h-0 md:flex-1 md:basis-0">
+        <div className="order-2 grid min-h-0 w-full min-w-0 max-w-full grid-cols-1 gap-[clamp(1rem,3.5vw,2rem)] sm:gap-6 md:flex md:h-full md:min-h-0 md:flex-col lg:gap-6">
+          <motion.div whileHover={{ y: -4 }} className="flex min-h-min w-full min-w-0 md:flex-1 md:basis-0">
             <Card
-              className={`relative flex h-full min-h-0 w-full flex-col justify-between overflow-hidden rounded-[28px] border-none p-5 sm:p-6 ${onDisciplineGradientShellShadow} ${onDisciplineGradientText}`}
+              className={`relative flex h-auto min-h-min w-full min-w-0 max-w-full flex-col overflow-hidden rounded-[1.75rem] border-none ${fluidGreenCardPadding} ${onDisciplineGradientShellShadow} ${onDisciplineGradientText}`}
             >
-              <div className="finera-gradient-plate finera-gradient-plate--card pointer-events-none" aria-hidden />
-              <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-                <div className="min-h-0 shrink-0">
-                  <div className="mb-3 flex items-start justify-between">
+              <div
+                className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[1.75rem]"
+                aria-hidden
+              >
+                <div className="finera-gradient-plate finera-gradient-plate--card pointer-events-none" />
+              </div>
+              <div className="relative z-10 flex min-h-min min-w-0 flex-1 flex-col">
+                <div className="min-w-0 shrink-0">
+                  <div className="mb-3 flex items-start justify-between gap-2">
                     <div className="shrink-0" role="img" aria-label="FinEra wallet">
                       <FinEraShieldIcon
-                        size={48}
+                        dimensionClassName="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12"
                         className="rounded-full ring-1 ring-white/45 shadow-lg"
                       />
                     </div>
@@ -404,40 +400,30 @@ export function DashboardV2({
                       {custodyLabel}
                     </p>
                   ) : null}
-                  <h3 className={`mt-1 text-2xl leading-none sm:text-3xl ${finAmountPrimary} ${onDisciplineGradientText}`}>
-                    {formatAmountWithCurrency(safeWalletBalance, selectCurrency)}
-                  </h3>
                 </div>
-                <div className="mt-auto flex shrink-0 gap-2 border-t border-white/20 pt-3">
-                  <Button
-                    size="sm"
-                    type="button"
-                    className="h-9 min-h-9 flex-1 rounded-xl bg-white text-xs font-semibold text-primary hover:bg-white/90 sm:h-10 sm:min-h-10"
-                    onClick={onAddSavings}
-                  >
-                    Cash In
-                  </Button>
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                    className={`h-9 min-h-9 flex-1 rounded-xl border text-xs font-semibold sm:h-10 sm:min-h-10 ${onDisciplineGradientButtonOutline} ${onDisciplineGradientText}`}
-                    onClick={handleCashOut}
-                  >
-                    Cash Out
-                  </Button>
+                <div className="mt-auto min-w-0 shrink-0 pt-3 sm:pt-4">
+                  <div className="min-w-0 overflow-x-auto overflow-y-hidden pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <h3 className={`${balanceAmountClassName} ${onDisciplineGradientText}`}>
+                      {formatAmountWithCurrency(safeWalletBalance, selectCurrency)}
+                    </h3>
+                  </div>
                 </div>
               </div>
             </Card>
           </motion.div>
 
-          <motion.div whileHover={{ y: -4 }} className="flex min-h-0 md:flex-1 md:basis-0">
+          <motion.div whileHover={{ y: -4 }} className="flex min-h-min w-full min-w-0 md:flex-1 md:basis-0">
             <Card
-              className={`relative flex h-full min-h-0 w-full flex-col justify-between overflow-hidden rounded-[28px] border-none p-5 sm:p-6 ${onDisciplineGradientShellShadow} ${onDisciplineGradientText}`}
+              className={`relative flex h-auto min-h-min w-full min-w-0 max-w-full flex-col overflow-hidden rounded-[1.75rem] border-none ${fluidGreenCardPadding} ${onDisciplineGradientShellShadow} ${onDisciplineGradientText}`}
             >
-              <div className="finera-gradient-plate finera-gradient-plate--card pointer-events-none" aria-hidden />
-              <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-                <div className="min-h-0 shrink-0">
+              <div
+                className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[1.75rem]"
+                aria-hidden
+              >
+                <div className="finera-gradient-plate finera-gradient-plate--card pointer-events-none" />
+              </div>
+              <div className="relative z-10 flex min-h-min min-w-0 flex-1 flex-col">
+                <div className="min-w-0 shrink-0">
                   <div className="mb-3 flex items-start justify-between">
                     <div className={`rounded-2xl border p-2.5 ${onDisciplineGradientGlass}`}>
                       <CreditCard className={`h-5 w-5 sm:h-6 sm:w-6 ${onDisciplineGradientIcon}`} />
@@ -451,39 +437,12 @@ export function DashboardV2({
                   <p className={`mt-0.5 text-[10px] font-semibold uppercase tracking-wider sm:text-[11px] ${onDisciplineGradientMuted}`}>
                     {selectCurrency} outstanding
                   </p>
-                  <h3 className={`mt-1 text-2xl leading-none sm:text-3xl ${finAmountPrimary} ${onDisciplineGradientText}`}>
-                    {formatAmountWithCurrency(safeActiveCredit, selectCurrency)}
-                  </h3>
                 </div>
-                <div className="relative z-10 mt-auto w-full shrink-0 border-t border-white/20 pt-3">
-                  <div className={`mb-1 flex justify-between text-[9px] font-semibold uppercase tracking-widest sm:text-[10px] ${onDisciplineGradientMuted}`}>
-                    <span>Repayment cycle</span>
-                    <span>Month 2/12</span>
-                  </div>
-                  <div className={`h-1.5 w-full overflow-hidden rounded-full ${onDisciplineGradientTrack}`}>
-                    <div className={`h-full w-[16%] ${onDisciplineGradientTrackFill}`} />
-                  </div>
-                  <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className={`h-8 min-h-8 flex-1 text-[9px] font-semibold uppercase tracking-widest hover:bg-white/18 dark:hover:bg-white/12 sm:h-9 sm:min-h-9 sm:text-[10px] ${onDisciplineGradientText}`}
-                      onClick={onViewRepayment}
-                    >
-                      View Repayment
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={!hasActiveLoan || !onMakeRepayment}
-                      className="h-8 min-h-8 flex-1 rounded-xl bg-white text-[9px] font-semibold uppercase tracking-widest text-primary hover:bg-white/90 disabled:opacity-50 sm:h-9 sm:min-h-9 sm:text-[10px]"
-                      onClick={() => {
-                        if (!hasActiveLoan || !onMakeRepayment) return;
-                        onMakeRepayment();
-                      }}
-                    >
-                      Repay loan
-                    </Button>
+                <div className="mt-auto min-w-0 shrink-0 pt-3 sm:pt-4">
+                  <div className="min-w-0 overflow-x-auto overflow-y-hidden pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <h3 className={`${balanceAmountClassName} ${onDisciplineGradientText}`}>
+                      {formatAmountWithCurrency(safeActiveCredit, selectCurrency)}
+                    </h3>
                   </div>
                 </div>
               </div>

@@ -74,12 +74,9 @@ export function Dashboard({
         <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className={`text-[10px] font-semibold uppercase tracking-widest ${onDisciplineGradientMuted}`}>FinCash · {cc}</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-black sm:text-3xl">
+            <h1 className="mt-1 text-[12pt] font-semibold tracking-tight text-black">
               Welcome, {userName}
             </h1>
-            <p className="mt-1 text-sm font-medium text-black">
-              Empowering your financial literacy journey.
-            </p>
           </div>
           <div
             className={`flex items-center gap-2 self-start rounded-2xl border px-4 py-2.5 shadow-none backdrop-blur-md md:self-center ${onDisciplineGradientGlass} ${onDisciplineGradientText}`}

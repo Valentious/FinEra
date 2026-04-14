@@ -7,19 +7,30 @@ import { cn } from "@/app/components/ui/utils";
 
 interface FinEraShieldIconProps {
   size?: number;
+  /** When set, width/height come from Tailwind (e.g. `h-10 w-10 sm:h-12 sm:w-12`) instead of the `size` prop. */
+  dimensionClassName?: string;
   className?: string;
 }
 
 const BRAND_GREEN = "#22C55E";
 const BRAND_GREEN_DARK = "#16a34a";
 
-export function FinEraShieldIcon({ size = 40, className = "" }: FinEraShieldIconProps) {
+export function FinEraShieldIcon({
+  size = 40,
+  dimensionClassName,
+  className = "",
+}: FinEraShieldIconProps) {
+  const sizeFromClass = Boolean(dimensionClassName);
   return (
     <div
-      className={cn("flex shrink-0 items-center justify-center rounded-xl shadow-md", className)}
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-xl shadow-md",
+        sizeFromClass && "aspect-square",
+        dimensionClassName,
+        className
+      )}
       style={{
-        width: size,
-        height: size,
+        ...(sizeFromClass ? {} : { width: size, height: size }),
         background: `linear-gradient(135deg, ${BRAND_GREEN_DARK} 0%, ${BRAND_GREEN} 100%)`,
         boxShadow: "0 2px 8px rgba(34, 197, 94, 0.3)",
       }}
