@@ -12,6 +12,9 @@ export const VALIDATION = {
   MIN_PASSWORD_LENGTH: 8,
   MAX_NAME_LENGTH: 100,
   PHONE_E164_REGEX: /^\+[1-9]\d{1,14}$/,
+  /** Total national digits (excluding +); aligned with backend `normalizePhone`. */
+  PHONE_NATIONAL_DIGITS_MIN: 10,
+  PHONE_NATIONAL_DIGITS_MAX: 15,
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
 } as const;
 
@@ -45,10 +48,25 @@ export function validateInstitutionalEmail(email: string): boolean {
   return INSTITUTIONAL_DOMAIN_REGEX.test(email) || /\.(edu|ac\.|gov)\.?/i.test(email);
 }
 
-/** Validate student email: university/college educational institution domains */
+/** Validate student email: university educational institution domains */
 export function validateStudentEmail(email: string): boolean {
   if (!VALIDATION.EMAIL_REGEX.test(email)) return false;
   return /\.(edu|ac\.[a-z]{2,}|ac\.uk|ac\.za|ac\.zw)/i.test(email) || /@[a-z0-9-]+\.(edu|ac\.)/i.test(email);
+}
+
+/** User-facing copy when the number is too short or missing digits after the country code. */
+export const PHONE_NUMBER_INCOMPLETE_MESSAGE =
+  "Phone number is incomplete. Enter the full number with country code (10–15 digits), e.g. +263 77 123 4567.";
+
+/**
+ * True when the value has enough digits for a full international number (same length rule as API `normalizePhone`).
+ */
+export function isCompletePhoneNumber(value: string): boolean {
+  const digits = value.replace(/\D/g, "");
+  return (
+    digits.length >= VALIDATION.PHONE_NATIONAL_DIGITS_MIN &&
+    digits.length <= VALIDATION.PHONE_NATIONAL_DIGITS_MAX
+  );
 }
 
 /** Validate phone in E.164 format */

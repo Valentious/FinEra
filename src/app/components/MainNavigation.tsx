@@ -101,7 +101,7 @@ export function MainNavigation({
           </div>
 
           <div className="flex items-center gap-4">
-            <NotificationsDropdown onNavigate={onNavigate} />
+            <NotificationsDropdown />
             <div className="mx-1 h-8 w-px bg-white/35" />
             <div className="flex items-center gap-2 pl-2">
               <div className="hidden text-right sm:block">

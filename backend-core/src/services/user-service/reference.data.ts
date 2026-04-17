@@ -54,7 +54,10 @@ const CITIES: City[] = [
   { id: "zw-bul", name: "Bulawayo", countryId: "zw" },
   { id: "zw-mut", name: "Mutare", countryId: "zw" },
   { id: "zw-gwe", name: "Gweru", countryId: "zw" },
-  { id: "zw-kad", name: "Kadoma", countryId: "zw" },
+  { id: "zw-mas", name: "Masvingo", countryId: "zw" },
+  { id: "zw-kwe", name: "Kwekwe", countryId: "zw" },
+  { id: "zw-chi", name: "Chitungwiza", countryId: "zw" },
+  { id: "zw-vfa", name: "Victoria Falls", countryId: "zw" },
   { id: "za-jhb", name: "Johannesburg", countryId: "za" },
   { id: "za-cpt", name: "Cape Town", countryId: "za" },
   { id: "za-dbn", name: "Durban", countryId: "za" },
@@ -87,15 +90,13 @@ const FALLBACK_CITIES: City[] = COUNTRIES.filter(
   countryId: c.id,
 }));
 
+/** Reference orgs for onboarding. Student / alumni pick universities only (no polytechnic / FE college sector). */
 export const INSTITUTIONS: Institution[] = [
   { id: "uoz", name: "University of Zimbabwe", type: "university", cityId: "zw-hre" },
-  { id: "nust", name: "National University of Science and Technology", type: "university", cityId: "zw-bul" },
+  { id: "nust", name: "National University of Science and Technology (NUST)", type: "university", cityId: "zw-bul" },
   { id: "mbu", name: "Midlands State University", type: "university", cityId: "zw-gwe" },
   { id: "buse", name: "Bindura University of Science Education", type: "university", cityId: "zw-hre" },
   { id: "lupane", name: "Lupane State University", type: "university", cityId: "zw-bul" },
-  { id: "hcc", name: "Harare Polytechnic College", type: "polytechnic", cityId: "zw-hre" },
-  { id: "bpc", name: "Bulawayo Polytechnic College", type: "polytechnic", cityId: "zw-bul" },
-  { id: "gpc", name: "Gweru Polytechnic College", type: "polytechnic", cityId: "zw-gwe" },
   { id: "zrp", name: "Zimbabwe Republic Police", type: "government", cityId: "zw-hre" },
   { id: "zimra", name: "Zimbabwe Revenue Authority", type: "government", cityId: "zw-hre" },
   { id: "zec", name: "Zimbabwe Electoral Commission", type: "government", cityId: "zw-hre" },
@@ -106,23 +107,20 @@ export const INSTITUTIONS: Institution[] = [
   { id: "uct", name: "University of Cape Town", type: "university", cityId: "za-cpt" },
   { id: "wits", name: "University of the Witwatersrand", type: "university", cityId: "za-jhb" },
   { id: "up", name: "University of Pretoria", type: "university", cityId: "za-pta" },
-  { id: "cput", name: "Cape Peninsula University of Technology", type: "polytechnic", cityId: "za-cpt" },
   { id: "sars", name: "South African Revenue Service", type: "government", cityId: "za-pta" },
   { id: "sap", name: "SAP South Africa", type: "company", cityId: "za-jhb" },
   { id: "uon", name: "University of Nairobi", type: "university", cityId: "ke-nrb" },
   { id: "kemu", name: "Kenyatta University", type: "university", cityId: "ke-nrb" },
-  { id: "kpu", name: "Kenya Polytechnic University", type: "polytechnic", cityId: "ke-nrb" },
   { id: "kra", name: "Kenya Revenue Authority", type: "government", cityId: "ke-nrb" },
   { id: "safaricom", name: "Safaricom PLC", type: "company", cityId: "ke-nrb" },
   { id: "ui", name: "University of Ibadan", type: "university", cityId: "ng-ibd" },
   { id: "unilag", name: "University of Lagos", type: "university", cityId: "ng-lag" },
   { id: "abu", name: "Ahmadu Bello University", type: "university", cityId: "ng-abj" },
-  { id: "yabatech", name: "Yaba College of Technology", type: "polytechnic", cityId: "ng-lag" },
   { id: "firs", name: "Federal Inland Revenue Service", type: "government", cityId: "ng-abj" },
   { id: "gtbank", name: "Guaranty Trust Bank", type: "company", cityId: "ng-lag" },
   { id: "oxford", name: "University of Oxford", type: "university", cityId: "gb-lon" },
   { id: "cambridge", name: "University of Cambridge", type: "university", cityId: "gb-lon" },
-  { id: "ucl", name: "University College London", type: "university", cityId: "gb-lon" },
+  { id: "ucl", name: "UCL", type: "university", cityId: "gb-lon" },
   { id: "imperial", name: "Imperial College London", type: "university", cityId: "gb-lon" },
   { id: "manchester", name: "University of Manchester", type: "university", cityId: "gb-man" },
   { id: "hmrc", name: "HM Revenue & Customs", type: "government", cityId: "gb-lon" },
@@ -149,5 +147,40 @@ export function getInstitutionsByCountryAndType(
   const cityIds = getCitiesByCountry(countryId).map((c) => c.id);
   const inCountry = INSTITUTIONS.filter((i) => cityIds.includes(i.cityId));
   if (accountType === "staff") return inCountry;
-  return inCountry.filter((i) => i.type === "university" || i.type === "polytechnic");
+  return inCountry.filter((i) => i.type === "university");
+}
+
+/** Zimbabwe-only registration city list (must match auth.registerSchema city enum). */
+export const ZW_REGISTRATION_CITIES: City[] = CITIES.filter((c) => c.countryId === "zw");
+
+const ZW_REGISTRATION_CITY_ID_SET = new Set(ZW_REGISTRATION_CITIES.map((c) => c.id));
+
+export const ZW_REGISTRATION_CITY_NAMES = [
+  "Harare",
+  "Bulawayo",
+  "Mutare",
+  "Gweru",
+  "Masvingo",
+  "Kwekwe",
+  "Chitungwiza",
+  "Victoria Falls",
+] as const;
+
+/** Zimbabwe registration institution picker: students and alumni — universities only; staff — all listed ZW orgs. */
+export function getZimbabweRegistrationInstitutions(accountType: "student" | "staff" | "alumni"): Institution[] {
+  const inZw = INSTITUTIONS.filter((i) => ZW_REGISTRATION_CITY_ID_SET.has(i.cityId));
+  if (accountType === "student") {
+    return inZw.filter((i) => i.type === "university");
+  }
+  if (accountType === "staff") {
+    return inZw;
+  }
+  // Alumni: universities and other formal orgs in ZW (no polytechnic / FE college sector).
+  return inZw.filter((i) => i.type !== "polytechnic");
+}
+
+/** Allowed institution display names for POST /auth/register (Zimbabwe onboarding). */
+export function getZimbabweRegistrationInstitutionNames(accountType: "STUDENT" | "STAFF" | "ALUMNI"): string[] {
+  const at = accountType.toLowerCase() as "student" | "staff" | "alumni";
+  return getZimbabweRegistrationInstitutions(at).map((i) => i.name);
 }

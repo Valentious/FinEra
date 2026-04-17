@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
@@ -9,12 +10,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PhoneInputField } from "@/app/components/PhoneInputField";
 import { motion } from "motion/react";
 import { LogIn, UserPlus, Mail, Lock, User, ArrowLeft, MapPin, Building2 } from "lucide-react";
-import { validateInstitutionalEmail, validateStudentEmail, validateAge, validatePassword } from "@/lib/validation";
+import {
+  validateInstitutionalEmail,
+  validateStudentEmail,
+  validateAge,
+  validatePassword,
+  isCompletePhoneNumber,
+  PHONE_NUMBER_INCOMPLETE_MESSAGE,
+} from "@/lib/validation";
+import { toast } from "sonner";
 import { PASSWORD_POLICY_HINT } from "@/lib/passwordPolicy";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 import { FinEraLogoText } from "@/app/components/FinEraLogoText";
 import { getRegistrationData } from "@/services/api";
 import { COUNTRIES, getCitiesByCountry, getInstitutionsByCountryAndType } from "@/data/locations";
+import { Checkbox } from "@/app/components/ui/checkbox";
+import { FINERA_REGISTRATION_CONSENT_VERSION } from "@/legal/consentVersion";
 
 interface LoginRegisterProps {
   onLogin: (email: string, password?: string) => void;
@@ -28,16 +39,18 @@ interface LoginRegisterProps {
 
 export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'student', accountMode = 'real' }: LoginRegisterProps) {
   const [loginData, setLoginData] = useState({ email: "", password: "" });
-  const [registerData, setRegisterData] = useState({ 
-    fullName: "", 
+  const [registerData, setRegisterData] = useState({
+    fullName: "",
     dateOfBirth: "",
     phoneNumber: "",
-    email: "", 
-    password: "", 
+    email: "",
+    password: "",
     confirmPassword: "",
     countryId: "",
     cityId: "",
     institutionId: "",
+    /** Professional / Business accounts: free-text institution or organisation name */
+    institutionName: "",
   });
   const [dobError, setDobError] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -46,6 +59,11 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
   const [cities, setCities] = useState<{ id: string; name: string; countryId: string }[]>([]);
   const [institutions, setInstitutions] = useState<{ id: string; name: string; type: string; cityId: string }[]>([]);
   const [refLoading, setRefLoading] = useState(true);
+  const [legalConsentAccepted, setLegalConsentAccepted] = useState(false);
+  const [consentError, setConsentError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const latestPhoneRef = useRef("");
+  latestPhoneRef.current = registerData.phoneNumber;
 
   useEffect(() => {
     const fetchRegistrationData = async () => {
@@ -63,7 +81,7 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
         setRefLoading(false);
       }
     };
-    fetchRegistrationData();
+    void fetchRegistrationData();
   }, []);
 
   const citiesForCountry = useMemo(() => {
@@ -72,15 +90,16 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
   }, [cities, registerData.countryId]);
 
   const institutionsForCountry = useMemo(() => {
+    if (accountType === "staff" || accountType === "alumni") {
+      return [];
+    }
     let list = institutions.length > 0
       ? institutions.filter((i) => {
           const city = citiesForCountry.find((c) => c.id === i.cityId);
           return city != null;
         })
       : getInstitutionsByCountryAndType(registerData.countryId, accountType);
-    if (accountType !== "staff") {
-      list = list.filter((i) => i.type === "university" || i.type === "polytechnic");
-    }
+    list = list.filter((i) => i.type === "university");
     if (registerData.cityId) {
       return list.filter((i) => i.cityId === registerData.cityId);
     }
@@ -98,7 +117,19 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError("");
+    setConsentError("");
+    setPhoneError("");
+    if (!legalConsentAccepted) {
+      setConsentError("You must accept the Terms of Service and Privacy Policy to create an account.");
+      return;
+    }
     if (registerData.password !== registerData.confirmPassword) return;
+    if (!isCompletePhoneNumber(registerData.phoneNumber)) {
+      setPhoneError(PHONE_NUMBER_INCOMPLETE_MESSAGE);
+      toast.error(PHONE_NUMBER_INCOMPLETE_MESSAGE);
+      return;
+    }
+
     if (!registerData.dateOfBirth) {
       setDobError("Date of birth is required");
       return;
@@ -115,7 +146,13 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
       setEmailError("Please select your city");
       return;
     }
-    if (!registerData.institutionId) {
+    const isProfessionalOrBusiness = accountType === "staff" || accountType === "alumni";
+    if (isProfessionalOrBusiness) {
+      if (registerData.institutionName.trim().length < 2) {
+        setEmailError("Please enter your institution or organisation name (at least 2 characters)");
+        return;
+      }
+    } else if (!registerData.institutionId) {
       setEmailError("Please select your institution");
       return;
     }
@@ -128,8 +165,8 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
     if (!isValidEmail) {
       setEmailError(
         isStudent
-          ? "Please use a valid University/College student email (e.g. @university.edu, .ac.zw)"
-          : "Please use a valid Institutional email (e.g. .edu, .ac.*, .gov, organisation domains)"
+          ? "Please use a valid university student email (e.g. @university.edu, .ac.zw)"
+          : "Please use a valid email address (e.g. .edu, .ac.*, .gov, or your organisation domain)"
       );
       return;
     }
@@ -141,29 +178,31 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
     const country = countries.find((c) => c.id === registerData.countryId);
     const city = citiesForCountry.find((c) => c.id === registerData.cityId);
     const institution = institutionsForCountry.find((i) => i.id === registerData.institutionId);
-    const { confirmPassword, countryId, cityId, institutionId, ...rest } = registerData;
+    const { confirmPassword, countryId, cityId, institutionId, institutionName, ...rest } = registerData;
     onRegister({
       ...rest,
       country: country?.code || "ZW",
       city: city?.name || "",
-      institution: institution?.name || "",
+      institution: isProfessionalOrBusiness
+        ? institutionName.trim()
+        : institution?.name || "",
+      termsAccepted: true,
+      privacyPolicyAccepted: true,
+      consentVersion: FINERA_REGISTRATION_CONSENT_VERSION,
     });
   };
 
   const handleCountryChange = (id: string) => {
-    setRegisterData({ ...registerData, countryId: id, cityId: "", institutionId: "" });
+    setRegisterData({ ...registerData, countryId: id, cityId: "", institutionId: "", institutionName: "" });
   };
 
   const handleCityChange = (id: string) => {
-    setRegisterData({ ...registerData, cityId: id, institutionId: "" });
+    setRegisterData({ ...registerData, cityId: id, institutionId: "", institutionName: "" });
   };
 
-  const emailLabel = accountType === 'student'
-    ? "University/College Student Email"
-    : "Institutional Email";
-  const emailPlaceholder = accountType === 'student'
-    ? "student@university.edu"
-    : "name@institution.edu";
+  const emailLabel = accountType === "student" ? "University student email" : "Email";
+  const emailPlaceholder =
+    accountType === "student" ? "student@university.edu" : "you@example.com";
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-transparent p-4">
@@ -308,12 +347,25 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                       <PhoneInputField
                         id="reg-phone"
                         value={registerData.phoneNumber}
-                        onChange={(value) => setRegisterData({ ...registerData, phoneNumber: value })}
+                        onChange={(value) => {
+                          latestPhoneRef.current = value;
+                          setRegisterData({ ...registerData, phoneNumber: value });
+                          setPhoneError("");
+                        }}
+                        onBlur={() => {
+                          const p = latestPhoneRef.current;
+                          if (p.trim().length > 0 && !isCompletePhoneNumber(p)) {
+                            setPhoneError(PHONE_NUMBER_INCOMPLETE_MESSAGE);
+                          }
+                        }}
                         placeholder="Enter phone number"
                         required
-                        inputClassName="!border-slate-200 focus:!ring-emerald-500 focus:!border-emerald-500"
+                        inputClassName={`focus:!ring-emerald-500 focus:!border-emerald-500 ${
+                          phoneError ? "!border-red-500" : "!border-slate-200"
+                        }`}
                         buttonClassName="!border-slate-200"
                       />
+                      {phoneError ? <p className="text-sm font-medium text-red-600">{phoneError}</p> : null}
                     </div>
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
@@ -360,26 +412,50 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
+                      <Label className="flex items-center gap-2" htmlFor={accountType === "student" ? "reg-institution-select" : "reg-institution-text"}>
                         <Building2 className="w-4 h-4" />
-                        Institution
+                        {accountType === "student"
+                          ? "Institution"
+                          : accountType === "staff"
+                            ? "Employer or institution"
+                            : "Organisation or business"}
                       </Label>
-                      <Select
-                        value={registerData.institutionId}
-                        onValueChange={(id) => setRegisterData({ ...registerData, institutionId: id })}
-                        disabled={!registerData.cityId || refLoading}
-                      >
-                        <SelectTrigger className="h-12 rounded-lg border-slate-200">
-                          <SelectValue placeholder="Select institution" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {institutionsForCountry.map((i) => (
-                            <SelectItem key={i.id} value={i.id}>
-                              {i.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {accountType === "student" ? (
+                        <Select
+                          value={registerData.institutionId}
+                          onValueChange={(id) => setRegisterData({ ...registerData, institutionId: id })}
+                          disabled={!registerData.cityId || refLoading}
+                        >
+                          <SelectTrigger id="reg-institution-select" className="h-12 rounded-lg border-slate-200">
+                            <SelectValue placeholder="Select institution" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {institutionsForCountry.map((i) => (
+                              <SelectItem key={i.id} value={i.id}>
+                                {i.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          id="reg-institution-text"
+                          value={registerData.institutionName}
+                          onChange={(e) => {
+                            setRegisterData({ ...registerData, institutionName: e.target.value });
+                            setEmailError("");
+                          }}
+                          placeholder={
+                            accountType === "staff"
+                              ? "Type your employer or institution name"
+                              : "Type your organisation or business name"
+                          }
+                          maxLength={200}
+                          disabled={!registerData.countryId || refLoading}
+                          className="h-12 rounded-lg border-slate-200 focus:ring-emerald-500"
+                          autoComplete="organization"
+                        />
+                      )}
                     </div>
                     <div className="space-y-3">
                       <Label htmlFor="reg-email">{emailLabel}</Label>
@@ -441,9 +517,49 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                         <p className="text-sm text-red-600 font-medium">Passwords do not match</p>
                       )}
                     </div>
+                    <div className="space-y-2">
+                      <div
+                        className={`flex gap-3 rounded-xl border bg-muted/30 p-3 ${consentError ? "border-red-500/80" : "border-slate-200"}`}
+                      >
+                        <Checkbox
+                          id="finera-legal-consent"
+                          checked={legalConsentAccepted}
+                          onCheckedChange={(v) => {
+                            setLegalConsentAccepted(v === true);
+                            setConsentError("");
+                          }}
+                          className="mt-0.5 size-5 shrink-0"
+                          aria-invalid={!!consentError}
+                        />
+                        <label htmlFor="finera-legal-consent" className="cursor-pointer text-sm leading-snug text-foreground">
+                          I have read and agree to the{" "}
+                          <Link
+                            to="/legal/terms"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-emerald-600 underline underline-offset-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Terms of Service
+                          </Link>{" "}
+                          and{" "}
+                          <Link
+                            to="/legal/privacy"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-emerald-600 underline underline-offset-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Privacy Policy
+                          </Link>
+                          .
+                        </label>
+                      </div>
+                      {consentError ? <p className="text-sm font-medium text-red-600">{consentError}</p> : null}
+                    </div>
                     <Button 
                       type="submit" 
-                      disabled={showPasswordMismatch}
+                      disabled={showPasswordMismatch || !legalConsentAccepted}
                       className="w-full h-12 bg-primary hover:bg-emerald-700 rounded-xl font-semibold text-lg text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Create Account Profile
@@ -454,10 +570,6 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
             </TabsContent>
           </Tabs>
         </motion.div>
-
-        <p className="mt-8 text-center text-sm text-muted-foreground">
-          By continuing, you agree to our <span className="text-emerald-600 font-medium">Terms of Service</span> and <span className="text-emerald-600 font-medium">Privacy Policy</span>.
-        </p>
       </div>
     </div>
   );

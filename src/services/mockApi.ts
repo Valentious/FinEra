@@ -9,10 +9,10 @@
  * 2. Update BASE_URL in api.ts to your backend URL
  */
 
-import type { 
-  UserData, 
-  Transaction, 
-  LoginRequest, 
+import type {
+  UserData,
+  Transaction,
+  LoginRequest,
   RegisterRequest,
   OTPVerificationRequest,
   DepositRequest,
@@ -22,9 +22,23 @@ import type {
   NotificationItem,
   NotificationListPayload,
   PeerTransferRecipient,
-} from './api';
-import { getWalletLabel } from '@/types/wallet';
-import { requiresWalletDisciplineForAmount } from '@/loan/loanTypes';
+  CompleteProfilePayload,
+} from "./api";
+import { getWalletLabel } from "@/types/wallet";
+import { requiresWalletDisciplineForAmount } from "@/loan/loanTypes";
+import { FINERA_REGISTRATION_CONSENT_VERSION } from "@/legal/consentVersion";
+import {
+  extractStaffEmployerIdContent,
+  extractStudentIdContent,
+  isNationalIdValid,
+  isStaffEmployerIdValid,
+  isStudentIdValid,
+  normalizeNationalIdForSubmit,
+  NATIONAL_ID_ERROR,
+  STAFF_EMPLOYER_ID_ERROR,
+  STUDENT_ID_ERROR,
+  validateStructuredResidentialAddress,
+} from "@/lib/kycIdentityFormats";
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -352,6 +366,13 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
   await delay(800);
   const email = normalizeEmail(data.email);
 
+  if (data.termsAccepted !== true || data.privacyPolicyAccepted !== true) {
+    throw new Error("You must accept the Terms of Service and Privacy Policy to register.");
+  }
+  if (data.consentVersion !== FINERA_REGISTRATION_CONSENT_VERSION) {
+    throw new Error("Consent version mismatch. Refresh the page and try again.");
+  }
+
   const existing = loadUserData(email);
   if (existing) {
     throw new Error("User already exists");
@@ -395,10 +416,14 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     missedPayments: 0,
     onTimePayments: 0,
     accountMode: data.accountMode === "demo" ? "demo" : "real",
+    countryId: "zw",
+    city: data.city || undefined,
     walletBalances: { USD: 0, ZIG: 0, ZAR: 0 },
     virtualDebitCards: [],
     _passwordHash: passwordHash,
     _pendingVerification: true,
+    registrationConsentAt: new Date().toISOString(),
+    registrationConsentVersion: data.consentVersion,
   };
 
   saveUserData(user);
@@ -408,6 +433,39 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     user: toPublicUser(user),
     message: "Check your email for a verification code (mock: see browser console).",
   };
+}
+
+export async function mockCompleteProfile(data: CompleteProfilePayload): Promise<{ success: boolean; user: UserData }> {
+  await delay(400);
+  const rawEmail = localStorage.getItem("active_user_email");
+  const email = rawEmail ? normalizeEmail(rawEmail) : "";
+  const user = email ? loadUserData(email) : null;
+  if (!user) throw new Error("Not authenticated");
+
+  if (!isNationalIdValid(data.nationalIdNumber)) throw new Error(NATIONAL_ID_ERROR);
+  const at = user.accountType;
+  if (at === "student" && !isStudentIdValid(data.studentStaffId ?? "")) throw new Error(STUDENT_ID_ERROR);
+  if (at === "alumni" && !isStaffEmployerIdValid(data.studentStaffId ?? "")) throw new Error(STAFF_EMPLOYER_ID_ERROR);
+  const addr = validateStructuredResidentialAddress(data.addressLine1, data.addressLine2);
+  if (!addr.ok) throw new Error(addr.error);
+  if ((at === "staff" || at === "alumni") && (!data.salaryRange || String(data.salaryRange).trim().length === 0)) {
+    throw new Error("Salary range is required");
+  }
+
+  user.nationalIdNumber = normalizeNationalIdForSubmit(data.nationalIdNumber);
+  if (at === "student") {
+    user.studentStaffId = extractStudentIdContent(data.studentStaffId ?? "");
+  } else if (at === "alumni") {
+    user.studentStaffId = extractStaffEmployerIdContent(data.studentStaffId ?? "");
+  } else {
+    user.studentStaffId = "";
+  }
+  user.title = data.title;
+  if (at === "staff" || at === "alumni") {
+    user.salaryRange = data.salaryRange ?? null;
+  }
+  saveUserData(user);
+  return { success: true, user: toPublicUser(user) };
 }
 
 /**
@@ -1058,7 +1116,7 @@ export async function mockGetFinancialMetrics(): Promise<{
   };
 }
 
-const MOCK_NOTIF_KEY = 'finera_mock_in_app_notifications_v1';
+const MOCK_NOTIF_KEY = 'finera_mock_in_app_notifications_v2';
 
 function seedMockNotifications(): NotificationItem[] {
   const now = new Date();
@@ -1093,17 +1151,6 @@ function seedMockNotifications(): NotificationItem[] {
       readAt: new Date(now.getTime() - 86400000 * 3).toISOString(),
       createdAt: new Date(now.getTime() - 86400000 * 4).toISOString(),
       actionUrl: null,
-    },
-    {
-      id: 'mock-n4',
-      type: 'LEARNING_NUDGE',
-      priority: 'LOW',
-      title: 'Learning Hub',
-      message: 'New module: understanding interest and APR. Strengthen your financial literacy in minutes.',
-      isRead: true,
-      readAt: new Date(now.getTime() - 86400000 * 5).toISOString(),
-      createdAt: new Date(now.getTime() - 86400000 * 6).toISOString(),
-      actionUrl: 'app:financialEducation',
     },
   ];
 }

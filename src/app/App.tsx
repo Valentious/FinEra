@@ -40,7 +40,6 @@ import {
   getWalletLabel,
 } from "@/types/wallet";
 import { AccountSwitchOverlay } from "@/app/components/AccountSwitchOverlay";
-import { BankLinking } from "@/app/components/BankLinking";
 import { BackendUnavailableBanner } from "@/app/components/BackendUnavailableBanner";
 import { AppErrorBoundary } from "@/app/components/AppErrorBoundary";
 import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
@@ -54,7 +53,6 @@ type Screen =
   | "splash"
   | "loginRegister"
   | "otpVerification"
-  | "bankLinking"
   | "accountCreationSuccess"
   | "accountType"
   | "verify"
@@ -839,37 +837,15 @@ export default function App() {
                 const updatedUser = { ...userData, ...profileData, ...(res?.user ?? {}) };
                 setUserData(updatedUser);
                 saveUserData(updatedUser);
-                // Staff & Employer: redirect to bank linking first
-                if (userData.accountType === "staff" || userData.accountType === "alumni") {
-                  setCurrentScreen("bankLinking");
-                } else {
-                  // Student: legacy FE-USD/ZIG/ZAR labels (optional); Wallet ID comes from profile / mock wallets
-                  const finEra = generateFinEraAccountNumbers();
-                  const withAccounts = { ...updatedUser, finEraAccountNumbers: finEra };
-                  setUserData(withAccounts);
-                  saveUserData(withAccounts);
-                  setCurrentScreen("accountCreationSuccess");
-                }
+                const finEra = generateFinEraAccountNumbers();
+                const withAccounts = { ...updatedUser, finEraAccountNumbers: finEra };
+                setUserData(withAccounts);
+                saveUserData(withAccounts);
+                setCurrentScreen("accountCreationSuccess");
               } catch (e) {
                 toast.error(e instanceof Error ? e.message : "Failed to save profile. Please try again.");
               }
             }} 
-          />
-        )}
-        {currentScreen === "bankLinking" && (
-          <BankLinking
-            accountHolderName={userData.fullName}
-            onComplete={(bankData) => {
-              const finEra = generateFinEraAccountNumbers();
-              const updatedUser = {
-                ...userData,
-                bankLinkingData: bankData,
-                finEraAccountNumbers: finEra,
-              };
-              setUserData(updatedUser);
-              saveUserData(updatedUser);
-              setCurrentScreen("accountCreationSuccess");
-            }}
           />
         )}
         {currentScreen === "accountCreationSuccess" && (

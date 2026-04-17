@@ -15,6 +15,7 @@
 import { fetchWithRetry } from "@/utils/fetchWithRetry";
 import { getWalletLabel } from "@/types/wallet";
 import type { LoanType } from "@/loan/loanTypes";
+import type { CompleteProfilePayload } from "@/types/profileCompletion";
 
 /**
  * API base URL.
@@ -51,13 +52,6 @@ export interface FinEraAccountNumbers {
   zar: string;
 }
 
-export interface BankLinkingData {
-  bankName: string;
-  accountHolderName: string;
-  accountNumber: string;
-  branch?: string;
-}
-
 export interface UserData {
   /** Backend user UUID (mock + real) - used for peer transfer resolution */
   userId?: string;
@@ -90,8 +84,6 @@ export interface UserData {
   onTimePayments: number;
   /** Multi-currency FinEra account numbers (FE-USD-xxx, FE-ZIG-xxx, FE-ZAR-xxx) */
   finEraAccountNumbers?: FinEraAccountNumbers;
-  /** Bank linking data (Staff & Employer only) */
-  bankLinkingData?: BankLinkingData;
   /** User's country (from profile) - used for payment options */
   countryId?: string;
   /** UI language: en, es, fr, pt, sw, sn (Shona), nd (Ndebele), af (Afrikaans) */
@@ -108,6 +100,9 @@ export interface UserData {
    * Operating mode chosen at onboarding (Deriv-style): explore (stored as `demo`) = simulated workflows only; real = live operations.
    */
   accountMode?: "real" | "demo";
+  /** ISO 8601 — when Terms + Privacy were accepted at registration (mirrors backend audit). */
+  registrationConsentAt?: string;
+  registrationConsentVersion?: string;
 }
 
 /** User-managed virtual Mastercard (mock + future card API) */
@@ -153,14 +148,19 @@ export interface RegisterRequest {
   email: string;
   password: string;
   accountType: 'student' | 'staff' | 'alumni';
-  /** Country 2-letter ISO code (e.g. ZW) - from reference data */
-  country?: string;
-  /** City name - from reference data */
-  city?: string;
-  /** Institution name - from reference data */
-  institution?: string;
+  /** Zimbabwe-only onboarding — must be `ZW`. */
+  country: string;
+  /** City display name from the Zimbabwe registration list */
+  city: string;
+  /** Institution display name from the Zimbabwe registration list */
+  institution: string;
   /** Explore (practice) vs live account; API value `demo` = explore (stored in user metadata on the backend) */
   accountMode?: "real" | "demo";
+  /** Required for POST /auth/register — must both be true. */
+  termsAccepted: boolean;
+  privacyPolicyAccepted: boolean;
+  /** Must match backend `FINERA_REGISTRATION_CONSENT_VERSION`. */
+  consentVersion: string;
 }
 
 export interface OTPVerificationRequest {
@@ -271,15 +271,19 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
       password: data.password,
       fullName: data.fullName,
       accountType: data.accountType.toUpperCase(),
-      country: data.country || 'ZW',
-      city: data.city || '',
-      institution: data.institution || '',
+      country: data.country ?? "ZW",
+      city: data.city ?? "",
+      institution: data.institution ?? "",
       dateOfBirth: data.dateOfBirth,
       phoneNumber: data.phoneNumber,
+      termsAccepted: data.termsAccepted === true,
+      privacyPolicyAccepted: data.privacyPolicyAccepted === true,
+      consentVersion: data.consentVersion,
       ...(data.accountMode ? { accountMode: data.accountMode } : {}),
     }),
   });
   const mode = data.accountMode === "demo" ? "demo" : "real";
+  const consentAt = new Date().toISOString();
   return {
     user: {
       memberId: res.data?.userId || '',
@@ -305,6 +309,8 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
       missedPayments: 0,
       onTimePayments: 0,
       accountMode: mode,
+      registrationConsentAt: consentAt,
+      registrationConsentVersion: data.consentVersion,
     },
     message: res.message || 'Account created. Check your email for a verification code.',
   };
@@ -420,7 +426,7 @@ export interface RegistrationData {
   institutions: ReferenceInstitution[];
 }
 
-const REGISTRATION_CACHE_KEY = "finera_registration_data";
+const REGISTRATION_CACHE_KEY = "finera_registration_data_zw_v2";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** Fetch all registration data with retry. Returns fallback on failure - never throws. */
@@ -800,18 +806,34 @@ export async function peerTransfer(params: {
 }
 
 /**
- * POST /users/complete-profile
- * Complete user profile after registration
- * Backend should:
- * - Save additional profile details
- * - Update account status
+ * POST /user/complete-profile — KYC profile completion (server re-validates all fields).
  */
-export async function completeProfile(profileData: any): Promise<{ success: boolean; user: UserData }> {
-  // TODO: Replace with actual API call
-  return apiCall('/users/complete-profile', {
-    method: 'POST',
+export async function completeProfile(profileData: CompleteProfilePayload): Promise<{ success: boolean; user: UserData }> {
+  const token = localStorage.getItem("auth_token") || localStorage.getItem("accessToken");
+  const response = await fetch(`${BASE_URL}/user/complete-profile`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    credentials: "include",
     body: JSON.stringify(profileData),
   });
+  const body = (await response.json().catch(() => ({}))) as {
+    success?: boolean;
+    message?: string;
+    errors?: { field: string; error: string }[];
+    user?: Partial<UserData>;
+    data?: Record<string, unknown>;
+  };
+  if (!response.ok) {
+    const first = body.errors?.[0]?.error;
+    throw new Error(first || body.message || `Profile update failed (${response.status})`);
+  }
+  return {
+    success: Boolean(body.success),
+    user: (body.user ?? body.data ?? {}) as UserData,
+  };
 }
 
 // ==================== WALLET & TRANSACTION APIs ====================
@@ -1739,6 +1761,8 @@ export const mockResponses = {
       loyaltyProgress: 0,
       missedPayments: 0,
       onTimePayments: 0,
+      registrationConsentAt: new Date().toISOString(),
+      registrationConsentVersion: data.consentVersion,
     },
     message: 'Registration successful. Please verify your OTP.',
   }),

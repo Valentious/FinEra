@@ -67,8 +67,13 @@ app.use("/api/v1/member-documents", generalLimiter, memberDocumentsRoutes);
 app.get("/api/registration-data", generalLimiter, async (_req, res) => {
   try {
     const ref = await import("../services/user-service/reference.data.js");
-    const cities = ref.COUNTRIES.flatMap((c) => ref.getCitiesByCountry(c.id));
-    const payload = { countries: ref.COUNTRIES, cities, institutions: ref.INSTITUTIONS };
+    const zwCityIds = new Set(ref.ZW_REGISTRATION_CITIES.map((c: { id: string }) => c.id));
+    const institutions = ref.INSTITUTIONS.filter((i: { cityId: string }) => zwCityIds.has(i.cityId));
+    const payload = {
+      countries: [{ id: "zw", name: "Zimbabwe", code: "ZW" }],
+      cities: ref.ZW_REGISTRATION_CITIES,
+      institutions,
+    };
     res.json(payload);
   } catch (err) {
     logger.error(

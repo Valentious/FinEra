@@ -12,7 +12,7 @@ import {
   forbiddenError,
   conflictError,
 } from "../../middlewares/errorHandler.js";
-import { updateProfileSchema } from "./user.validation.js";
+import { buildCompleteProfileSchema, updateProfileSchema } from "./user.validation.js";
 import { logger } from "../../core/utils/logger.js";
 import { zodErrorToFieldErrors } from "../../shared/validation/zod-format.js";
 import { getWalletLabel } from "../../shared/wallet-label.js";
@@ -74,6 +74,68 @@ router.get("/profile", async (req, res, next) => {
     finalizeProfilePayload(raw);
 
     res.json({ success: true, data: user });
+  } catch (e) {
+    next(e);
+  }
+});
+
+/**
+ * POST /user/complete-profile — KYC profile step after onboarding (national ID, student or employer ID, structured address).
+ * Persists normalized values under `User.metadata.profileKyc` until dedicated columns exist.
+ */
+router.post("/complete-profile", async (req, res, next) => {
+  try {
+    const userId = req.user!.id;
+    const existing = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { accountType: true, metadata: true },
+    });
+    if (!existing) throw notFoundError("User not found");
+
+    const schema = buildCompleteProfileSchema(existing.accountType);
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      throw validationError("Validation failed", { fields: zodErrorToFieldErrors(parsed.error) });
+    }
+
+    const body = parsed.data;
+    const meta = (existing.metadata as Record<string, unknown> | null) ?? {};
+    const nextMeta = {
+      ...meta,
+      profileKyc: {
+        nationalIdNumber: body.nationalIdNumber,
+        studentStaffId: body.studentStaffId,
+        addressLine1: body.addressLine1,
+        addressLine2: body.addressLine2 ?? null,
+        salaryRange: body.salaryRange ?? null,
+        completedAt: new Date().toISOString(),
+      },
+    };
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        title: body.title,
+        metadata: nextMeta as object,
+      },
+      select: profileSelectWithMeta,
+    });
+
+    const raw = user as Record<string, unknown>;
+    finalizeProfilePayload(raw);
+
+    res.json({
+      success: true,
+      data: user,
+      user: {
+        nationalIdNumber: body.nationalIdNumber,
+        studentStaffId: body.studentStaffId,
+        addressLine1: body.addressLine1,
+        addressLine2: body.addressLine2,
+        title: body.title,
+        salaryRange: body.salaryRange,
+      },
+    });
   } catch (e) {
     next(e);
   }

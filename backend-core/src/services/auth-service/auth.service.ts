@@ -25,6 +25,7 @@ import { sendOtpEmail, logDevOtpFallback, maskEmailForLog } from "./email-delive
 import { logger } from "../../core/utils/logger.js";
 import { assertHourlyOtpLimit, recordOtpSend } from "./otp-rate-limit.js";
 import type { RegisterInput } from "./auth.validation.js";
+import { FINERA_REGISTRATION_CONSENT_VERSION } from "../../shared/legal/consent-version.js";
 import { createUserCurrencyAccountStack } from "../ledger-service/account-stack.service.js";
 import { publishDomainEvent } from "../../infrastructure/messaging/event-bus.js";
 
@@ -119,9 +120,24 @@ async function deliverRegistrationOtp(to: string, code: string): Promise<void> {
   }
 }
 
-export async function register(data: RegisterInput): Promise<{ userId: string; email: string }> {
+export interface RegisterRequestContext {
+  ip?: string | undefined;
+  userAgent?: string | undefined;
+}
+
+export async function register(
+  data: RegisterInput,
+  ctx: RegisterRequestContext = {}
+): Promise<{ userId: string; email: string }> {
   const email = normalizeEmail(data.email);
   assertHourlyOtpLimit(email);
+
+  if (data.termsAccepted !== true || data.privacyPolicyAccepted !== true) {
+    throw validationError("Legal consent is required to create an account.");
+  }
+  if (data.consentVersion !== FINERA_REGISTRATION_CONSENT_VERSION) {
+    throw validationError("Consent version mismatch. Refresh the page and try again.");
+  }
 
   const existing = await authRepo.findUserByEmail(email);
   if (existing) throw conflictError("Email already registered");
@@ -163,6 +179,12 @@ export async function register(data: RegisterInput): Promise<{ userId: string; e
         emailVerificationExpiry: expiry,
         emailOtpLastSentAt: now,
         metadata: { accountMode } as object,
+        termsOfServiceAccepted: true,
+        privacyPolicyAccepted: true,
+        consentAcceptedAt: now,
+        consentVersion: data.consentVersion,
+        registrationIp: ctx.ip ?? null,
+        registrationUserAgent: ctx.userAgent ?? null,
       },
     });
     await tx.userAuth.create({

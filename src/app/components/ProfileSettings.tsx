@@ -42,6 +42,7 @@ import { motion } from "motion/react";
 import { toast } from "sonner";
 import { DateOfBirthField } from "@/app/components/ui/date-of-birth-field";
 import { validateDobIso, dobErrorMessage } from "@/lib/dob";
+import { isCompletePhoneNumber, PHONE_NUMBER_INCOMPLETE_MESSAGE } from "@/lib/validation";
 import { apiService } from "@/services/index";
 import { useI18n } from "@/app/providers/I18nProvider";
 import { isAppLocale } from "@/i18n/locales";
@@ -74,6 +75,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
   const [profileCity, setProfileCity] = useState(userData.city || "");
   const [profileDob, setProfileDob] = useState(userData.dateOfBirth || "");
   const [dobError, setDobError] = useState("");
+  const [profilePhoneError, setProfilePhoneError] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
@@ -89,6 +91,7 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
       setLocale(pl);
     }
     setDobError("");
+    setProfilePhoneError("");
   }, [userData.memberId, userData.email, userData.dateOfBirth, userData.phoneNumber, userData.fullName, userData.city, userData.preferredLanguage, userData.title, setLocale]);
 
   useEffect(() => {
@@ -105,6 +108,13 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
       toast.error(dobErrorMessage(dobCheck.error));
       return;
     }
+    const phoneTrimmed = profilePhone.trim();
+    if (phoneTrimmed.length > 0 && !isCompletePhoneNumber(phoneTrimmed)) {
+      setProfilePhoneError(PHONE_NUMBER_INCOMPLETE_MESSAGE);
+      toast.error(PHONE_NUMBER_INCOMPLETE_MESSAGE);
+      return;
+    }
+    setProfilePhoneError("");
     setSavingProfile(true);
     try {
       const patch = await apiService.updateUserProfile({
@@ -317,11 +327,17 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                       <Label className="text-xs font-bold text-muted-foreground">{t("profile.fieldPhone")}</Label>
                       <Input
                         value={profilePhone}
-                        onChange={(e) => setProfilePhone(e.target.value)}
-                        className="h-11 rounded-xl"
+                        onChange={(e) => {
+                          setProfilePhone(e.target.value);
+                          setProfilePhoneError("");
+                        }}
+                        className={`h-11 rounded-xl ${profilePhoneError ? "border-red-500" : ""}`}
                         inputMode="tel"
                         autoComplete="tel"
                       />
+                      {profilePhoneError ? (
+                        <p className="text-sm font-medium text-red-600">{profilePhoneError}</p>
+                      ) : null}
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-bold text-muted-foreground">{t("profile.fieldCity")}</Label>
@@ -354,14 +370,18 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                         className="h-11 rounded-xl bg-slate-50 text-muted-foreground cursor-not-allowed" 
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold text-muted-foreground">{userData.accountType === 'student' ? 'Student' : userData.accountType === 'staff' ? 'Staff' : 'Employer'} ID</Label>
-                      <Input 
-                        defaultValue={userData.studentStaffId} 
-                        disabled 
-                        className="h-11 rounded-xl bg-slate-50 text-muted-foreground cursor-not-allowed" 
-                      />
-                    </div>
+                    {userData.accountType !== "staff" && (
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold text-muted-foreground">
+                          {userData.accountType === "student" ? "Student" : "Employer"} ID
+                        </Label>
+                        <Input
+                          defaultValue={userData.studentStaffId}
+                          disabled
+                          className="h-11 rounded-xl bg-slate-50 text-muted-foreground cursor-not-allowed"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-4 border-t border-border/60 flex justify-end">

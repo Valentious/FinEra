@@ -275,6 +275,17 @@ model User {
   updatedAt               DateTime  @updatedAt
   deletedAt               DateTime?
   metadata                Json?
+  /// Explicit acceptance of Terms of Service at registration (financial consent audit).
+  termsOfServiceAccepted  Boolean   @default(false)
+  /// Explicit acceptance of Privacy Policy at registration.
+  privacyPolicyAccepted   Boolean   @default(false)
+  /// Server time when both legal documents were accepted (required for new registrations).
+  consentAcceptedAt       DateTime?
+  /// Document bundle version accepted (e.g. matches app constant `1.0`).
+  consentVersion          String?
+  /// Client IP at registration when available (proxy-aware header on API).
+  registrationIp          String?
+  registrationUserAgent   String?   @db.Text
 
   authCredentials        UserAuth?
   wallets                 Wallet[]

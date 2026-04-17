@@ -38,7 +38,7 @@ export const apiService = USE_MOCK_DATA ? {
   // User Management
   getUserProfile: mockApi.mockGetUserProfile,
   updateUserProfile: mockApi.mockUpdateUserProfile,
-  completeProfile: async (data: any) => ({ success: true, user: await mockApi.mockGetUserProfile() }),
+  completeProfile: mockApi.mockCompleteProfile,
 
   // Wallet & Transactions
   depositFunds: mockApi.mockDepositFunds,
@@ -143,7 +143,6 @@ export type {
   Transaction,
   CreditApplication,
   FinEraAccountNumbers,
-  BankLinkingData,
   CurrencyConfig,
   NotificationItem,
   NotificationListPayload,

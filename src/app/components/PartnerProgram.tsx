@@ -3,7 +3,7 @@
  * Route: /partner-program (screen: partnerProgram)
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { getPartnerProgram, applyPartnerProgram, type PartnerProgramApplication } from "@/services/api";
 import { toast } from "sonner";
+import { isCompletePhoneNumber, PHONE_NUMBER_INCOMPLETE_MESSAGE } from "@/lib/validation";
 import { FineraGradientBackdrop } from "@/app/components/FineraGradientBackdrop";
 
 const SERVICE_OPTIONS = ["Cash In", "Cash Out", "Loan Support", "Payment Assistance"];
@@ -34,6 +35,9 @@ export function PartnerProgram() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
+  const latestContactRef = useRef("");
+  latestContactRef.current = formData.contactNumber;
   const [formData, setFormData] = useState<PartnerProgramApplication & { services: string[] }>({
     fullName: "",
     idNumber: "",
@@ -275,13 +279,24 @@ export function PartnerProgram() {
               <PhoneInputField
                 id="contactNumber"
                 value={formData.contactNumber}
-                onChange={(value) => setFormData({ ...formData, contactNumber: value })}
+                onChange={(value) => {
+                  latestContactRef.current = value;
+                  setFormData({ ...formData, contactNumber: value });
+                  setPhoneError("");
+                }}
+                onBlur={() => {
+                  const p = latestContactRef.current;
+                  if (p.trim().length > 0 && !isCompletePhoneNumber(p)) {
+                    setPhoneError(PHONE_NUMBER_INCOMPLETE_MESSAGE);
+                  }
+                }}
                 placeholder="e.g., +263 77 123 4567"
                 required
                 defaultCountry="zw"
-                inputClassName="!rounded-xl !font-medium"
+                inputClassName={`!rounded-xl !font-medium ${phoneError ? "!border-red-500" : ""}`}
                 buttonClassName="!rounded-l-xl"
               />
+              {phoneError ? <p className="text-sm font-medium text-red-600">{phoneError}</p> : null}
             </div>
 
             <div className="space-y-2">

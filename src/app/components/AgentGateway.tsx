@@ -30,10 +30,10 @@ interface Agent {
 }
 
 const MOCK_AGENTS: Agent[] = [
-  { id: "A1", name: "Simba Mukanya", location: "University Commons", rating: 4.9, agentCode: "AG-9921", distance: "0.4 km", availability: "Online", contact: "+263 77 123 4567" },
-  { id: "A2", name: "Chipo Mupemhi", location: "Students Union", rating: 4.8, agentCode: "AG-8812", distance: "0.8 km", availability: "Online", contact: "+263 71 987 6543" },
+  { id: "A1", name: "Simba Mukanya", location: "Civic Centre", rating: 4.9, agentCode: "AG-9921", distance: "0.4 km", availability: "Online", contact: "+263 77 123 4567" },
+  { id: "A2", name: "Chipo Mupemhi", location: "Community Hub", rating: 4.8, agentCode: "AG-8812", distance: "0.8 km", availability: "Online", contact: "+263 71 987 6543" },
   { id: "A3", name: "Tinashe Zhou", location: "Main Gate Plaza", rating: 4.7, agentCode: "AG-7733", distance: "1.2 km", availability: "Online", contact: "+263 73 555 1212" },
-  { id: "A4", name: "Farai Gumbo", location: "Engineering Block", rating: 4.6, agentCode: "AG-6644", distance: "1.5 km", availability: "Offline", contact: "+263 77 333 4444" },
+  { id: "A4", name: "Farai Gumbo", location: "Tech Park", rating: 4.6, agentCode: "AG-6644", distance: "1.5 km", availability: "Offline", contact: "+263 77 333 4444" },
 ];
 
 interface AgentGatewayProps {

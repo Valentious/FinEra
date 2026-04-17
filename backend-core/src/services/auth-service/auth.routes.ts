@@ -22,7 +22,11 @@ router.post("/register", async (req, res, next) => {
     if (!parsed.success) {
       throw validationError("Validation failed", { fields: zodErrorToFieldErrors(parsed.error) });
     }
-    const result = await authService.register(parsed.data);
+    const ip =
+      (req.headers["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim() ??
+      req.socket?.remoteAddress;
+    const userAgent = req.headers["user-agent"];
+    const result = await authService.register(parsed.data, { ip, userAgent });
     res.status(201).json({
       success: true,
       message: "Account created. Check your email for a verification code.",

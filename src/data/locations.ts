@@ -53,12 +53,15 @@ export const COUNTRIES: Country[] = [
 
 /** Cities by country */
 export const CITIES: City[] = [
-  // Zimbabwe
+  // Zimbabwe (onboarding registration uses this exact set — no non-ZW cities)
   { id: "zw-hre", name: "Harare", countryId: "zw" },
   { id: "zw-bul", name: "Bulawayo", countryId: "zw" },
   { id: "zw-mut", name: "Mutare", countryId: "zw" },
   { id: "zw-gwe", name: "Gweru", countryId: "zw" },
-  { id: "zw-kad", name: "Kadoma", countryId: "zw" },
+  { id: "zw-mas", name: "Masvingo", countryId: "zw" },
+  { id: "zw-kwe", name: "Kwekwe", countryId: "zw" },
+  { id: "zw-chi", name: "Chitungwiza", countryId: "zw" },
+  { id: "zw-vfa", name: "Victoria Falls", countryId: "zw" },
   // South Africa
   { id: "za-jhb", name: "Johannesburg", countryId: "za" },
   { id: "za-cpt", name: "Cape Town", countryId: "za" },
@@ -96,17 +99,14 @@ const FALLBACK_CITIES: City[] = COUNTRIES.filter(c => !["zw", "za", "ke", "ng", 
   countryId: c.id,
 }));
 
-/** All institutions - Staff: universities, companies, government, research. Student / Employer–Alumni: universities & polytechnics only */
+/** All institutions - Staff: universities, companies, government, research. Student / alumni: universities only */
 export const INSTITUTIONS: Institution[] = [
-  // Zimbabwe - Universities & Polytechnics
+  // Zimbabwe - Universities
   { id: "uoz", name: "University of Zimbabwe", type: "university", cityId: "zw-hre" },
-  { id: "nust", name: "National University of Science and Technology", type: "university", cityId: "zw-bul" },
+  { id: "nust", name: "National University of Science and Technology (NUST)", type: "university", cityId: "zw-bul" },
   { id: "mbu", name: "Midlands State University", type: "university", cityId: "zw-gwe" },
   { id: "buse", name: "Bindura University of Science Education", type: "university", cityId: "zw-hre" },
   { id: "lupane", name: "Lupane State University", type: "university", cityId: "zw-bul" },
-  { id: "hcc", name: "Harare Polytechnic College", type: "polytechnic", cityId: "zw-hre" },
-  { id: "bpc", name: "Bulawayo Polytechnic College", type: "polytechnic", cityId: "zw-bul" },
-  { id: "gpc", name: "Gweru Polytechnic College", type: "polytechnic", cityId: "zw-gwe" },
   // Zimbabwe - Government & Companies (Staff only)
   { id: "zrp", name: "Zimbabwe Republic Police", type: "government", cityId: "zw-hre" },
   { id: "zimra", name: "Zimbabwe Revenue Authority", type: "government", cityId: "zw-hre" },
@@ -119,26 +119,23 @@ export const INSTITUTIONS: Institution[] = [
   { id: "uct", name: "University of Cape Town", type: "university", cityId: "za-cpt" },
   { id: "wits", name: "University of the Witwatersrand", type: "university", cityId: "za-jhb" },
   { id: "up", name: "University of Pretoria", type: "university", cityId: "za-pta" },
-  { id: "cput", name: "Cape Peninsula University of Technology", type: "polytechnic", cityId: "za-cpt" },
   { id: "sars", name: "South African Revenue Service", type: "government", cityId: "za-pta" },
   { id: "sap", name: "SAP South Africa", type: "company", cityId: "za-jhb" },
   // Kenya
   { id: "uon", name: "University of Nairobi", type: "university", cityId: "ke-nrb" },
   { id: "kemu", name: "Kenyatta University", type: "university", cityId: "ke-nrb" },
-  { id: "kpu", name: "Kenya Polytechnic University", type: "polytechnic", cityId: "ke-nrb" },
   { id: "kra", name: "Kenya Revenue Authority", type: "government", cityId: "ke-nrb" },
   { id: "safaricom", name: "Safaricom PLC", type: "company", cityId: "ke-nrb" },
   // Nigeria
   { id: "ui", name: "University of Ibadan", type: "university", cityId: "ng-ibd" },
   { id: "unilag", name: "University of Lagos", type: "university", cityId: "ng-lag" },
   { id: "abu", name: "Ahmadu Bello University", type: "university", cityId: "ng-abj" },
-  { id: "yabatech", name: "Yaba College of Technology", type: "polytechnic", cityId: "ng-lag" },
   { id: "firs", name: "Federal Inland Revenue Service", type: "government", cityId: "ng-abj" },
   { id: "gtbank", name: "Guaranty Trust Bank", type: "company", cityId: "ng-lag" },
   // UK
   { id: "oxford", name: "University of Oxford", type: "university", cityId: "gb-lon" },
   { id: "cambridge", name: "University of Cambridge", type: "university", cityId: "gb-lon" },
-  { id: "ucl", name: "University College London", type: "university", cityId: "gb-lon" },
+  { id: "ucl", name: "UCL", type: "university", cityId: "gb-lon" },
   { id: "imperial", name: "Imperial College London", type: "university", cityId: "gb-lon" },
   { id: "manchester", name: "University of Manchester", type: "university", cityId: "gb-man" },
   { id: "hmrc", name: "HM Revenue & Customs", type: "government", cityId: "gb-lon" },
@@ -160,7 +157,7 @@ export function getCitiesByCountry(countryId: string): City[] {
   return FALLBACK_CITIES.filter((c) => c.countryId === countryId);
 }
 
-/** Get institutions for Staff: all formal orgs. For Student / Employer–Alumni: universities & polytechnics only. Filtered by country. */
+/** Get institutions for Staff: all formal orgs. For Student / alumni: universities only. Filtered by country. */
 export function getInstitutionsByCountryAndType(
   countryId: string,
   accountType: "student" | "staff" | "alumni"
@@ -169,18 +166,9 @@ export function getInstitutionsByCountryAndType(
   const inCountry = INSTITUTIONS.filter((i) => cityIds.includes(i.cityId));
 
   if (accountType === "staff") {
-    return inCountry; // All: universities, polytechnics, companies, government, research
+    return inCountry;
   }
-  // Student & Employer: universities and polytechnics only
-  return inCountry.filter(
-    (i) => i.type === "university" || i.type === "polytechnic"
-  );
-}
-
-/** Full registration data for fallback when API is unavailable */
-export function getFallbackRegistrationData() {
-  const allCities = [...CITIES, ...FALLBACK_CITIES];
-  return { countries: COUNTRIES, cities: allCities, institutions: INSTITUTIONS };
+  return inCountry.filter((i) => i.type === "university");
 }
 
 /** Search institutions by name */
@@ -195,4 +183,36 @@ export function searchInstitutions(
   return list.filter((i) => i.name.toLowerCase().includes(q));
 }
 
+/** Zimbabwe cities allowed on the registration form (curated; matches backend onboarding). */
+export const ZW_REGISTRATION_CITIES: City[] = CITIES.filter((c) => c.countryId === "zw");
+
+const ZW_REGISTRATION_CITY_ID_SET = new Set(ZW_REGISTRATION_CITIES.map((c) => c.id));
+
+/**
+ * Institutions available during Zimbabwe-only registration.
+ * Student: universities only. Staff: all formal orgs in ZW. Alumni: universities and other orgs (no polytechnic sector).
+ */
+export function getZimbabweRegistrationInstitutions(accountType: "student" | "staff" | "alumni"): Institution[] {
+  const inZw = INSTITUTIONS.filter((i) => ZW_REGISTRATION_CITY_ID_SET.has(i.cityId));
+  if (accountType === "student") {
+    return inZw.filter((i) => i.type === "university");
+  }
+  if (accountType === "staff") {
+    return inZw;
+  }
+  return inZw.filter((i) => i.type !== "polytechnic");
+}
+
+export function isZimbabweRegistrationCityId(id: string): boolean {
+  return ZW_REGISTRATION_CITY_ID_SET.has(id);
+}
+
+/** Registration reference when API is unavailable — Zimbabwe-only onboarding bundle. */
+export function getFallbackRegistrationData() {
+  return {
+    countries: [{ id: "zw", name: "Zimbabwe", code: "ZW" }],
+    cities: ZW_REGISTRATION_CITIES,
+    institutions: INSTITUTIONS.filter((i) => ZW_REGISTRATION_CITY_ID_SET.has(i.cityId)),
+  };
+}
 

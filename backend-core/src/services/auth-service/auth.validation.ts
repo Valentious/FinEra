@@ -4,14 +4,16 @@
 
 import { z } from "zod";
 import {
-  countryCodeSchema,
   dateIsoSchema,
   emailSchema,
   fullNameSchema,
-  optionalCitySchema,
-  optionalInstitutionSchema,
   phoneNumberSchema,
 } from "../../shared/validation/zod-schemas.js";
+import {
+  ZW_REGISTRATION_CITY_NAMES,
+  getZimbabweRegistrationInstitutionNames,
+} from "../user-service/reference.data.js";
+import { FINERA_REGISTRATION_CONSENT_VERSION } from "../../shared/legal/consent-version.js";
 
 const PASSWORD_MIN = 8;
 const PASSWORD_MAX = 128;
@@ -43,15 +45,63 @@ export const registerSchema = z
       ),
     fullName: fullNameSchema,
     accountType: z.enum(["STUDENT", "STAFF", "ALUMNI"]),
-    country: countryCodeSchema,
-    city: optionalCitySchema,
-    institution: optionalInstitutionSchema,
+    /** Onboarding is Zimbabwe-only; API accepts only ZW. */
+    country: z.literal("ZW"),
+    city: z
+      .string()
+      .min(1, "City is required")
+      .refine((v) => (ZW_REGISTRATION_CITY_NAMES as readonly string[]).includes(v), {
+        message: "City must be a supported Zimbabwe location",
+      }),
+    institution: z
+      .string()
+      .min(1, "Institution is required")
+      .max(200, "Institution name is too long"),
     dateOfBirth: dateIsoSchema,
     phoneNumber: phoneNumberSchema,
     /** Optional: practice explore mode (stored as `demo`) vs live account - persisted in User.metadata */
     accountMode: z.enum(["real", "demo"]).optional(),
+    /** Legal consent — both required; must be literal `true` (not coerced strings). */
+    termsAccepted: z.literal(true, {
+      errorMap: () => ({ message: "You must accept the Terms of Service to register" }),
+    }),
+    privacyPolicyAccepted: z.literal(true, {
+      errorMap: () => ({ message: "You must accept the Privacy Policy to register" }),
+    }),
+    /** Must match server-issued document bundle version. */
+    consentVersion: z.literal(FINERA_REGISTRATION_CONSENT_VERSION, {
+      errorMap: () => ({
+        message: "Consent version is outdated or invalid. Refresh the page and try again.",
+      }),
+    }),
   })
-  .strict();
+  .strict()
+  .superRefine((data, ctx) => {
+    const inst = data.institution.trim();
+    if (data.accountType === "STUDENT") {
+      const allowed = getZimbabweRegistrationInstitutionNames("STUDENT");
+      if (!allowed.includes(inst)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Institution must be selected from the Zimbabwe onboarding list",
+          path: ["institution"],
+        });
+      }
+    } else {
+      /** Professional (STAFF) and Business (ALUMNI): free-text organisation / employer name. */
+      if (inst.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Enter your institution or organisation name (at least 2 characters)",
+          path: ["institution"],
+        });
+      }
+    }
+  })
+  .transform((data) => ({
+    ...data,
+    institution: data.institution.trim(),
+  }));
 
 export const loginSchema = z
   .object({

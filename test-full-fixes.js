@@ -28,7 +28,7 @@ async function testFixes() {
     results.referenceData.details.push(`Countries: ${countries.length}`);
     results.referenceData.details.push(`Cities (ZW): ${cities.length}`);
     const unis = institutions.filter((i) => i.type === "university");
-    const polys = institutions.filter((i) => i.type === "polytechnic");
+    const polys = institutions.filter((i) => i.type === "polytechnic"); // expected 0 after college-sector removal
     results.referenceData.details.push(`Universities: ${unis.length}`);
     results.referenceData.details.push(`Polytechnics: ${polys.length}`);
 

@@ -12,6 +12,7 @@ interface PhoneInputFieldProps {
   containerClassName?: string;
   inputClassName?: string;
   buttonClassName?: string;
+  onBlur?: () => void;
 }
 
 /**
@@ -25,10 +26,11 @@ export function PhoneInputField({
   placeholder = "Enter phone number",
   required = false,
   disabled = false,
-  defaultCountry = "us",
+  defaultCountry = "zw",
   containerClassName = "",
   inputClassName = "",
   buttonClassName = "",
+  onBlur,
 }: PhoneInputFieldProps) {
   const handleChange = (val: string) => {
     onChange(val ? `+${val}` : "");
@@ -43,7 +45,12 @@ export function PhoneInputField({
       onChange={handleChange}
       enableSearch
       searchPlaceholder="Search country..."
-      inputProps={{ id, required, "aria-required": required }}
+      inputProps={{
+        id,
+        required,
+        "aria-required": required,
+        ...(onBlur ? { onBlur } : {}),
+      }}
       placeholder={placeholder}
       disabled={disabled}
       containerClass={containerClassName}

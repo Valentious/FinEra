@@ -9,17 +9,19 @@ import {
   INSTITUTIONS,
   getCitiesByCountry,
   getInstitutionsByCountryAndType,
+  ZW_REGISTRATION_CITIES,
 } from "./reference.data.js";
 
 const router = Router();
 
-/** Unified registration data - countries, all cities, all institutions (frontend filters by country) */
+/** Zimbabwe-only onboarding bundle for member registration (no global city/country lists). */
 router.get("/registration-data", (_req: Request, res: Response) => {
-  const cities = COUNTRIES.flatMap((c) => getCitiesByCountry(c.id));
+  const zwCityIds = new Set(ZW_REGISTRATION_CITIES.map((c) => c.id));
+  const institutions = INSTITUTIONS.filter((i) => zwCityIds.has(i.cityId));
   res.json({
-    countries: COUNTRIES,
-    cities,
-    institutions: INSTITUTIONS,
+    countries: [{ id: "zw", name: "Zimbabwe", code: "ZW" }],
+    cities: ZW_REGISTRATION_CITIES,
+    institutions,
   });
 });
 
