@@ -68,7 +68,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           className="flex w-full shrink-0 items-center justify-center px-6 pb-2 text-center"
         >
           <span className="max-w-[min(100%,22rem)] text-sm font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Powered by NUST & SPC Microfinance
+            Powered by SPC Microfinance
           </span>
         </motion.div>
 

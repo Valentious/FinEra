@@ -112,11 +112,10 @@ export function DateOfBirthField({
                 type="button"
                 variant="outline"
                 disabled={isDisabled}
-                className="h-12 shrink-0 rounded-xl border-slate-200 gap-2 w-full sm:w-auto"
-                aria-label="Open calendar to choose date of birth"
+                className="h-12 w-full shrink-0 justify-center rounded-xl border-slate-200 sm:w-12"
+                aria-label="Open date picker to choose date of birth"
               >
                 <CalendarIcon className="h-4 w-4" aria-hidden />
-                Calendar
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start" sideOffset={6}>

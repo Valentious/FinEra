@@ -35,7 +35,6 @@ export function requiresWalletDisciplineForAmount(
   loanType: LoanType,
   creditType: string
 ): boolean {
-  if (creditType === "emergency") return false;
   return loanType === "NON_COLLATERAL" && (creditType === "essential" || creditType === "business");
 }
 

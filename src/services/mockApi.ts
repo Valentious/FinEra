@@ -323,6 +323,122 @@ export async function mockSendEmailVerificationCode(email: string): Promise<{ su
   return { success: true, message: "Verification code sent to your email." };
 }
 
+const PWD_OTP_KEY = (channel: "email" | "phone", id: string) =>
+  `finera_pwd_otp_${channel}_${id.replace(/\s/g, "").toLowerCase()}`;
+
+function phoneDigits(s: string): string {
+  return s.replace(/\D/g, "");
+}
+
+function findMockUserByPhone(phone: string): MockUserData | null {
+  const p = phoneDigits(phone);
+  if (!p) return null;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k?.startsWith("member_")) continue;
+    const raw = localStorage.getItem(k);
+    if (!raw) continue;
+    try {
+      const u = JSON.parse(raw) as MockUserData;
+      const num = phoneDigits(u.phoneNumber || u.mobile || "");
+      if (!num) continue;
+      if (num === p || (p.length >= 9 && num.endsWith(p)) || (num.length >= 9 && p.endsWith(num))) return u;
+    } catch {
+      /* ignore */
+    }
+  }
+  return null;
+}
+
+export async function mockRequestPasswordReset(body: {
+  channel: "email" | "phone";
+  email?: string;
+  phone?: string;
+}): Promise<{ success: boolean; message: string }> {
+  await delay(600);
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = Date.now() + 10 * 60 * 1000;
+
+  if (body.channel === "email") {
+    const id = normalizeEmail(body.email || "");
+    if (!id) throw new Error("Email required");
+    const user = loadUserData(id);
+    if (!user) {
+      return { success: true, message: "If an account exists, a reset code has been sent." };
+    }
+    localStorage.setItem(PWD_OTP_KEY("email", id), JSON.stringify({ code, expiresAt }));
+    if (typeof import.meta !== "undefined" && (import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
+      console.info(`[FinEra mock] Password reset OTP emailed for ${id}: ${code}`);
+    }
+    return { success: true, message: "If an account exists, a reset code has been sent." };
+  }
+
+  const phone = (body.phone || "").trim();
+  if (!phone) throw new Error("Phone required");
+  const user = findMockUserByPhone(phone);
+  if (!user?.email) {
+    return { success: true, message: "If an account exists, a reset code has been sent." };
+  }
+  localStorage.setItem(PWD_OTP_KEY("phone", phone), JSON.stringify({ code, expiresAt, email: user.email }));
+  if (typeof import.meta !== "undefined" && (import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
+    console.info(`[FinEra mock] Password reset OTP for phone ${phone} (account ${user.email}): ${code}`);
+  }
+  return { success: true, message: "If an account exists, a reset code has been sent." };
+}
+
+export async function mockVerifyPasswordResetOtp(body: {
+  channel: "email" | "phone";
+  email?: string;
+  phone?: string;
+  code: string;
+}): Promise<{ resetSessionToken: string }> {
+  await delay(500);
+  const trimmed = body.code.trim();
+  if (!/^\d{6}$/.test(trimmed)) throw new Error("Enter the 6-digit code.");
+
+  if (body.channel === "email") {
+    const id = normalizeEmail(body.email || "");
+    const raw = localStorage.getItem(PWD_OTP_KEY("email", id));
+    if (!raw) throw new Error("Invalid or expired code. Request a new one.");
+    const { code, expiresAt } = JSON.parse(raw) as { code: string; expiresAt: number };
+    if (Date.now() > expiresAt || code !== trimmed) throw new Error("Invalid or expired code.");
+    localStorage.removeItem(PWD_OTP_KEY("email", id));
+    const token = btoa(JSON.stringify({ t: "pwd", email: id, exp: Date.now() + 15 * 60 * 1000 }));
+    return { resetSessionToken: token };
+  }
+
+  const phone = (body.phone || "").trim();
+  const raw = localStorage.getItem(PWD_OTP_KEY("phone", phone));
+  if (!raw) throw new Error("Invalid or expired code. Request a new one.");
+  const parsed = JSON.parse(raw) as { code: string; expiresAt: number; email: string };
+  if (Date.now() > parsed.expiresAt || parsed.code !== trimmed) throw new Error("Invalid or expired code.");
+  localStorage.removeItem(PWD_OTP_KEY("phone", phone));
+  const token = btoa(JSON.stringify({ t: "pwd", email: normalizeEmail(parsed.email), exp: Date.now() + 15 * 60 * 1000 }));
+  return { resetSessionToken: token };
+}
+
+export async function mockCompletePasswordReset(body: {
+  resetSessionToken: string;
+  newPassword: string;
+}): Promise<{ success: boolean; message: string }> {
+  await delay(600);
+  let payload: { t?: string; email?: string; exp?: number };
+  try {
+    payload = JSON.parse(atob(body.resetSessionToken)) as { t?: string; email?: string; exp?: number };
+  } catch {
+    throw new Error("Invalid or expired reset session. Start again.");
+  }
+  if (payload.t !== "pwd" || !payload.email || !payload.exp || Date.now() > payload.exp) {
+    throw new Error("Invalid or expired reset session. Start again.");
+  }
+  const user = loadUserData(payload.email) as MockUserData | null;
+  if (!user) throw new Error("User not found.");
+  const nextHash = await hashPassword(body.newPassword);
+  user._passwordHash = nextHash;
+  saveUserData(user);
+  return { success: true, message: "Password updated. You can sign in with your new password." };
+}
+
 /** POST /auth/verify-email (mock): verify OTP and issue session. Accepts any 6-digit code for local progress. */
 export async function mockVerifyRegistrationEmail(
   email: string,
@@ -364,6 +480,9 @@ export async function mockVerifyRegistrationEmail(
 
 export async function mockRegister(data: RegisterRequest): Promise<{ user: UserData; message: string }> {
   await delay(800);
+  if (data.acceptedTermsAndPrivacy !== true) {
+    throw new Error("You must accept the Terms of Service and Privacy Policy to register.");
+  }
   const email = normalizeEmail(data.email);
 
   if (data.termsAccepted !== true || data.privacyPolicyAccepted !== true) {

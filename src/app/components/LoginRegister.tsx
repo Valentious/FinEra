@@ -31,13 +31,21 @@ interface LoginRegisterProps {
   onLogin: (email: string, password?: string) => void;
   onRegister: (data: any) => void;
   onBack?: () => void;
+  onForgotPassword?: () => void;
   /** Pre-selected account type from AccountTypeSelection - affects email label & validation */
   accountType?: 'student' | 'staff' | 'alumni';
   /** Practice (explore) vs live account - chosen on account type screen */
   accountMode?: 'real' | 'demo';
 }
 
-export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'student', accountMode = 'real' }: LoginRegisterProps) {
+export function LoginRegister({
+  onLogin,
+  onRegister,
+  onBack,
+  onForgotPassword,
+  accountType = "student",
+  accountMode = "real",
+}: LoginRegisterProps) {
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
     fullName: "",
@@ -283,7 +291,20 @@ export function LoginRegister({ onLogin, onRegister, onBack, accountType = 'stud
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="password">Password</Label>
-                        <Button variant="link" className="px-0 h-auto text-xs text-emerald-600">Forgot password?</Button>
+                        {onForgotPassword ? (
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="px-0 h-auto text-xs text-emerald-600"
+                            onClick={onForgotPassword}
+                          >
+                            Forgot password?
+                          </Button>
+                        ) : (
+                          <Button variant="link" className="px-0 h-auto text-xs text-emerald-600">
+                            Forgot password?
+                          </Button>
+                        )}
                       </div>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

@@ -127,7 +127,7 @@ export interface Transaction {
 }
 
 export interface CreditApplication {
-  creditType: 'essential' | 'emergency' | 'business';
+  creditType: 'essential' | 'business';
   amount: number;
   /** Product chosen on the dashboard before the application flow */
   loanType: LoanType;
@@ -385,6 +385,53 @@ export async function resendOTP(email: string): Promise<{ success: boolean; mess
     body: JSON.stringify({ email: email.trim().toLowerCase() }),
   });
   return { success: !!res.success, message: res.message || "Verification code sent." };
+}
+
+export type PasswordResetChannel = "email" | "phone";
+
+/** POST /auth/password-reset/request */
+export async function requestPasswordReset(body: {
+  channel: PasswordResetChannel;
+  email?: string;
+  phone?: string;
+}): Promise<{ success: boolean; message: string }> {
+  const res = await apiCall<{ success: boolean; message?: string }>("/auth/password-reset/request", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  return { success: !!res.success, message: res.message || "If an account exists, a reset code has been sent." };
+}
+
+/** POST /auth/password-reset/verify */
+export async function verifyPasswordResetOtp(body: {
+  channel: PasswordResetChannel;
+  email?: string;
+  phone?: string;
+  code: string;
+}): Promise<{ resetSessionToken: string }> {
+  const res = await apiCall<{
+    success: boolean;
+    message?: string;
+    data?: { resetSessionToken: string };
+  }>("/auth/password-reset/verify", {
+    method: "POST",
+    body: JSON.stringify({ ...body, code: body.code.trim() }),
+  });
+  const token = res.data?.resetSessionToken;
+  if (!token) throw new Error("Invalid response from server.");
+  return { resetSessionToken: token };
+}
+
+/** POST /auth/password-reset/complete */
+export async function completePasswordReset(body: {
+  resetSessionToken: string;
+  newPassword: string;
+}): Promise<{ success: boolean; message: string }> {
+  const res = await apiCall<{ success: boolean; message?: string }>("/auth/password-reset/complete", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  return { success: !!res.success, message: res.message || "Password updated." };
 }
 
 /**
@@ -1775,6 +1822,9 @@ export default {
   verifyOTP,
   verifyRegistrationEmail,
   resendOTP,
+  requestPasswordReset,
+  verifyPasswordResetOtp,
+  completePasswordReset,
   logout,
   getUserProfile,
   updateUserProfile,

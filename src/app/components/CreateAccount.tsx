@@ -10,6 +10,7 @@ import { DateOfBirthField } from "@/app/components/ui/date-of-birth-field";
 import { DOB, dobErrorMessage, validateDobIso } from "@/lib/dob";
 import {
   validatePassword,
+  validateNationalIdZw,
   isCompletePhoneNumber,
   PHONE_NUMBER_INCOMPLETE_MESSAGE,
 } from "@/lib/validation";
@@ -63,6 +64,11 @@ export function CreateAccount({ onContinue }: CreateAccountProps) {
       return;
     }
     setPhoneError("");
+    const nidErr = validateNationalIdZw(idNumber);
+    if (nidErr) {
+      toast.error(nidErr);
+      return;
+    }
     const pw = validatePassword(password);
     if (!pw.valid) {
       setPasswordError(pw.message || "");

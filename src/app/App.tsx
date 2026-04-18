@@ -48,10 +48,12 @@ import { useI18n } from "@/app/providers/I18nProvider";
 import { isAppLocale } from "@/i18n/locales";
 import { cn } from "@/app/components/ui/utils";
 import { MobileBottomNav } from "@/app/navigation/memberNav";
+import { ForgotPasswordFlow } from "@/app/components/ForgotPasswordFlow";
 
 type Screen =
   | "splash"
   | "loginRegister"
+  | "forgotPassword"
   | "otpVerification"
   | "accountCreationSuccess"
   | "accountType"
@@ -682,8 +684,6 @@ export default function App() {
     switch (creditApplication.creditType) {
       case "essential":
         return { maxAmount: Math.min(5000, cap), repaymentCycle: "12 months", savingsRequirement: 0.2 };
-      case "emergency":
-        return { maxAmount: Math.min(3000, cap), repaymentCycle: "6 months", savingsRequirement: 0 };
       case "business":
         return { maxAmount: Math.min(10000, cap), repaymentCycle: "24 months", savingsRequirement: 0.2 };
       default:
@@ -773,9 +773,6 @@ export default function App() {
           activeScreen={currentScreen}
           onNavigate={handleMemberNavigate}
           onLogout={handleLogout}
-          userName={userData.fullName || "User"}
-          accountNumber={displayAccountNumber}
-          walletNumericId={displayWalletNumericId}
         />
       )}
 
@@ -793,8 +790,8 @@ export default function App() {
         <main
           className={
             isAuthScreen
-              ? // Header h-16; mobile: pb-20 clears fixed tab bar; md: ribbon + sidebar inset on wrapper.
-                "flex-1 overflow-y-auto overflow-x-hidden px-4 pt-[max(calc(4rem+1.5rem),calc(env(safe-area-inset-top,0px)+4rem+1rem))] pb-20 md:px-8 md:pb-[max(2rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]"
+              ? // h-12 notification strip + safe area; pb-20 clears fixed mobile tab bar; md: trust ribbon + sidebar inset.
+                "flex-1 overflow-y-auto overflow-x-hidden px-4 pt-[calc(env(safe-area-inset-top,0px)+3rem+0.5rem)] pb-20 md:px-8 md:pb-[max(2rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]"
               : showTrustRibbon
                 ? "pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]"
                 : ""
@@ -824,7 +821,11 @@ export default function App() {
             onLogin={handleLogin}
             onRegister={handleRegister}
             onBack={() => setCurrentScreen("accountType")}
+            onForgotPassword={() => setCurrentScreen("forgotPassword")}
           />
+        )}
+        {currentScreen === "forgotPassword" && (
+          <ForgotPasswordFlow onBackToLogin={() => setCurrentScreen("loginRegister")} />
         )}
         {currentScreen === "otpVerification" && <OTPVerification email={userData.email} onVerify={() => setCurrentScreen("verify")} onBack={() => setCurrentScreen("loginRegister")} />}
         {currentScreen === "verify" && <VerifyAccess onVerify={() => setCurrentScreen("profileDetails")} />}

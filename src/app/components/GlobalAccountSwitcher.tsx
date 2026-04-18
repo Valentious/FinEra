@@ -115,15 +115,11 @@ export function GlobalAccountSwitcher({
                         </span>
                       )}
                     </span>
-                    {w.accountNumber ? (
-                      <span className="text-[10px] text-muted-foreground pl-7 font-mono">
-                        Acc: {w.accountNumber}
-                      </span>
-                    ) : (
+                    {!w.accountNumber ? (
                       <span className="text-[10px] text-muted-foreground pl-7">
                         Connected to: {w.provider}
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 </DropdownMenuItem>
               );

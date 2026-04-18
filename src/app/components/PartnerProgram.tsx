@@ -22,11 +22,24 @@ import {
   FileText,
 } from "lucide-react";
 import { getPartnerProgram, applyPartnerProgram, type PartnerProgramApplication } from "@/services/api";
+import {
+  isCompleteNationalIdZw,
+  normalizeNationalIdZwInput,
+  normalizeStudentIdMask,
+  PROFILE_FORMAT_EXAMPLES,
+  validateNationalOrStudentId,
+} from "@/lib/validation";
 import { toast } from "sonner";
 import { isCompletePhoneNumber, PHONE_NUMBER_INCOMPLETE_MESSAGE } from "@/lib/validation";
 import { FineraGradientBackdrop } from "@/app/components/FineraGradientBackdrop";
 
 const SERVICE_OPTIONS = ["Cash In", "Cash Out", "Loan Support", "Payment Assistance"];
+
+function formatPartnerNationalOrStudentId(raw: string): string {
+  const t = raw.trimStart();
+  if (/^\d/.test(t)) return normalizeNationalIdZwInput(raw);
+  return normalizeStudentIdMask(raw);
+}
 
 export function PartnerProgram() {
   const [status, setStatus] = useState<"NOT_APPLIED" | "PENDING" | "APPROVED" | "REJECTED">("NOT_APPLIED");
@@ -81,11 +94,18 @@ export function PartnerProgram() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const idErr = validateNationalOrStudentId(formData.idNumber);
+    if (idErr) {
+      toast.error(idErr);
+      return;
+    }
+    const nid = normalizeNationalIdZwInput(formData.idNumber).trim();
+    const idNumber = isCompleteNationalIdZw(nid) ? nid : normalizeStudentIdMask(formData.idNumber);
     setSubmitting(true);
     try {
       const res = await applyPartnerProgram({
         fullName: formData.fullName,
-        idNumber: formData.idNumber,
+        idNumber,
         contactNumber: formData.contactNumber,
         location: formData.location,
         services: formData.services,
@@ -265,11 +285,20 @@ export function PartnerProgram() {
               <Input
                 id="idNumber"
                 required
-                placeholder="Enter your ID number"
+                placeholder={`${PROFILE_FORMAT_EXAMPLES.nationalIdZw} or ${PROFILE_FORMAT_EXAMPLES.studentId}`}
                 value={formData.idNumber}
-                onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
-                className="h-12 rounded-xl font-medium"
+                onChange={(e) =>
+                  setFormData({ ...formData, idNumber: formatPartnerNationalOrStudentId(e.target.value) })
+                }
+                maxLength={15}
+                className="h-12 rounded-xl font-medium tracking-wide"
+                autoComplete="off"
+                spellCheck={false}
+                aria-describedby="partner-id-hint"
               />
+              <p id="partner-id-hint" className="text-xs text-muted-foreground">
+                National ID: {PROFILE_FORMAT_EXAMPLES.nationalIdZw} · Student ID: {PROFILE_FORMAT_EXAMPLES.studentId}
+              </p>
             </div>
 
             <div className="space-y-2">

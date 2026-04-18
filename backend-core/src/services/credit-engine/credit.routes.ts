@@ -23,7 +23,6 @@ router.use(authMiddleware);
 const loanProductEnum = z.enum(["ASSET_BACKED", "SALARY_BACKED", "COLLATERAL", "NON_COLLATERAL"]);
 
 function requiresWalletDisciplineForAmount(loanType: LoanProductType, creditType: string): boolean {
-  if (creditType === "emergency") return false;
   return loanType === "NON_COLLATERAL" && (creditType === "essential" || creditType === "business");
 }
 
@@ -36,7 +35,7 @@ const applySchema = z.object({
   amount: loanPrincipalSchema,
   currency: z.enum(["USD", "ZIG", "ZAR", "EUR", "GBP"]),
   term: z.number().int().min(1).max(60).optional(),
-  creditType: z.enum(["essential", "emergency", "business"]).optional(),
+  creditType: z.enum(["essential", "business"]).optional(),
   loanType: loanProductEnum.optional().default("NON_COLLATERAL"),
 });
 
@@ -166,7 +165,7 @@ router.get("/loans", async (req, res, next) => {
 
 const applyInstantSchema = z.object({
   amount: loanPrincipalSchema,
-  creditType: z.enum(["essential", "emergency", "business"]),
+  creditType: z.enum(["essential", "business"]),
   loanType: loanProductEnum,
   currency: z.enum(["USD", "ZIG", "ZAR", "EUR", "GBP"]),
 });
@@ -226,7 +225,7 @@ router.post("/apply-instant", async (req, res, next) => {
     else if (loanProduct === "NON_COLLATERAL") interestRatePct = 18.5;
     const interest = amount * (interestRatePct / 100);
     const totalRepayable = amount + serviceFee + interest;
-    const term = creditType === "essential" ? 12 : creditType === "emergency" ? 6 : 24;
+    const term = creditType === "essential" ? 12 : 24;
 
     const result = await processLoanDisbursement(req.user!.id, {
       principal: amount,

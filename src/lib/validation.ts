@@ -74,10 +74,107 @@ export function validatePhoneE164(phone: string): boolean {
   return VALIDATION.PHONE_E164_REGEX.test(phone);
 }
 
-/** Address Line 1: required, min 5 chars. Address Line 2: optional. */
+/** Address Line 1: required, comma-separated residential format. Address Line 2: optional. */
 export const ADDRESS = {
-  MIN_LINE1_LENGTH: 5,
-  validateAddressLine1: (v: string): string | null =>
-    v && v.trim().length >= ADDRESS.MIN_LINE1_LENGTH ? null : "Address Line 1 is required (min 5 characters)",
+  MIN_LINE1_LENGTH: 8,
+  /** UI copy: four comma-separated parts */
+  RESIDENTIAL_LINE1_HINT:
+    "Format: street name, house number, city, town — four parts separated by commas.",
+  validateAddressLine1: (v: string): string | null => {
+    const t = v?.trim() ?? "";
+    if (!t) return "Address Line 1 is required";
+    const parts = t
+      .split(",")
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+    if (parts.length < 4) {
+      return "Use four comma-separated parts: street name, house number, city, town.";
+    }
+    if (t.length < ADDRESS.MIN_LINE1_LENGTH) {
+      return "Address looks too short; include street, number, city, and town.";
+    }
+    return null;
+  },
+} as const;
+
+/**
+ * Zimbabwe National ID UI mask: `## ####### L ##` (e.g. 54 1234567 Z 54).
+ * Non-alphanumeric stripped; segments built in order from the remaining characters.
+ */
+export function normalizeNationalIdZwInput(input: string): string {
+  const s = input.replace(/\s/g, "").toUpperCase();
+  let i = 0;
+  const take = (n: number, pred: (c: string) => boolean) => {
+    let out = "";
+    while (i < s.length && out.length < n && pred(s[i])) out += s[i++];
+    return out;
+  };
+  const d1 = take(2, (c) => /[0-9]/.test(c));
+  if (d1.length < 2) return d1;
+  const d2 = take(7, (c) => /[0-9]/.test(c));
+  if (d2.length < 7) return `${d1} ${d2}`;
+  const L = take(1, (c) => /[A-Z]/.test(c));
+  if (L.length === 0) return `${d1} ${d2}`;
+  const d3 = take(2, (c) => /[0-9]/.test(c));
+  if (d3.length === 0) return `${d1} ${d2} ${L}`;
+  return `${d1} ${d2} ${L} ${d3}`;
+}
+
+export function isCompleteNationalIdZw(value: string): boolean {
+  return /^\d{2} \d{7} [A-Z] \d{2}$/.test(value.trim());
+}
+
+export function validateNationalIdZw(value: string): string | null {
+  const v = value.trim();
+  if (!v) return "National ID is required";
+  if (!isCompleteNationalIdZw(v)) {
+    return "National ID must match 54 1234567 Z 54 (2 digits, 7 digits, 1 letter, 2 digits, spaces optional when typing).";
+  }
+  return null;
+}
+
+/** Student ID mask: N + 8 alphanumeric + M (10 chars), e.g. N12345678M */
+export function normalizeStudentIdMask(value: string): string {
+  return value.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 10);
+}
+
+export function isValidStudentIdFormat(value: string): boolean {
+  return /^N[A-Z0-9]{8}M$/.test(value.trim());
+}
+
+export function validateStudentIdZw(value: string): string | null {
+  const v = normalizeStudentIdMask(value);
+  if (!v) return "Student ID is required";
+  if (!isValidStudentIdFormat(v)) {
+    return "Student ID must be exactly 10 characters: N + 8 letters or digits + M (e.g. N12345678M).";
+  }
+  return null;
+}
+
+export function normalizeStaffEmployerIdInput(value: string): string {
+  return value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 24);
+}
+
+export function validateStaffOrEmployerId(value: string): string | null {
+  const v = normalizeStaffEmployerIdInput(value);
+  if (!v) return "ID is required";
+  if (v.length < 4 || v.length > 24) {
+    return "ID must be 4–24 characters (letters, numbers, or hyphen).";
+  }
+  return null;
+}
+
+export function validateNationalOrStudentId(value: string): string | null {
+  const n = normalizeNationalIdZwInput(value).trim();
+  if (isCompleteNationalIdZw(n)) return null;
+  const s = normalizeStudentIdMask(value);
+  if (isValidStudentIdFormat(s)) return null;
+  return "Enter a valid National ID (e.g. 54 1234567 Z 54) or Student ID (e.g. N12345678M).";
+}
+
+export const PROFILE_FORMAT_EXAMPLES = {
+  nationalIdZw: "54 1234567 Z 54",
+  studentId: "N12345678M",
+  addressLine1: "Samora Machel Avenue, 15, Harare, Harare",
 } as const;
 

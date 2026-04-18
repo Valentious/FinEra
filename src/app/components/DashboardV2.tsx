@@ -296,11 +296,10 @@ export function DashboardV2({
             <h1 className="text-[12pt] font-semibold tracking-tight text-black">
               Welcome, {userName}
             </h1>
-            {displayAccountNumber ? (
+            {displayAccountNumber &&
+            /^\d{10}$/.test(String(displayAccountNumber).replace(/\s/g, "")) ? (
               <p className={`mt-2 text-xs font-medium ${onDisciplineGradientMuted}`}>
-                {/^\d{10}$/.test(String(displayAccountNumber).replace(/\s/g, ""))
-                  ? `Wallet ID · ${displayAccountNumber}`
-                  : `Account · ${displayAccountNumber}`}
+                Wallet ID · {displayAccountNumber}
               </p>
             ) : null}
           </div>

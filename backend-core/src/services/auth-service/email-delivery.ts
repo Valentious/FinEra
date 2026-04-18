@@ -14,6 +14,8 @@ function maskEmailForLog(email: string): string {
   return `${safe}@${domain}`;
 }
 
+export type OtpEmailKind = "verification" | "password_reset";
+
 function buildOtpHtml(code: string): string {
   return `<p>Your FinEra verification code is <strong style="font-size:18px;letter-spacing:2px">${code}</strong>.</p>
 <p>This code expires in 10 minutes.</p>
@@ -22,6 +24,27 @@ function buildOtpHtml(code: string): string {
 
 function buildOtpText(code: string): string {
   return `Your FinEra verification code is ${code}. It expires in 10 minutes. If you did not request this, ignore this email.`;
+}
+
+function buildPasswordResetHtml(code: string): string {
+  return `<p>Your FinEra <strong>password reset</strong> code is <strong style="font-size:18px;letter-spacing:2px">${code}</strong>.</p>
+<p>This code expires in 10 minutes.</p>
+<p>If you did not request a password reset, ignore this email and your password will stay the same.</p>`;
+}
+
+function buildPasswordResetText(code: string): string {
+  return `Your FinEra password reset code is ${code}. It expires in 10 minutes. If you did not request this, ignore this email.`;
+}
+
+function otpEmailSubject(kind: OtpEmailKind): string {
+  return kind === "password_reset" ? "Your FinEra password reset code" : "Your FinEra verification code";
+}
+
+function otpEmailBodies(kind: OtpEmailKind, code: string): { html: string; text: string } {
+  if (kind === "password_reset") {
+    return { html: buildPasswordResetHtml(code), text: buildPasswordResetText(code) };
+  }
+  return { html: buildOtpHtml(code), text: buildOtpText(code) };
 }
 
 /** Detect which provider to use (explicit EMAIL_PROVIDER or auto from env). */
@@ -75,11 +98,12 @@ async function withRetry<T>(
   throw lastErr;
 }
 
-async function sendViaResend(to: string, code: string): Promise<{ providerMessageId?: string }> {
+async function sendViaResend(to: string, code: string, kind: OtpEmailKind): Promise<{ providerMessageId?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) throw new Error("RESEND_API_KEY missing");
 
   const from = process.env.EMAIL_FROM || "FinEra <onboarding@resend.dev>";
+  const { html, text } = otpEmailBodies(kind, code);
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -89,9 +113,9 @@ async function sendViaResend(to: string, code: string): Promise<{ providerMessag
     body: JSON.stringify({
       from,
       to: [to],
-      subject: "Your FinEra verification code",
-      html: buildOtpHtml(code),
-      text: buildOtpText(code),
+      subject: otpEmailSubject(kind),
+      html,
+      text,
     }),
   });
 
@@ -116,7 +140,7 @@ async function sendViaResend(to: string, code: string): Promise<{ providerMessag
   return { providerMessageId };
 }
 
-async function sendViaSendGrid(to: string, code: string): Promise<{ providerMessageId?: string }> {
+async function sendViaSendGrid(to: string, code: string, kind: OtpEmailKind): Promise<{ providerMessageId?: string }> {
   const apiKey = process.env.SENDGRID_API_KEY;
   if (!apiKey) throw new Error("SENDGRID_API_KEY missing");
 
@@ -130,13 +154,14 @@ async function sendViaSendGrid(to: string, code: string): Promise<{ providerMess
     );
   }
 
+  const { html, text } = otpEmailBodies(kind, code);
   const payload = {
     personalizations: [{ to: [{ email: to }] }],
     from: { email: from.email, name: from.name || "FinEra" },
-    subject: "Your FinEra verification code",
+    subject: otpEmailSubject(kind),
     content: [
-      { type: "text/plain", value: buildOtpText(code) },
-      { type: "text/html", value: buildOtpHtml(code) },
+      { type: "text/plain", value: text },
+      { type: "text/html", value: html },
     ],
     mail_settings: {
       sandbox_mode: { enable: sandboxEnabled },
@@ -176,7 +201,7 @@ async function sendViaSendGrid(to: string, code: string): Promise<{ providerMess
   return { providerMessageId: messageId };
 }
 
-async function sendViaSes(to: string, code: string): Promise<{ providerMessageId?: string }> {
+async function sendViaSes(to: string, code: string, kind: OtpEmailKind): Promise<{ providerMessageId?: string }> {
   const region = process.env.AWS_SES_REGION || process.env.AWS_REGION;
   if (!region) throw new Error("AWS_SES_REGION or AWS_REGION required for SES");
 
@@ -191,15 +216,16 @@ async function sendViaSes(to: string, code: string): Promise<{ providerMessageId
     },
   });
 
+  const { html, text } = otpEmailBodies(kind, code);
   const out = await client.send(
     new SendEmailCommand({
       Source: from.name ? `${from.name} <${from.email}>` : from.email,
       Destination: { ToAddresses: [to] },
       Message: {
-        Subject: { Data: "Your FinEra verification code", Charset: "UTF-8" },
+        Subject: { Data: otpEmailSubject(kind), Charset: "UTF-8" },
         Body: {
-          Text: { Data: buildOtpText(code), Charset: "UTF-8" },
-          Html: { Data: buildOtpHtml(code), Charset: "UTF-8" },
+          Text: { Data: text, Charset: "UTF-8" },
+          Html: { Data: html, Charset: "UTF-8" },
         },
       },
     })
@@ -225,7 +251,7 @@ export interface SendOtpResult {
  * Send OTP email. Throws on hard failure (production).
  * In development, may log OTP and return ok when delivery is unavailable (see caller).
  */
-export async function sendOtpEmail(to: string, code: string): Promise<SendOtpResult> {
+export async function sendOtpEmail(to: string, code: string, kind: OtpEmailKind = "verification"): Promise<SendOtpResult> {
   const explicit = (process.env.EMAIL_PROVIDER || "").trim().toLowerCase();
   let provider = resolveEmailProvider();
 
@@ -240,15 +266,15 @@ export async function sendOtpEmail(to: string, code: string): Promise<SendOtpRes
 
   const run = async (): Promise<SendOtpResult> => {
     if (provider === "resend") {
-      const r = await sendViaResend(to, code);
+      const r = await sendViaResend(to, code, kind);
       return { ok: true, provider: "resend", providerMessageId: r.providerMessageId };
     }
     if (provider === "sendgrid") {
-      const r = await sendViaSendGrid(to, code);
+      const r = await sendViaSendGrid(to, code, kind);
       return { ok: true, provider: "sendgrid", providerMessageId: r.providerMessageId };
     }
     if (provider === "ses") {
-      const r = await sendViaSes(to, code);
+      const r = await sendViaSes(to, code, kind);
       return { ok: true, provider: "ses", providerMessageId: r.providerMessageId };
     }
     return { ok: false, provider: "none" };

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { FineraGradientBackdrop } from "@/app/components/FineraGradientBackdrop";
+import { isCheckboxChecked } from "@/lib/checkboxState";
 
 interface MemberAgreementProps {
   memberType: 'student' | 'staff' | 'alumni';
@@ -101,7 +102,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
               <Checkbox 
                 id="agree-terms" 
                 checked={agreed} 
-                onCheckedChange={(checked) => setAgreed(checked as boolean)}
+                onCheckedChange={(checked) => setAgreed(isCheckboxChecked(checked))}
                 className="w-6 h-6 rounded-lg border-2 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
               />
               <label 
@@ -114,6 +115,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
 
             <div className="flex gap-4">
               <Button 
+                type="button"
                 variant="ghost" 
                 onClick={onBack}
                 className="flex-1 h-14 rounded-2xl font-bold text-muted-foreground"
@@ -121,7 +123,11 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
                 Cancel
               </Button>
               <Button 
-                onClick={onAgree}
+                type="button"
+                onClick={() => {
+                  if (!agreed) return;
+                  onAgree();
+                }}
                 disabled={!agreed}
                 className="flex-[2] h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-bold shadow-xl shadow-emerald-200 disabled:opacity-50"
               >
@@ -132,7 +138,6 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
           </div>
         </CardContent>
       </Card>
-      </div>
     </div>
   );
 }

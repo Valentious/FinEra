@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import type { LoanType } from "@/loan/loanTypes";
 import { getLoanProductLabel, isLoanTypeAllowedForAccount, LOAN_TYPES } from "@/loan/loanTypes";
 import {
   downloadMemberTemplate,
   getMemberDocumentsStatus,
-  patchAssetDocumentationNote,
-  putEmploymentDetails,
   putMemberDocumentsContext,
   uploadMemberSignedDocument,
   type MemberDocVerificationStatus,
@@ -13,7 +12,7 @@ import {
 import { USE_MOCK_DATA } from "@/services/index";
 import { Button } from "@/app/components/ui/button";
 import { Checkbox } from "@/app/components/ui/checkbox";
-import { Download, FileUp, ShieldCheck, ArrowLeft, Briefcase, Building2 } from "lucide-react";
+import { Download, FileUp, ShieldCheck, ArrowLeft, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   onDisciplineGradientButtonOutline,
@@ -24,6 +23,7 @@ import {
   onDisciplineGradientText,
 } from "@/lib/disciplineGradient";
 import { FineraGradientBackdrop } from "@/app/components/FineraGradientBackdrop";
+import { isCheckboxChecked } from "@/lib/checkboxState";
 
 function StatusBadge({ status }: { status: MemberDocVerificationStatus | null | undefined }) {
   if (status == null) {
@@ -82,20 +82,12 @@ export function AgreementsConsentScreen({
   const [consentStatus, setConsentStatus] = useState<MemberDocVerificationStatus | null>(null);
   const [hasAgreement, setHasAgreement] = useState(false);
   const [hasConsent, setHasConsent] = useState(false);
-  const [assetNote, setAssetNote] = useState("");
-  const [emp, setEmp] = useState({
-    employerName: "",
-    employerContact: "",
-    jobTitle: "",
-    salaryEstimate: "",
-  });
   const [compliance, setCompliance] = useState<{
     defaultFlagged: boolean;
     payrollEnforcementEligible: boolean;
   } | null>(null);
 
   const isSalary = loanType === "SALARY_BACKED";
-  const isAsset = loanType === "ASSET_BACKED";
 
   const refresh = useCallback(async () => {
     if (USE_MOCK_DATA) {
@@ -113,15 +105,6 @@ export function AgreementsConsentScreen({
       setConsentStatus(md?.consentStatus ?? null);
       setHasAgreement(Boolean(md?.hasAgreementUpload));
       setHasConsent(Boolean(md?.hasConsentUpload));
-      if (md?.assetDocumentationNote) setAssetNote(md.assetDocumentationNote);
-      if (res.data.employment) {
-        setEmp({
-          employerName: res.data.employment.employerName,
-          employerContact: res.data.employment.employerContact,
-          jobTitle: res.data.employment.jobTitle,
-          salaryEstimate: String(res.data.employment.salaryEstimate),
-        });
-      }
       if (res.data.compliance) {
         setCompliance({
           defaultFlagged: res.data.compliance.defaultFlagged,
@@ -201,47 +184,15 @@ export function AgreementsConsentScreen({
     input.click();
   };
 
-  const saveEmployment = async () => {
-    const salary = Number(emp.salaryEstimate);
-    if (!emp.employerName.trim() || !emp.employerContact.trim() || !emp.jobTitle.trim() || !Number.isFinite(salary) || salary <= 0) {
-      toast.error("Fill all employment fields with a valid salary estimate.");
-      return;
-    }
-    try {
-      if (USE_MOCK_DATA) {
-        toast.success("Mock mode: employment saved locally only.");
-        return;
-      }
-      await putEmploymentDetails({
-        employerName: emp.employerName.trim(),
-        employerContact: emp.employerContact.trim(),
-        jobTitle: emp.jobTitle.trim(),
-        salaryEstimate: salary,
-      });
-      toast.success("Employment details saved");
-      await refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Save failed");
-    }
-  };
+  const canContinue = agreed && hasAgreement && (!isSalary || hasConsent);
 
-  const saveAssetNote = async () => {
-    try {
-      if (USE_MOCK_DATA) {
-        toast.success("Mock mode: note not persisted.");
-        return;
-      }
-      await patchAssetDocumentationNote(assetNote, loanType);
-      toast.success("Asset documentation note saved");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Save failed");
-    }
-  };
-
-  const canContinue =
-    agreed &&
-    hasAgreement &&
-    (!isSalary || (hasConsent && emp.employerName && emp.employerContact && emp.jobTitle && Number(emp.salaryEstimate) > 0));
+  const continueBlockers = useMemo(() => {
+    const parts: string[] = [];
+    if (!agreed) parts.push("confirm the acknowledgment");
+    if (!hasAgreement) parts.push("upload the signed member agreement");
+    if (isSalary && !hasConsent) parts.push("upload the payroll consent form");
+    return parts;
+  }, [agreed, hasAgreement, isSalary, hasConsent]);
 
   const glassPanel = `rounded-2xl border p-5 shadow-md shadow-primary/12 backdrop-blur-md dark:shadow-primary/10 ${onDisciplineGradientGlass} ${onDisciplineGradientText}`;
   const innerRow = `flex flex-col gap-2 rounded-xl border border-white/40 bg-white/55 p-4 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between dark:border-white/12 dark:bg-white/10 ${onDisciplineGradientText}`;
@@ -251,7 +202,7 @@ export function AgreementsConsentScreen({
     <div
       className={[
         "relative isolate -mx-4 w-[calc(100%+2rem)] max-w-[100vw] overflow-x-hidden md:-mx-8 md:w-[calc(100%+4rem)]",
-        "min-h-[min(100%,calc(100dvh-5rem))] pb-10 pt-2",
+        "min-h-[min(100%,calc(100dvh-4rem))] pb-10 pt-2",
         "animate-in slide-in-from-bottom-4 duration-500",
       ].join(" ")}
     >
@@ -374,76 +325,9 @@ export function AgreementsConsentScreen({
                   </div>
                 </div>
               )}
-
-              {isAsset && (
-                <div className="rounded-xl border border-white/40 bg-white/50 p-4 backdrop-blur-sm dark:border-white/12 dark:bg-white/10">
-                  <p className="text-sm font-bold">Asset documentation</p>
-                  <p className="text-xs opacity-90">Optional - describe collateral or notes for the credit team.</p>
-                  <textarea
-                    className={`${fieldClass} mt-3 w-full resize-y`}
-                    rows={3}
-                    placeholder="e.g. Vehicle reg. / asset ID / valuation reference"
-                    value={assetNote}
-                    onChange={(e) => setAssetNote(e.target.value)}
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className={`mt-2 border font-semibold ${onDisciplineGradientButtonOutline} ${onDisciplineGradientText}`}
-                    onClick={() => void saveAssetNote()}
-                  >
-                    Save note
-                  </Button>
-                </div>
-              )}
             </div>
           )}
         </div>
-
-        {isSalary && (
-          <div className={glassPanel}>
-            <p className={`flex items-center gap-2 text-[10px] font-semibold uppercase tracking-widest ${onDisciplineGradientMuted}`}>
-              <Briefcase className={`h-3.5 w-3.5 ${onDisciplineGradientIcon}`} aria-hidden />
-              Employment details
-            </p>
-            <div className="mt-4 grid gap-3">
-              <input
-                className={fieldClass}
-                placeholder="Employer name"
-                value={emp.employerName}
-                onChange={(e) => setEmp((s) => ({ ...s, employerName: e.target.value }))}
-              />
-              <input
-                className={fieldClass}
-                placeholder="Employer contact (email or phone)"
-                value={emp.employerContact}
-                onChange={(e) => setEmp((s) => ({ ...s, employerContact: e.target.value }))}
-              />
-              <input
-                className={fieldClass}
-                placeholder="Job title"
-                value={emp.jobTitle}
-                onChange={(e) => setEmp((s) => ({ ...s, jobTitle: e.target.value }))}
-              />
-              <input
-                className={fieldClass}
-                placeholder="Estimated monthly salary"
-                type="number"
-                min={0}
-                value={emp.salaryEstimate}
-                onChange={(e) => setEmp((s) => ({ ...s, salaryEstimate: e.target.value }))}
-              />
-              <Button
-                type="button"
-                className="bg-white font-semibold text-primary hover:bg-white/90"
-                onClick={() => void saveEmployment()}
-              >
-                Save employment details
-              </Button>
-            </div>
-          </div>
-        )}
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
           <p className="font-bold text-black">Acknowledgment</p>
@@ -451,16 +335,32 @@ export function AgreementsConsentScreen({
             You understand that repayment compliance is monitored and that repeated missed repayments may trigger default handling and, for payroll-linked
             products, employer coordination (without automatic payroll deduction by FinEra).
           </p>
-          <div className="mt-4 flex items-center gap-3">
+          <div className="mt-4 flex items-start gap-3">
             <Checkbox
               id="agree-consent-flow"
               checked={agreed}
-              onCheckedChange={(c) => setAgreed(Boolean(c))}
-              className="border-2 border-slate-400 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+              onCheckedChange={(c) => setAgreed(isCheckboxChecked(c))}
+              className="mt-0.5 border-2 border-slate-400 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+              aria-describedby="agree-consent-flow-desc"
             />
-            <label htmlFor="agree-consent-flow" className="cursor-pointer text-sm font-semibold text-black">
-              I understand and agree
-            </label>
+            <div className="min-w-0 flex-1 text-sm font-semibold text-black" id="agree-consent-flow-desc">
+              <label htmlFor="agree-consent-flow" className="cursor-pointer">
+                I understand and agree to FinEra&apos;s{" "}
+              </label>
+              <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
+                Terms of Service
+              </Link>
+              <label htmlFor="agree-consent-flow" className="cursor-pointer">
+                {" "}
+                and{" "}
+              </label>
+              <Link to="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
+                Privacy Policy
+              </Link>
+              <label htmlFor="agree-consent-flow" className="cursor-pointer">
+                , and to the document uploads required for this product.
+              </label>
+            </div>
           </div>
         </div>
 
@@ -478,11 +378,19 @@ export function AgreementsConsentScreen({
             type="button"
             className="flex-[2] bg-white font-semibold text-primary hover:bg-white/90 disabled:opacity-40"
             disabled={!canContinue}
-            onClick={() => onContinue()}
+            onClick={() => {
+              if (!canContinue) return;
+              onContinue();
+            }}
           >
             Continue
           </Button>
         </div>
+        {!canContinue && continueBlockers.length > 0 ? (
+          <p className="text-center text-xs font-medium text-amber-900 dark:text-amber-100" role="status">
+            To continue: {continueBlockers.join(", ")}.
+          </p>
+        ) : null}
       </div>
     </div>
   );

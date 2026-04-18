@@ -9,7 +9,7 @@ export type { AccountType, UserStatus, TransactionType, TransactionStatus, LoanS
 export interface JwtPayload {
   sub: string;
   email: string;
-  type: "access" | "refresh";
+  type: "access" | "refresh" | "pwd_reset";
   /** Staff tokens set `admin`; member tokens omit or use `user`. */
   kind?: "user" | "admin";
   role?: string;

@@ -8,6 +8,7 @@ import { formatAmountWithCurrency } from "@/types/wallet";
 import type { LoanType } from "@/loan/loanTypes";
 import { getLoanProductLabel, requiresCollateralStep } from "@/loan/loanTypes";
 import { LoanApplicationFlow } from "@/app/components/LoanApplicationFlow";
+import { isCheckboxChecked } from "@/lib/checkboxState";
 
 interface ConfirmApplicationProps {
   currencyCode: string;
@@ -30,13 +31,17 @@ export function ConfirmApplication({
 }: ConfirmApplicationProps) {
   const cc = currencyCode.toUpperCase();
   const [acknowledged, setAcknowledged] = useState(false);
+  const [acknowledgeError, setAcknowledgeError] = useState("");
   const collateralFlow = requiresCollateralStep(loanType);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (acknowledged) {
-      onSubmit();
+    setAcknowledgeError("");
+    if (!acknowledged) {
+      setAcknowledgeError("Please confirm the loan terms checkbox to submit your application.");
+      return;
     }
+    onSubmit();
   };
 
   return (
@@ -127,7 +132,7 @@ export function ConfirmApplication({
                   </li>
                   <li className="flex gap-2 text-sm text-foreground">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
-                    I understand repayments are mandatory and may be prioritized per salary-backed policy.
+                    I understand repayments are mandatory and may be prioritized per salary-backed loan policy.
                   </li>
                 </>
               ) : requiresCollateralStep(loanType) ? (
@@ -172,8 +177,13 @@ export function ConfirmApplication({
               <Checkbox
                 id="acknowledge"
                 checked={acknowledged}
-                onCheckedChange={(checked) => setAcknowledged(checked as boolean)}
+                onCheckedChange={(checked) => {
+                  setAcknowledgeError("");
+                  setAcknowledged(isCheckboxChecked(checked));
+                }}
                 className="mt-1"
+                aria-invalid={acknowledgeError ? true : undefined}
+                aria-describedby={acknowledgeError ? "acknowledge-error" : undefined}
               />
               <div className="flex-1">
                 <Label 
@@ -182,6 +192,11 @@ export function ConfirmApplication({
                 >
                   I understand and agree to repay the credit amount according to the specified terms and conditions, including applicable interest and service fees.
                 </Label>
+                {acknowledgeError ? (
+                  <p id="acknowledge-error" role="alert" className="mt-2 text-sm font-medium text-red-600">
+                    {acknowledgeError}
+                  </p>
+                ) : null}
               </div>
             </div>
 

@@ -22,6 +22,7 @@ import type { JwtPayload } from "../../types/index.js";
 import * as authRepo from "./auth.repository.js";
 import { logLoginAttempt } from "./auth.audit.js";
 import { sendOtpEmail, logDevOtpFallback, maskEmailForLog } from "./email-delivery.js";
+import { isTwilioConfigured, sendPasswordResetSms } from "./sms-delivery.js";
 import { logger } from "../../core/utils/logger.js";
 import { assertHourlyOtpLimit, recordOtpSend } from "./otp-rate-limit.js";
 import type { RegisterInput } from "./auth.validation.js";
@@ -33,6 +34,7 @@ const SALT_ROUNDS = 12;
 const OTP_BCRYPT_ROUNDS = 10;
 const OTP_TTL_MS = 5 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 30 * 1000;
+const PASSWORD_RESET_SESSION_EXPIRY = "15m";
 
 /** When true, any 6-digit code verifies (dev / progress only). Off in production unless explicitly enabled. */
 function emailOtpAcceptAny(): boolean {
@@ -178,7 +180,10 @@ export async function register(
         emailVerificationToken: otpHash,
         emailVerificationExpiry: expiry,
         emailOtpLastSentAt: now,
-        metadata: { accountMode } as object,
+        metadata: {
+          accountMode,
+          acceptedTermsAndPrivacyAt: now.toISOString(),
+        } as object,
         termsOfServiceAccepted: true,
         privacyPolicyAccepted: true,
         consentAcceptedAt: now,
@@ -420,4 +425,261 @@ function generateTokens(userId: string, email: string): AuthTokens {
   const expiresIn = decoded?.exp && decoded?.iat ? decoded.exp - decoded.iat : 900;
 
   return { accessToken, refreshToken, expiresIn };
+}
+
+// ----- Password reset (email / SMS) -----
+
+async function deliverPasswordResetEmail(to: string, code: string): Promise<void> {
+  try {
+    const result = await sendOtpEmail(to, code, "password_reset");
+    if (result.ok) {
+      logger.info(
+        { event: "password_reset_otp_email", to: maskEmailForLog(to), provider: result.provider },
+        "Password reset OTP email accepted by provider"
+      );
+      return;
+    }
+    const isDev = process.env.NODE_ENV === "development";
+    if (isDev && process.env.EMAIL_DEV_FALLBACK_LOG !== "false") {
+      logDevOtpFallback(to, code, "no_email_provider_configured");
+      return;
+    }
+    throw validationError(
+      "Failed to send reset email. Email service is not configured. Contact support."
+    );
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    logger.error(
+      {
+        event: "password_reset_email_failed",
+        to: maskEmailForLog(to),
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "Password reset email delivery failed"
+    );
+    const isDev = process.env.NODE_ENV === "development";
+    if (isDev && process.env.EMAIL_DEV_FALLBACK_LOG !== "false") {
+      logDevOtpFallback(to, code, err instanceof Error ? err.message : "send_failed");
+      return;
+    }
+    throw validationError("Failed to send reset email. Try again later.");
+  }
+}
+
+function passwordResetRateKey(channel: "email" | "phone", email?: string, phone?: string): string {
+  return channel === "email" ? normalizeEmail(email || "") : (phone || "").trim();
+}
+
+function readPasswordResetSentAt(metadata: unknown): number {
+  if (!metadata || typeof metadata !== "object") return 0;
+  const raw = (metadata as Record<string, unknown>).passwordResetSentAt;
+  if (typeof raw !== "string") return 0;
+  const t = Date.parse(raw);
+  return Number.isFinite(t) ? t : 0;
+}
+
+export async function requestPasswordReset(input: {
+  channel: "email" | "phone";
+  email?: string;
+  phone?: string;
+}): Promise<{ message: string }> {
+  const { prisma } = await import("../../infrastructure/database/index.js");
+  const generic = { message: "If an account exists, a reset code has been sent." };
+
+  const emailNorm = input.channel === "email" ? normalizeEmail(input.email || "") : "";
+  const phoneRaw = input.channel === "phone" ? (input.phone || "").trim() : "";
+
+  const user =
+    input.channel === "email"
+      ? await prisma.user.findUnique({
+          where: { email: emailNorm },
+          select: {
+            id: true,
+            email: true,
+            phoneNumber: true,
+            status: true,
+            metadata: true,
+            authCredentials: { select: { userId: true } },
+          },
+        })
+      : await prisma.user.findFirst({
+          where: { phoneNumber: phoneRaw },
+          select: {
+            id: true,
+            email: true,
+            phoneNumber: true,
+            status: true,
+            metadata: true,
+            authCredentials: { select: { userId: true } },
+          },
+        });
+
+  if (!user?.authCredentials) {
+    return generic;
+  }
+  if (user.status !== "ACTIVE" && user.status !== "PENDING_VERIFICATION") {
+    return generic;
+  }
+
+  const rateKey = passwordResetRateKey(input.channel, emailNorm || undefined, phoneRaw || undefined);
+  assertHourlyOtpLimit(rateKey);
+
+  const last = readPasswordResetSentAt(user.metadata);
+  if (last > 0) {
+    const waitMs = RESEND_COOLDOWN_MS - (Date.now() - last);
+    if (waitMs > 0) {
+      throw validationError(`Please wait ${Math.ceil(waitMs / 1000)}s before requesting another code.`);
+    }
+  }
+
+  const plainOtp = generateOtp();
+  const otpHash = await hashEmailOtp(plainOtp);
+  const now = new Date();
+  const expiry = new Date(now.getTime() + OTP_TTL_MS);
+  const meta = (user.metadata && typeof user.metadata === "object" ? { ...(user.metadata as object) } : {}) as Record<
+    string,
+    unknown
+  >;
+  meta.passwordResetSentAt = now.toISOString();
+
+  await prisma.userAuth.update({
+    where: { userId: user.id },
+    data: {
+      resetToken: otpHash,
+      resetTokenExpires: expiry,
+    },
+  });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { metadata: meta as object },
+  });
+
+  recordOtpSend(rateKey);
+
+  if (input.channel === "email") {
+    await deliverPasswordResetEmail(user.email, plainOtp);
+  } else {
+    if (!user.phoneNumber) {
+      return generic;
+    }
+    if (!isTwilioConfigured()) {
+      throw validationError(
+        "SMS is not configured on this server. Please use the email option with your registered email address."
+      );
+    }
+    await sendPasswordResetSms(user.phoneNumber, plainOtp);
+  }
+
+  return { message: "If an account exists, a reset code has been sent." };
+}
+
+export async function verifyPasswordResetOtp(input: {
+  channel: "email" | "phone";
+  email?: string;
+  phone?: string;
+  code: string;
+}): Promise<{ resetSessionToken: string }> {
+  const { prisma } = await import("../../infrastructure/database/index.js");
+  const code = input.code.trim();
+  const emailNorm = input.channel === "email" ? normalizeEmail(input.email || "") : "";
+  const phoneRaw = input.channel === "phone" ? (input.phone || "").trim() : "";
+
+  const user =
+    input.channel === "email"
+      ? await prisma.user.findUnique({
+          where: { email: emailNorm },
+          select: {
+            id: true,
+            email: true,
+            phoneNumber: true,
+            authCredentials: { select: { resetToken: true, resetTokenExpires: true } },
+          },
+        })
+      : await prisma.user.findFirst({
+          where: { phoneNumber: phoneRaw },
+          select: {
+            id: true,
+            email: true,
+            phoneNumber: true,
+            authCredentials: { select: { resetToken: true, resetTokenExpires: true } },
+          },
+        });
+
+  if (!user?.authCredentials?.resetToken || !user.authCredentials.resetTokenExpires) {
+    throw validationError("Invalid or expired reset code.");
+  }
+  if (user.authCredentials.resetTokenExpires < new Date()) {
+    throw validationError("Invalid or expired reset code.");
+  }
+
+  const valid = await bcrypt.compare(code, user.authCredentials.resetToken);
+  if (!valid) {
+    throw validationError("Invalid reset code.");
+  }
+
+  await prisma.userAuth.update({
+    where: { userId: user.id },
+    data: { resetToken: null, resetTokenExpires: null },
+  });
+
+  const config = getConfig();
+  const payload: JwtPayload = { sub: user.id, email: user.email, type: "pwd_reset" };
+  const resetSessionToken = jwt.sign(payload, config.JWT_SECRET, {
+    expiresIn: PASSWORD_RESET_SESSION_EXPIRY,
+  } as jwt.SignOptions);
+
+  return { resetSessionToken };
+}
+
+export async function completePasswordReset(input: {
+  resetSessionToken: string;
+  newPassword: string;
+}): Promise<{ message: string }> {
+  const config = getConfig();
+  let decoded: jwt.JwtPayload & { sub?: string; email?: string; type?: string };
+  try {
+    decoded = jwt.verify(input.resetSessionToken, config.JWT_SECRET) as jwt.JwtPayload & {
+      sub?: string;
+      email?: string;
+      type?: string;
+    };
+  } catch {
+    throw validationError("Invalid or expired reset session. Start again.");
+  }
+  if (decoded.type !== "pwd_reset" || !decoded.sub || !decoded.email) {
+    throw validationError("Invalid or expired reset session. Start again.");
+  }
+
+  const passwordHash = await bcrypt.hash(input.newPassword, SALT_ROUNDS);
+  const { prisma } = await import("../../infrastructure/database/index.js");
+
+  const u = await prisma.user.findUnique({
+    where: { id: decoded.sub },
+    select: { id: true, metadata: true },
+  });
+  if (!u) throw userNotFoundError("User not found");
+
+  const meta = (u.metadata && typeof u.metadata === "object" ? { ...(u.metadata as object) } : {}) as Record<
+    string,
+    unknown
+  >;
+  delete meta.passwordResetSentAt;
+
+  await prisma.userAuth.update({
+    where: { userId: u.id },
+    data: {
+      passwordHash,
+      passwordLastChanged: new Date(),
+      resetToken: null,
+      resetTokenExpires: null,
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+    },
+  });
+  await prisma.user.update({
+    where: { id: u.id },
+    data: { metadata: meta as object },
+  });
+
+  return { message: "Password updated. You can sign in with your new password." };
 }

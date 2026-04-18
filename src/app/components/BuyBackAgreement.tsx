@@ -13,6 +13,7 @@ import {
   Info
 } from "lucide-react";
 import { motion } from "motion/react";
+import { isCheckboxChecked } from "@/lib/checkboxState";
 
 interface BuyBackAgreementProps {
   approvedAmount: number;
@@ -52,9 +53,7 @@ export function BuyBackAgreement({
   };
 
   const handleAccept = () => {
-    if (!agreedToTerms) {
-      return;
-    }
+    if (!agreedToTerms) return;
     onAcceptAndActivate(repaymentOption);
   };
 
@@ -242,8 +241,9 @@ export function BuyBackAgreement({
             <Checkbox 
               id="terms" 
               checked={agreedToTerms}
-              onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+              onCheckedChange={(checked) => setAgreedToTerms(isCheckboxChecked(checked))}
               className="mt-1"
+              aria-describedby="buyback-terms-hint"
             />
             <div className="flex-1">
               <Label 
@@ -252,7 +252,7 @@ export function BuyBackAgreement({
               >
                 I understand this is a sale with a buy-back obligation.
               </Label>
-              <p className="text-sm text-muted-foreground mt-2 font-medium">
+              <p id="buyback-terms-hint" className="text-sm text-muted-foreground mt-2 font-medium">
                 By checking this box, you confirm that you have read and understood the terms of this digital asset sale and buy-back agreement. You commit to repurchasing your asset by repaying the total buy-back amount according to the selected repayment schedule.
               </p>
             </div>
@@ -269,6 +269,7 @@ export function BuyBackAgreement({
             Cancel
           </Button>
           <Button 
+            type="button"
             onClick={handleAccept}
             disabled={!agreedToTerms}
             className="flex-2 h-14 rounded-xl font-black text-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
@@ -277,11 +278,11 @@ export function BuyBackAgreement({
           </Button>
         </div>
 
-        {!agreedToTerms && (
-          <p className="text-center text-sm text-red-600 font-bold">
-            You must agree to the terms before activating credit
+        {!agreedToTerms ? (
+          <p className="text-center text-xs font-medium text-muted-foreground" role="status">
+            Confirm the agreement above to enable &quot;Accept &amp; Activate Credit&quot;.
           </p>
-        )}
+        ) : null}
       </div>
     </div>
   );

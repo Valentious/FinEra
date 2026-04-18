@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   ArrowRight,
   PiggyBank,
-  Clock,
   Briefcase,
   AlertCircle,
   ShieldCheck,
@@ -24,12 +23,11 @@ interface ApplyForCreditProps {
   walletLabel: string;
   hasActiveLoan: boolean;
   loanType: LoanType;
-  onSelectCreditType: (type: "essential" | "emergency" | "business") => void;
+  onSelectCreditType: (type: "essential" | "business") => void;
   onBack: () => void;
 }
 
 function purposeRule(loanType: LoanType, id: string): string {
-  if (id === "emergency") return "Wallet discipline rule waived when criteria are satisfied";
   if (loanType === "NON_COLLATERAL" && (id === "essential" || id === "business")) {
     return "Requires 20% wallet balance discipline";
   }
@@ -40,21 +38,14 @@ const CREDIT_TYPES = [
   {
     id: "essential",
     title: "Essential Credit",
-    desc: "For daily needs and campus essentials.",
+    desc: "For daily needs.",
     icon: <PiggyBank className="w-6 h-6" />,
     color: "emerald",
   },
   {
-    id: "emergency",
-    title: "Delayed Allowed Coverage",
-    desc: "Approved liquidity when schedules slip: documented eligibility replaces the standard wallet hold rule.",
-    icon: <Clock className="w-6 h-6" />,
-    color: "amber",
-  },
-  {
     id: "business",
     title: "Business Credit",
-    desc: "Startup capital for student entrepreneurs.",
+    desc: "Startup capital for entrepreneurs.",
     icon: <Briefcase className="w-6 h-6" />,
     color: "purple",
   },
@@ -104,22 +95,11 @@ export function ApplyForCredit({
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500">
       <LoanApplicationFlow loanType={loanType} step="purpose" className="mb-2" />
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h2 className="text-3xl font-black text-foreground">GET LOAN</h2>
-            <p className="text-sm font-bold text-muted-foreground mt-1">{cc} dashboard - amounts in {cc}</p>
-          </div>
-        </div>
-        <div className="bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm text-right max-w-[min(100%,14rem)]">
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-tight">{walletLabel}</p>
-          <p className={`text-sm font-black ${isWalletTooLow ? "text-red-500" : "text-green-600"}`}>
-            {formatAmountWithCurrency(walletBalance, cc)}
-          </p>
-        </div>
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full">
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <h2 className="text-3xl font-black tracking-tight text-foreground">SELECT LOAN PURPOSE</h2>
       </div>
 
       {hasActiveLoan && (
@@ -166,7 +146,7 @@ export function ApplyForCredit({
             >
               <button
                 disabled={isDisabled}
-                onClick={() => onSelectCreditType(type.id as "essential" | "emergency" | "business")}
+                onClick={() => onSelectCreditType(type.id as "essential" | "business")}
                 className={`w-full flex items-center justify-between p-6 bg-white border-2 border-slate-100 rounded-3xl transition-all group relative overflow-hidden ${
                   isDisabled
                     ? "opacity-50 grayscale cursor-not-allowed"

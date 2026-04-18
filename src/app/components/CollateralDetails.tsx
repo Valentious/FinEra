@@ -17,6 +17,7 @@ import type { LoanType } from "@/loan/loanTypes";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { CURRENCY_AMOUNT_SYMBOLS, currencyAmountPlaceholder } from "@/types/wallet";
+import { isCheckboxChecked } from "@/lib/checkboxState";
 interface CollateralDetailsProps {
   currencyCode: string;
   loanType: LoanType;
@@ -42,12 +43,19 @@ export function CollateralDetails({
   const [disclosureAccepted, setDisclosureAccepted] = useState(false);
   const [step, setStep] = useState<"disclosure" | "form">("disclosure");
   const [collateralFiles, setCollateralFiles] = useState<string[]>([]);
+  const [ownershipBypassMessage, setOwnershipBypassMessage] = useState("");
 
   const DISCLOSURE_TEXT = "Your approved loan amount is based on: (1) Asset condition assessment, (2) Current market value, and (3) Secure storage verification. The final amount is calculated as a percentage of the liquidation value, not market value. Important: If you default and the asset is liquidated, no refund will be issued for any difference between asset value and loan balance.";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setOwnershipBypassMessage("");
+    if (!confirmed) {
+      setOwnershipBypassMessage("Confirm proof of ownership before generating a loan limit.");
+      toast.error("Please confirm proof of ownership.");
+      return;
+    }
+
     // Calculation Engine (Internal Logic for display)
     const marketValue = parseFloat(estimatedValue) || 0;
     const conditionScore = 0.85; // Mock assessment
@@ -94,25 +102,37 @@ export function CollateralDetails({
                     "{DISCLOSURE_TEXT}"
                   </div>
 
-                  <div className="flex items-center space-x-3 rounded-xl border border-white/45 bg-white/45 p-4 backdrop-blur-sm dark:border-white/15 dark:bg-white/10">
+                  <div className="flex items-start space-x-3 rounded-xl border border-white/45 bg-white/45 p-4 backdrop-blur-sm dark:border-white/15 dark:bg-white/10">
                     <Checkbox
                       id="disclosure-check"
                       checked={disclosureAccepted}
-                      onCheckedChange={(checked) => setDisclosureAccepted(checked as boolean)}
+                      onCheckedChange={(checked) => setDisclosureAccepted(isCheckboxChecked(checked))}
                       className="border-zinc-500/40 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:border-zinc-400/35"
+                      aria-describedby={!disclosureAccepted ? "disclosure-continue-hint" : undefined}
                     />
-                    <Label htmlFor="disclosure-check" className="cursor-pointer text-xs font-medium text-white">
-                      I have read, understood, and accept these collateral-based lending terms.
-                    </Label>
+                    <div className="min-w-0 flex-1">
+                      <Label htmlFor="disclosure-check" className="cursor-pointer text-xs font-medium text-white">
+                        I have read, understood, and accept these collateral-based lending terms.
+                      </Label>
+                    </div>
                   </div>
 
                   <Button
+                    type="button"
                     disabled={!disclosureAccepted}
-                    onClick={() => setStep("form")}
+                    onClick={() => {
+                      if (!disclosureAccepted) return;
+                      setStep("form");
+                    }}
                     className="h-14 w-full rounded-2xl bg-white font-semibold text-primary shadow-xl transition-all hover:bg-white/90 active:scale-[0.98]"
                   >
                     Agree & Proceed
                   </Button>
+                  {!disclosureAccepted ? (
+                    <p id="disclosure-continue-hint" className="text-center text-xs font-medium text-white/85" role="status">
+                      Check the box above to enable Agree &amp; Proceed.
+                    </p>
+                  ) : null}
                 </div>
               </Card>
             </motion.div>
@@ -196,9 +216,13 @@ export function CollateralDetails({
                     <Checkbox
                       id="ownership"
                       checked={confirmed}
-                      onCheckedChange={(checked) => setConfirmed(checked as boolean)}
+                      onCheckedChange={(checked) => {
+                        setOwnershipBypassMessage("");
+                        setConfirmed(isCheckboxChecked(checked));
+                      }}
                       className="mt-1"
-                      required
+                      aria-invalid={ownershipBypassMessage ? true : undefined}
+                      aria-describedby={ownershipBypassMessage ? "ownership-error" : undefined}
                     />
                     <div className="flex-1">
                       <Label htmlFor="ownership" className="text-xs font-black text-foreground cursor-pointer">
@@ -207,6 +231,11 @@ export function CollateralDetails({
                       <p className="text-[10px] text-muted-foreground font-medium mt-1 leading-relaxed">
                         I legally own this asset and authorize its assessment for secure storage verification. I understand it will be held as collateral.
                       </p>
+                      {ownershipBypassMessage ? (
+                        <p id="ownership-error" role="alert" className="mt-2 text-xs font-bold text-red-600">
+                          {ownershipBypassMessage}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
 

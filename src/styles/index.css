@@ -4,12 +4,56 @@
 @import './app-canvas.css';
 @import './financial.css';
 
-/* react-phone-input-2 full-width */
-.react-tel-input {
+/* react-phone-input-2 — FinEra: side-by-side flag + field (no text under dial code) */
+.finera-phone-input.react-tel-input {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: stretch;
   width: 100% !important;
+  position: relative;
+  gap: 0;
 }
-.react-tel-input .form-control {
-  width: 100% !important;
+.finera-phone-input.react-tel-input .flag-dropdown {
+  position: relative !important;
+  top: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  flex: 0 0 auto;
+  align-self: stretch;
+  z-index: 2;
+  border-radius: 0.75rem 0 0 0.75rem;
+}
+.finera-phone-input.react-tel-input .flag-dropdown.open {
+  border-bottom-left-radius: 0;
+}
+.finera-phone-input.react-tel-input .selected-flag {
+  height: 100%;
+  min-height: 3rem;
+  width: auto;
+  min-width: 2.375rem;
+  padding-left: 0.5rem;
+  padding-right: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+.finera-phone-input.react-tel-input .form-control {
+  flex: 1 1 0%;
+  min-width: 0;
+  width: auto !important;
+  max-width: none;
+  margin: 0 !important;
+  padding-left: 0.75rem !important;
+}
+.finera-phone-input.react-tel-input .country-list {
+  z-index: 100 !important;
+  left: 0;
+  right: auto;
+  margin-top: 0.25rem;
+}
+.finera-phone-input.react-tel-input .invalid-number-message {
+  left: auto;
+  right: 0.75rem;
+  top: -0.5rem;
 }
 
 /* FinEra hero header - logo above FinEra, vertically stacked, centered */

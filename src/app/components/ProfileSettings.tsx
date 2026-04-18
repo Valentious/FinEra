@@ -296,7 +296,6 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                     <div>
                       <p className="font-bold text-foreground">{profileFullName || userData.fullName}</p>
                       <p className="text-xs text-muted-foreground uppercase tracking-wider">{userData.accountType} Member</p>
-                      <p className="text-xs text-muted-foreground mt-1">Acc: {userData.finEraAccountNumbers?.usd ?? userData.accountNumber}</p>
                     </div>
                   </div>
 

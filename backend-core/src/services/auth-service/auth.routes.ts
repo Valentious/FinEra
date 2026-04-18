@@ -10,6 +10,9 @@ import {
   refreshSchema,
   verifyEmailSchema,
   resendOtpSchema,
+  passwordResetRequestSchema,
+  passwordResetVerifySchema,
+  passwordResetCompleteSchema,
 } from "./auth.validation.js";
 import { validationError } from "../../middlewares/errorHandler.js";
 import { zodErrorToFieldErrors } from "../../shared/validation/zod-format.js";
@@ -61,6 +64,45 @@ router.post("/resend-otp", async (req, res, next) => {
       throw validationError("Validation failed", { fields: zodErrorToFieldErrors(parsed.error) });
     }
     const result = await authService.resendEmailOtp(parsed.data.email);
+    res.json({ success: true, message: result.message });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/password-reset/request", async (req, res, next) => {
+  try {
+    const parsed = passwordResetRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw validationError("Validation failed", { fields: zodErrorToFieldErrors(parsed.error) });
+    }
+    const result = await authService.requestPasswordReset(parsed.data);
+    res.json({ success: true, message: result.message });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/password-reset/verify", async (req, res, next) => {
+  try {
+    const parsed = passwordResetVerifySchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw validationError("Validation failed", { fields: zodErrorToFieldErrors(parsed.error) });
+    }
+    const result = await authService.verifyPasswordResetOtp(parsed.data);
+    res.json({ success: true, message: "Code verified.", data: result });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/password-reset/complete", async (req, res, next) => {
+  try {
+    const parsed = passwordResetCompleteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw validationError("Validation failed", { fields: zodErrorToFieldErrors(parsed.error) });
+    }
+    const result = await authService.completePasswordReset(parsed.data);
     res.json({ success: true, message: result.message });
   } catch (e) {
     next(e);

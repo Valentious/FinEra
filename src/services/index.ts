@@ -34,6 +34,9 @@ export const apiService = USE_MOCK_DATA ? {
   verifyRegistrationEmail: mockApi.mockVerifyRegistrationEmail,
   resendOTP: async (email: string) => mockApi.mockSendEmailVerificationCode(email),
   logout: async () => ({ success: true }),
+  requestPasswordReset: mockApi.mockRequestPasswordReset,
+  verifyPasswordResetOtp: mockApi.mockVerifyPasswordResetOtp,
+  completePasswordReset: mockApi.mockCompletePasswordReset,
 
   // User Management
   getUserProfile: mockApi.mockGetUserProfile,
@@ -109,6 +112,9 @@ export const apiService = USE_MOCK_DATA ? {
   verifyRegistrationEmail: realApi.verifyRegistrationEmail,
   resendOTP: realApi.resendOTP,
   logout: realApi.logout,
+  requestPasswordReset: realApi.requestPasswordReset,
+  verifyPasswordResetOtp: realApi.verifyPasswordResetOtp,
+  completePasswordReset: realApi.completePasswordReset,
   getUserProfile: realApi.getUserProfile,
   updateUserProfile: realApi.updateUserProfile,
   completeProfile: realApi.completeProfile,
