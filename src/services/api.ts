@@ -300,11 +300,11 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
       walletBalance: 0,
       approvedCreditWallet: 0,
       activeCredit: 0,
-      availableCreditLimit: 200,
+      availableCreditLimit: data.accountType === "student" ? 30 : 2000,
       loanPrincipal: 0,
       transactions: [],
       disciplineScore: 50,
-      creditScore: 82,
+      creditScore: 50,
       loyaltyProgress: 0,
       missedPayments: 0,
       onTimePayments: 0,
@@ -707,7 +707,7 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
     apiCall<{ success: boolean; data: WalletApiRow[] }>("/user/wallets"),
     apiCall<{ success: boolean; data: { creditLimit: number; availableCredit: number; financialDisciplineScore: number } }>(
       `/credit/limit?currency=${encodeURIComponent(currency)}`
-    ).catch(() => ({ success: false, data: { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 } })),
+    ).catch(() => ({ success: false, data: { creditLimit: 30, availableCredit: 30, financialDisciplineScore: 50 } })),
   ]);
   const p = profileRes.data || {};
   const wallets = (walletsRes.data || []).map(normalizeWalletRow);
@@ -715,7 +715,7 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
   const usdWallet = wallets.find((w) => w.currencyCode === 'USD') as { accountNumber?: string } | undefined;
   const zigWallet = wallets.find((w) => w.currencyCode === 'ZIG') as { accountNumber?: string } | undefined;
   const zarWallet = wallets.find((w) => w.currencyCode === 'ZAR') as { accountNumber?: string } | undefined;
-  const limit = limitRes.data || { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 };
+  const limit = limitRes.data || { creditLimit: 30, availableCredit: 30, financialDisciplineScore: 50 };
   const activeCredit = primaryWallet?.activeLoanBalance ?? 0;
   const dobRaw = p.dateOfBirth as string | Date | undefined | null;
   const dobStr =
@@ -746,11 +746,11 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
     walletBalance: primaryWallet?.balance ?? 0,
     approvedCreditWallet: primaryWallet?.approvedCreditBalance ?? 0,
     activeCredit,
-    availableCreditLimit: limit.availableCredit || 200,
+    availableCreditLimit: limit.availableCredit || 30,
     loanPrincipal: 0,
     transactions: [],
     disciplineScore: limit.financialDisciplineScore || 50,
-    creditScore: limit.financialDisciplineScore || 82,
+    creditScore: limit.financialDisciplineScore || 50,
     loyaltyProgress: 0,
     missedPayments: 0,
     onTimePayments: 0,
@@ -1098,7 +1098,7 @@ export async function getCreditLimitForCurrency(currency: string): Promise<{
     success: boolean;
     data: { creditLimit: number; availableCredit: number; financialDisciplineScore: number };
   }>(`/credit/limit?currency=${encodeURIComponent(currency)}`);
-  const d = res.data ?? { creditLimit: 200, availableCredit: 200, financialDisciplineScore: 50 };
+  const d = res.data ?? { creditLimit: 30, availableCredit: 30, financialDisciplineScore: 50 };
   return {
     creditLimit: d.creditLimit,
     availableCredit: d.availableCredit,
@@ -1799,12 +1799,12 @@ export const mockResponses = {
       walletBalance: 0,
       approvedCreditWallet: 0,
       activeCredit: 0,
-      availableCreditLimit: data.accountType === 'student' ? 200 : 2000,
+      availableCreditLimit: data.accountType === 'student' ? 30 : 2000,
       loanPrincipal: 0,
       transactions: [],
       lastLogin: Date.now(),
-      disciplineScore: 75,
-      creditScore: 82,
+      disciplineScore: 50,
+      creditScore: 50,
       loyaltyProgress: 0,
       missedPayments: 0,
       onTimePayments: 0,

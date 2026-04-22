@@ -119,5 +119,58 @@ export const refreshSchema = z.object({
   refreshToken: z.string().min(1, "Refresh token required"),
 });
 
+const passwordResetChannelRefine = (
+  data: { channel: "email" | "phone"; email?: string; phone?: string },
+  ctx: z.RefinementCtx
+) => {
+  if (data.channel === "email") {
+    const e = data.email?.trim() ?? "";
+    if (!e) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Email is required", path: ["email"] });
+    }
+  } else {
+    const p = data.phone?.trim() ?? "";
+    if (!p) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Phone number is required", path: ["phone"] });
+    }
+  }
+};
+
+export const passwordResetRequestSchema = z
+  .object({
+    channel: z.enum(["email", "phone"]),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+  })
+  .strict()
+  .superRefine(passwordResetChannelRefine);
+
+export const passwordResetVerifySchema = z
+  .object({
+    channel: z.enum(["email", "phone"]),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    code: z
+      .string()
+      .min(1, "Code is required")
+      .refine((v) => /^\d{6}$/.test(v.trim()), "Enter the 6-digit code"),
+  })
+  .strict()
+  .superRefine(passwordResetChannelRefine);
+
+export const passwordResetCompleteSchema = z
+  .object({
+    resetSessionToken: z.string().min(1, "Reset session is required"),
+    newPassword: z
+      .string()
+      .min(PASSWORD_MIN, `Password must be at least ${PASSWORD_MIN} characters`)
+      .max(PASSWORD_MAX, `Password must not exceed ${PASSWORD_MAX} characters`)
+      .regex(
+        PASSWORD_REGEX,
+        "Password must include uppercase, lowercase, a number, and a symbol"
+      ),
+  })
+  .strict();
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

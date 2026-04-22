@@ -33,6 +33,7 @@ import type { LoanType } from "@/loan/loanTypes";
 import { isLoanTypeAllowedForAccount, requiresCollateralStep, requiresWalletDisciplineForAmount } from "@/loan/loanTypes";
 import { useAccountStore } from "@/stores/accountStore";
 import { fetchWalletsForStore } from "@/lib/walletFetcher";
+import { normalizeStoredMemberTrust } from "@/lib/memberTrustDefaults";
 import {
   CURRENCY_AMOUNT_SYMBOLS,
   currencyAmountPlaceholder,
@@ -42,7 +43,6 @@ import {
 import { AccountSwitchOverlay } from "@/app/components/AccountSwitchOverlay";
 import { BackendUnavailableBanner } from "@/app/components/BackendUnavailableBanner";
 import { AppErrorBoundary } from "@/app/components/AppErrorBoundary";
-import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
 import { PeerTransferFlow } from "@/app/components/PeerTransferFlow";
 import { useI18n } from "@/app/providers/I18nProvider";
 import { isAppLocale } from "@/i18n/locales";
@@ -84,7 +84,7 @@ type Screen =
 // NOTE: These limits are now defined in the backend
 // Kept here for UI reference only - backend is the source of truth
 const CREDIT_LIMITS = {
-  student: { min: 20, max: 200 },
+  student: { min: 20, max: 30 },
   staff: { min: 30, max: 2000 },
   alumni: { min: 30, max: 2000 },
 };
@@ -128,7 +128,12 @@ const loadUserData = (email: string): UserData | null => {
   const saved = localStorage.getItem(`member_${key}`);
   if (!saved) return null;
   try {
-    return JSON.parse(saved) as UserData;
+    const parsed = JSON.parse(saved) as UserData;
+    const { user, changed } = normalizeStoredMemberTrust(parsed);
+    if (changed) {
+      localStorage.setItem(`member_${key}`, JSON.stringify(user));
+    }
+    return user;
   } catch {
     return null;
   }
@@ -170,12 +175,12 @@ export default function App() {
     walletBalance: 0,
     approvedCreditWallet: 0, // New: Approved Credit Wallet (non-withdrawable)
     activeCredit: 0,
-    availableCreditLimit: 200, // Default for students
+    availableCreditLimit: 30, // Student credit cap; backend/mock enforce per account type
     loanPrincipal: 0,
     transactions: [],
     // Financial Identity Metrics: New users start at 50 discipline, 0 loyalty
     disciplineScore: 50,
-    creditScore: 82,
+    creditScore: 50,
     loyaltyProgress: 0,
     missedPayments: 0,
     onTimePayments: 6,
@@ -588,9 +593,11 @@ export default function App() {
           ...user,
           email: normalizedEmail,
           lastLogin: Date.now(),
-          availableCreditLimit: user.availableCreditLimit ?? 200,
+          availableCreditLimit:
+            user.availableCreditLimit ??
+            (user.accountType === "student" ? 30 : user.accountType === "staff" || user.accountType === "alumni" ? 2000 : 30),
           disciplineScore: user.disciplineScore ?? 50,
-          creditScore: user.creditScore ?? 82,
+          creditScore: user.creditScore ?? 50,
           loyaltyProgress: user.loyaltyProgress ?? 0,
           walletBalance: user.walletBalance ?? 0,
           approvedCreditWallet: user.approvedCreditWallet ?? 0,
@@ -741,8 +748,6 @@ export default function App() {
     }
   };
 
-  const showTrustRibbon = currentScreen !== "splash";
-
   const handleMemberNavigate = useCallback(
     (s: string) => {
       if (s === "quickActions" || s === "savingsWallet") {
@@ -776,25 +781,15 @@ export default function App() {
         />
       )}
 
-      {showTrustRibbon && (
-        <DashboardTrustRibbon
-          accountMode={userData.accountMode ?? preSelectedAccountMode}
-          insetForSidebar={isAuthScreen}
-          bottomOffsetClassName={isAuthScreen ? "bottom-16 md:bottom-0" : "bottom-0"}
-        />
-      )}
-
       <AccountSwitchOverlay />
 
       <div className={isAuthScreen ? "flex min-h-0 flex-1 flex-col md:pl-64" : "contents"}>
         <main
           className={
             isAuthScreen
-              ? // h-12 notification strip + safe area; pb-20 clears fixed mobile tab bar; md: trust ribbon + sidebar inset.
-                "flex-1 overflow-y-auto overflow-x-hidden px-4 pt-[calc(env(safe-area-inset-top,0px)+3rem+0.5rem)] pb-20 md:px-8 md:pb-[max(2rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]"
-              : showTrustRibbon
-                ? "pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]"
-                : ""
+              ? // h-12 notification strip + safe area; pb-20 clears fixed mobile tab bar.
+                "flex-1 overflow-y-auto overflow-x-hidden px-4 pt-[calc(env(safe-area-inset-top,0px)+3.5rem+0.5rem)] pb-20 md:px-8 md:pb-[max(1rem,env(safe-area-inset-bottom,0px))]"
+              : ""
           }
         >
         <AppErrorBoundary onReset={() => setCurrentScreen("dashboard")}>

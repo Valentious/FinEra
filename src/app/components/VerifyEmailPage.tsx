@@ -10,19 +10,7 @@ import { toast } from "sonner";
 import { apiService } from "@/services";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 import { FinEraLogoText } from "@/app/components/FinEraLogoText";
-import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
-
 const RESEND_COOLDOWN_SEC = 30;
-
-function trustRibbonAccountMode(): "real" | "demo" {
-  try {
-    const s = sessionStorage.getItem("finera_pre_account_mode");
-    if (s === "demo" || s === "real") return s;
-  } catch {
-    /* ignore */
-  }
-  return "real";
-}
 
 export function VerifyEmailPage() {
   const navigate = useNavigate();
@@ -201,7 +189,6 @@ export function VerifyEmailPage() {
           </CardContent>
         </Card>
       </div>
-      <DashboardTrustRibbon accountMode={trustRibbonAccountMode()} insetForSidebar={false} />
     </div>
   );
 }

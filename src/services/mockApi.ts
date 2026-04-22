@@ -27,6 +27,7 @@ import type {
 import { getWalletLabel } from "@/types/wallet";
 import { requiresWalletDisciplineForAmount } from "@/loan/loanTypes";
 import { FINERA_REGISTRATION_CONSENT_VERSION } from "@/legal/consentVersion";
+import { normalizeStoredMemberTrust } from "@/lib/memberTrustDefaults";
 import {
   extractStaffEmployerIdContent,
   extractStudentIdContent,
@@ -54,7 +55,7 @@ function generateAccountNumber(): string {
 
 function calculateCreditLimit(accountType: 'student' | 'staff' | 'alumni'): number {
   const limits = {
-    student: 200,
+    student: 30,
     staff: 2000,
     alumni: 2000,
   };
@@ -242,6 +243,11 @@ function loadUserData(email: string): MockUserData | null {
         : `00000000-0000-4000-8000-${Date.now().toString(16).slice(-12).padStart(12, "0")}`;
     saveUserData(parsed);
   }
+  const trustNorm = normalizeStoredMemberTrust(parsed as UserData);
+  if (trustNorm.changed) {
+    Object.assign(parsed, trustNorm.user);
+    saveUserData(parsed);
+  }
   ensureMockWalletNumericIds(parsed);
   return parsed;
 }
@@ -296,8 +302,8 @@ export async function mockGetCreditLimitForCurrency(currency: string): Promise<{
   if (!email) throw new Error("Not authenticated");
   const user = loadUserData(email);
   if (!user) throw new Error("User not found");
-  const limits: Record<string, number> = { student: 200, staff: 2000, alumni: 2000 };
-  const max = limits[user.accountType] ?? 200;
+  const limits: Record<string, number> = { student: 30, staff: 2000, alumni: 2000 };
+  const max = limits[user.accountType] ?? 30;
   const c = (currency || "USD").toUpperCase();
   const outstanding = getActiveLoanForCurrency(user, c);
   const availableCredit = Math.max(0, max - outstanding);
@@ -480,9 +486,6 @@ export async function mockVerifyRegistrationEmail(
 
 export async function mockRegister(data: RegisterRequest): Promise<{ user: UserData; message: string }> {
   await delay(800);
-  if (data.acceptedTermsAndPrivacy !== true) {
-    throw new Error("You must accept the Terms of Service and Privacy Policy to register.");
-  }
   const email = normalizeEmail(data.email);
 
   if (data.termsAccepted !== true || data.privacyPolicyAccepted !== true) {
@@ -529,8 +532,8 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     availableCreditLimit: calculateCreditLimit(data.accountType),
     loanPrincipal: 0,
     transactions: [],
-    disciplineScore: 75,
-    creditScore: 82,
+    disciplineScore: 50,
+    creditScore: 50,
     loyaltyProgress: 0,
     missedPayments: 0,
     onTimePayments: 0,

@@ -30,6 +30,7 @@ import {
 import { validationError } from "../../middlewares/errorHandler.js";
 import { postLoanDisbursementLedger, postLoanRepaymentLedger } from "./loan-ledger.service.js";
 import { publishDomainEvent } from "../../infrastructure/messaging/event-bus.js";
+import { onDepositTrustActivity } from "../credit-engine/domain/trust-score.service.js";
 
 /**
  * Deposit: Uses engine. ONLY affects specified currency wallet + ledger.
@@ -58,6 +59,8 @@ export async function processDeposit(
       ...(metadata ?? {}),
     },
   });
+
+  void onDepositTrustActivity(userId, amount).catch(() => {});
 
   return {
     transactionId: result.transactionId,
@@ -250,6 +253,8 @@ export async function processLoanDisbursement(
     term: number;
     creditType?: string;
     loanType: LoanProductType;
+    /** Flat processing / service fee included in totalRepayable (stored on Loan.fees). */
+    fees?: number;
   }
 ): Promise<{
   loanId: string;
@@ -267,6 +272,9 @@ export async function processLoanDisbursement(
 
     const loanNumber = `LN-${new Date().toISOString().slice(0, 7).replace(/-/, "")}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
+    const feePart = params.fees ?? 0;
+    const interestPart = Math.max(0, params.totalRepayable - params.principal - feePart);
+
     const loan = await tx.loan.create({
       data: {
         loanNumber,
@@ -275,7 +283,8 @@ export async function processLoanDisbursement(
         loanType: params.loanType,
         principalAmount: params.principal,
         interestRate: params.interestRate,
-        totalInterest: params.totalRepayable - params.principal,
+        totalInterest: interestPart,
+        fees: feePart,
         totalRepayable: params.totalRepayable,
         remainingBalance: params.totalRepayable,
         amountDisbursed: params.principal,

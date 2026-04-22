@@ -635,14 +635,14 @@ export function DashboardV2({
 
             <p className={`text-sm mb-4 font-medium ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-muted-foreground'}`}>
               {safeLoyaltyProgress === 10 
-                ? "12% Interest Discount Activated On Next Loan." 
-                : "Complete 10 loans with zero repayment default to unlock one-time complete interest discount"}
+                ? "10% interest rate reduction activated on your next loan." 
+                : "Complete 10 loans with zero defaults to unlock a 10% interest rate reduction."}
             </p>
 
             {safeLoyaltyProgress === 9 && (
               <div className="px-4 py-3 bg-amber-50 border-2 border-amber-400 rounded-xl mb-4 dark:bg-amber-950/60 dark:border-amber-600">
                 <p className="text-amber-900 dark:text-amber-100 font-black text-sm text-center">
-                  🎉 1 Loan Away From 12% Discount!
+                  🎉 One loan away from your 10% rate reduction!
                 </p>
               </div>
             )}

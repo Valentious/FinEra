@@ -6,13 +6,15 @@
   "main": "dist/api-gateway/server.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch src/api-gateway/server.ts",
+    "postinstall": "prisma generate",
+    "dev": "prisma generate && npx --yes tsx watch src/api-gateway/server.ts",
     "start": "node dist/api-gateway/server.js",
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:truncate": "npx tsx scripts/truncate-all-data.ts",
+    "db:cap-trust-50": "npx tsx scripts/cap-all-trust-scores-at-50.ts",
     "db:studio": "npx prisma studio",
     "setup:docker": "docker compose up -d",
     "setup:verify": "powershell -ExecutionPolicy Bypass -File ./scripts/verify-stack.ps1",
@@ -36,6 +38,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
+    "dotenv": "^16.6.1",
     "express": "^4.21.1",
     "express-rate-limit": "^7.4.1",
     "helmet": "^8.0.0",
@@ -46,7 +49,8 @@
     "pino-pretty": "^11.3.0",
     "uuid": "^10.0.0",
     "ws": "^8.20.0",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "prisma": "^5.22.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
@@ -58,7 +62,6 @@
     "@types/node": "^22.9.0",
     "@types/uuid": "^10.0.0",
     "artillery": "^2.0.14",
-    "prisma": "^5.22.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "vitest": "^2.1.6"

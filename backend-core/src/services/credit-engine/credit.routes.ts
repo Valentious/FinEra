@@ -11,6 +11,7 @@ import { assertWalletHasNoActiveLoan } from "../ledger-service/loan-invariants.j
 import { z } from "zod";
 import { validationError } from "../../middlewares/errorHandler.js";
 import { assignLoanInterestRatePercent } from "../../shared/validation/rules.js";
+import { getTrustTierInfo, processingFeeForLoan, trustBelowLoanFloor } from "./domain/dynamic-credit-engine.js";
 import { loanPrincipalSchema } from "../../shared/validation/zod-schemas.js";
 import { zodErrorToFieldErrors } from "../../shared/validation/zod-format.js";
 import type { AccountType, LoanProductType } from "@prisma/client";
@@ -42,7 +43,17 @@ const applySchema = z.object({
 router.get("/score", async (req, res, next) => {
   try {
     const { score, factors } = await creditService.calculateCreditScore(req.user!.id);
-    res.json({ success: true, data: { score, factors, lastUpdated: new Date() } });
+    const tier = getTrustTierInfo(score);
+    res.json({
+      success: true,
+      data: {
+        score,
+        factors,
+        trustTier: tier.tierKey,
+        riskStatus: tier.apiRiskStatus,
+        lastUpdated: new Date(),
+      },
+    });
   } catch (e) {
     next(e);
   }
@@ -55,12 +66,15 @@ router.get("/limit", async (req, res, next) => {
     const q = currencyQuery.safeParse(req.query.currency);
     const currency = q.success ? q.data : undefined;
     const result = await creditService.calculateCreditLimit(req.user!.id, currency ? { currency } : undefined);
+    const tier = getTrustTierInfo(result.financialDisciplineScore);
     res.json({
       success: true,
       data: {
         creditLimit: result.creditLimit,
         availableCredit: result.availableCredit,
         financialDisciplineScore: result.financialDisciplineScore,
+        trustTier: tier.tierKey,
+        riskStatus: tier.apiRiskStatus,
         currency: currency ?? "USD",
       },
     });
@@ -81,6 +95,11 @@ router.post("/apply", async (req, res, next) => {
 
     const limitResult = await creditService.calculateCreditLimit(req.user!.id, { currency });
     const available = Number(limitResult.availableCredit);
+    if (trustBelowLoanFloor(limitResult.financialDisciplineScore)) {
+      throw validationError("Trust score is below the minimum required to borrow", {
+        fields: [{ field: "trustScore", error: "Trust score must be at least 20 to request a loan" }],
+      });
+    }
     if (amount > available) {
       throw validationError("Amount exceeds available credit", {
         fields: [{ field: "amount", error: "Amount exceeds available credit" }],
@@ -88,6 +107,7 @@ router.post("/apply", async (req, res, next) => {
     }
 
     const interestRatePct = assignLoanInterestRatePercent(amount);
+    const processingFee = processingFeeForLoan();
 
     const wallet = await prisma.wallet.findFirst({
       where: { userId: req.user!.id, currencyCode: currency },
@@ -100,7 +120,7 @@ router.post("/apply", async (req, res, next) => {
 
     const rateDecimal = interestRatePct / 100;
     const totalInterest = amount * rateDecimal * (term / 12);
-    const fees = 0;
+    const fees = processingFee;
     const totalRepayable = amount + totalInterest + fees;
     const installmentAmount = totalRepayable / term;
     const maturityDate = new Date();
@@ -129,13 +149,20 @@ router.post("/apply", async (req, res, next) => {
       },
     });
 
+    const tier = getTrustTierInfo(limitResult.financialDisciplineScore);
     res.status(202).json({
       success: true,
       data: {
         applicationId: application.id,
         loanNumber: application.loanNumber,
         status: "pending",
-        interestRatePercent: interestRatePct,
+        approvedLoanAmount: amount,
+        interestRateAppliedPercent: interestRatePct,
+        processingFee: fees,
+        totalRepaymentAmount: totalRepayable,
+        updatedTrustScore: limitResult.financialDisciplineScore,
+        updatedCreditLimit: limitResult.creditLimit,
+        riskStatus: tier.apiRiskStatus,
         repaymentAmount: installmentAmount,
         totalRepayable,
         estimatedDecision: "Within 24 hours",
@@ -196,6 +223,11 @@ router.post("/apply-instant", async (req, res, next) => {
     }
 
     const limitResult = await creditService.calculateCreditLimit(req.user!.id, { currency });
+    if (trustBelowLoanFloor(limitResult.financialDisciplineScore)) {
+      throw validationError("Trust score is below the minimum required to borrow", {
+        fields: [{ field: "trustScore", error: "Trust score must be at least 20 to request a loan" }],
+      });
+    }
     if (amount > Number(limitResult.availableCredit)) {
       throw validationError("Amount exceeds available credit", {
         fields: [{ field: "amount", error: "Amount exceeds available credit" }],
@@ -218,14 +250,11 @@ router.post("/apply-instant", async (req, res, next) => {
 
     await assertDocumentsAllowLoanApplication(req.user!.id, loanProduct);
 
-    const serviceFee = amount * 0.015;
-    let interestRatePct = 18;
-    if (loanProduct === "SALARY_BACKED") interestRatePct = 17;
-    else if (loanProduct === "ASSET_BACKED" || loanProduct === "COLLATERAL") interestRatePct = 16;
-    else if (loanProduct === "NON_COLLATERAL") interestRatePct = 18.5;
-    const interest = amount * (interestRatePct / 100);
-    const totalRepayable = amount + serviceFee + interest;
+    const interestRatePct = assignLoanInterestRatePercent(amount);
+    const processingFee = processingFeeForLoan();
     const term = creditType === "essential" ? 12 : 24;
+    const interest = amount * (interestRatePct / 100) * (term / 12);
+    const totalRepayable = amount + processingFee + interest;
 
     const result = await processLoanDisbursement(req.user!.id, {
       principal: amount,
@@ -235,13 +264,23 @@ router.post("/apply-instant", async (req, res, next) => {
       term,
       creditType,
       loanType: loanProduct,
+      fees: processingFee,
     });
+
+    const refreshed = await creditService.calculateCreditLimit(req.user!.id, { currency });
+    const tier = getTrustTierInfo(refreshed.financialDisciplineScore);
 
     res.status(201).json({
       success: true,
       data: {
         applicationId: result.loanId,
         status: "approved",
+        approvedLoanAmount: amount,
+        interestRateAppliedPercent: interestRatePct,
+        totalRepaymentAmount: totalRepayable,
+        updatedTrustScore: refreshed.financialDisciplineScore,
+        updatedCreditLimit: refreshed.creditLimit,
+        riskStatus: tier.apiRiskStatus,
         approvedAmount: amount,
         totalCredit: totalRepayable,
         approvedCreditBalance: result.approvedCreditBalance,

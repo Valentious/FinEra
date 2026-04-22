@@ -257,6 +257,9 @@ export async function verifyEmail(data: { email: string; code: string }): Promis
     },
   });
 
+  const { ensureCreditProfile } = await import("../credit-engine/domain/trust-score.service.js");
+  await ensureCreditProfile(user.id).catch(() => {});
+
   return generateTokens(user.id, user.email);
 }
 

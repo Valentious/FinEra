@@ -10,8 +10,6 @@ import { AccessDenied } from "./pages/FailStates";
 import { useAdminWebSocket } from "./hooks/useAdminWebSocket";
 import { useAdminPolling } from "./hooks/useAdminPolling";
 import { useState, useCallback, useEffect } from "react";
-import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
-
 /** Dev-only: set `VITE_ADMIN_DEV_BYPASS=true` in `.env.local` to skip session check. */
 const ADMIN_DEV_BYPASS =
   import.meta.env.DEV && String(import.meta.env.VITE_ADMIN_DEV_BYPASS ?? "").toLowerCase() === "true";
@@ -36,9 +34,8 @@ function RequireAdmin() {
 
   if (state === "loading") {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center bg-slate-950 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))] text-muted-foreground">
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-slate-950 text-muted-foreground">
         Checking session…
-        <DashboardTrustRibbon insetForSidebar={false} />
       </div>
     );
   }

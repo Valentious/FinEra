@@ -6,8 +6,6 @@ import {
   patchAdminMemberDocuments,
   recordAdminMissedInstallment,
 } from "../services/adminApi";
-import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
-
 function Badge({ status }: { status: string | null | undefined }) {
   if (status == null)
     return <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">n/a</span>;
@@ -80,8 +78,7 @@ export function DocumentsCompliancePage() {
   };
 
   return (
-    <div className="min-h-full bg-black pb-24 text-white">
-      <DashboardTrustRibbon insetForSidebar />
+    <div className="min-h-full bg-black pb-8 text-white">
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 md:px-8">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-white">Agreements &amp; consent</h1>

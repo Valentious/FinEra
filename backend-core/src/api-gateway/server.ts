@@ -2,6 +2,7 @@
  * FinEra Backend - Server Entry Point
  */
 
+import "./load-env.js";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { createServer as createNetServer } from "node:net";
@@ -33,6 +34,8 @@ async function main() {
 
   await connectDatabase();
   logger.info("Database connected");
+  // Visible in terminal next to Vite (plain lines, not only JSON logs)
+  console.log("\n[FinEra] Database connected\n");
 
   await startRabbitConsumer();
 
@@ -75,6 +78,10 @@ async function main() {
   const actualPort = (server.address() as AddressInfo | null)?.port ?? boundPort;
   logger.info({ port: actualPort, env: config.NODE_ENV }, "FinEra Backend started");
   logger.info({ port: actualPort }, "backend-core started");
+  console.log(`[FinEra] Backend started`);
+  console.log(`[FinEra] Local:   http://localhost:${actualPort}`);
+  console.log(`[FinEra] Health:  http://localhost:${actualPort}/health`);
+  console.log(`[FinEra] Ready:   http://localhost:${actualPort}/ready\n`);
 
   const shutdown = async () => {
     logger.info("Shutting down...");

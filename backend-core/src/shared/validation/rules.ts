@@ -17,7 +17,7 @@ export const COUNTRY_CODE_REGEX = /^[A-Za-z]{2}$/;
 const PHONE_DIGITS_MIN = 10;
 const PHONE_DIGITS_MAX = 15;
 
-export const DEFAULT_TRUST_SCORE = 49;
+export const DEFAULT_TRUST_SCORE = 50;
 
 export function isValidPersonName(value: string): boolean {
   const t = value.trim();
@@ -62,12 +62,12 @@ export function normalizePhone(input: string): { e164: string; digits: string } 
   return { e164: `+${digits}`, digits };
 }
 
-/** Spec: loan_amount &lt; 100 → 25%, otherwise 15% (annual rate percent for product rules). */
+/** Global annual interest rate percent at loan creation (Dynamic Credit Engine). */
 export function assignLoanInterestRatePercent(principalAmount: number): number {
   if (!Number.isFinite(principalAmount) || principalAmount <= 0) {
     throw new Error("principalAmount must be a positive finite number");
   }
-  return principalAmount < 100 ? 25 : 15;
+  return 15;
 }
 
 /** Maps API-style status labels to Prisma LoanStatus (e.g. repaid → COMPLETED). */

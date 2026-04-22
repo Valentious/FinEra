@@ -3,8 +3,6 @@ import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopBar } from "./AdminTopBar";
 import { useState } from "react";
 import type { IsoCurrency } from "../components/CurrencyTag";
-import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
-
 type Props = {
   wsConnected: boolean;
   onLogout: () => void;
@@ -23,12 +21,11 @@ export function AdminLayout({ wsConnected, onLogout }: Props) {
             wsConnected={wsConnected}
             onLogout={onLogout}
           />
-          <main className="flex-1 overflow-auto p-6 pb-[max(2rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]">
+          <main className="flex-1 overflow-auto p-6 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]">
             <Outlet context={{ currency }} />
           </main>
         </div>
       </div>
-      <DashboardTrustRibbon insetForSidebar sidebarInsetClassName="md:left-56" />
     </>
   );
 }

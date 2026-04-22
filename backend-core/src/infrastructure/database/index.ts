@@ -5,9 +5,22 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { forbiddenError } from "../../middlewares/errorHandler.js";
 
-const DATABASE_URL = process.env.DATABASE_URL;
+/** Same default as `.env.example` — only when unset (local dev). Production must set DATABASE_URL. */
+const DEFAULT_DEV_DATABASE_URL = "postgresql://finera:finera_secure@localhost:5432/finera_db";
+
+const rawUrl = process.env.DATABASE_URL?.trim();
+const DATABASE_URL =
+  rawUrl ||
+  (process.env.NODE_ENV !== "production" ? DEFAULT_DEV_DATABASE_URL : undefined);
+
 if (!DATABASE_URL) {
-  throw new Error("DATABASE_URL is not set");
+  throw new Error(
+    "DATABASE_URL is not set. Copy backend-core/.env.example to backend-core/.env or set DATABASE_URL."
+  );
+}
+
+if (!rawUrl && process.env.NODE_ENV !== "production") {
+  process.env.DATABASE_URL = DATABASE_URL;
 }
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };

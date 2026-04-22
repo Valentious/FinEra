@@ -30,6 +30,7 @@ import { validationError, notFoundError } from "../../middlewares/errorHandler.j
 import { prisma } from "../../infrastructure/database/index.js";
 import type { Transaction as PrismaTransaction } from "@prisma/client";
 import { getWalletLabel, normalizeCurrencyCode } from "../../shared/wallet-label.js";
+import { onRepaymentTrustEvent } from "../credit-engine/domain/trust-score.service.js";
 
 function describeTransaction(t: PrismaTransaction): string {
   const meta = t.metadata as Record<string, unknown> | null | undefined;
@@ -244,12 +245,15 @@ const repaySchema = z
     deductFromWallet: z.boolean().optional(),
     /** @deprecated use deductFromWallet */
     deductFromSavings: z.boolean().optional(),
+    /** When true, applies early-repayment trust bonus (+8 vs +5 on-time). */
+    earlyRepayment: z.boolean().optional(),
   })
   .transform((b) => ({
     amount: b.amount,
     method: b.method,
     currency: b.currency,
     deductFromWallet: b.deductFromWallet ?? b.deductFromSavings ?? false,
+    earlyRepayment: b.earlyRepayment ?? false,
   }));
 
 /**
@@ -402,6 +406,11 @@ router.post("/repay", fraudDetectionMiddleware, async (req, res, next) => {
       method,
       currency,
       deductFromWallet,
+    });
+
+    await onRepaymentTrustEvent(req.user!.id, {
+      earlyRepayment: parsed.data.earlyRepayment,
+      loanFullyPaid: result.loanFullyPaid,
     });
 
     res.status(201).json({

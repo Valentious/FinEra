@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { adminLogin } from "../services/adminApi";
 import { adminColors } from "../design-system/tokens";
 import { ShieldCheck, Fingerprint } from "lucide-react";
-import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
-
 export function AdminLogin() {
   const nav = useNavigate();
   const [email, setEmail] = useState("");
@@ -27,8 +25,7 @@ export function AdminLogin() {
   }
 
   return (
-    <>
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
       <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl">
         <div className="mb-6 flex items-center gap-3">
           <div className="rounded-xl bg-emerald-600 p-3 text-white">
@@ -106,7 +103,5 @@ export function AdminLogin() {
         </form>
       </div>
     </div>
-    <DashboardTrustRibbon insetForSidebar={false} />
-    </>
   );
 }

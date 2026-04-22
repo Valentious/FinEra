@@ -70,7 +70,7 @@ export const apiService = USE_MOCK_DATA ? {
   getCreditLimits: async () => {
     const user = await mockApi.mockGetUserProfile();
     const limits = {
-      student: { min: 20, max: 200 },
+      student: { min: 20, max: 30 },
       staff: { min: 30, max: 2000 },
       alumni: { min: 30, max: 2000 },
     };

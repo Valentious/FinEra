@@ -1,8 +1,6 @@
 import { cn } from "@/app/components/ui/utils";
 import { LogOut, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
-import { FinEraLogoText } from "@/app/components/FinEraLogoText";
 import { NotificationsDropdown } from "@/app/components/NotificationsDropdown";
 import { useMemberNavItems, isMemberNavId, type MemberNavId } from "@/app/navigation/memberNav";
 import { useI18n } from "@/app/providers/I18nProvider";
@@ -69,66 +67,35 @@ export function MainNavigation({
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-stretch border-b border-white/25 bg-gradient-to-br from-primary to-[#1ebe5d] px-4 text-white shadow-[0_8px_24px_-8px_rgba(37,211,102,0.35)]">
-        <div className="pointer-events-none absolute -right-12 -top-10 h-36 w-44 rounded-full bg-white/20 blur-2xl" aria-hidden />
-        <div className="relative z-10 flex w-full items-center justify-between">
-          <div className="flex items-center gap-3">
+      <header className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 dark:bg-slate-950/95 md:pl-64">
+        <div className="flex w-full items-center justify-end gap-3 sm:gap-4">
+          <NotificationsDropdown onNavigate={onNavigate} />
+          <div className="mx-1 hidden h-8 w-px bg-border sm:block" aria-hidden />
+          <div className="flex items-center gap-2">
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-semibold leading-none text-foreground">{userName}</p>
+              <p className="text-[10px] font-medium tracking-wide text-muted-foreground">
+                {walletNumericId
+                  ? `Wallet ID: ${walletNumericId}`
+                  : accountNumber
+                    ? `Acc: ${accountNumber}`
+                    : "Verified Member"}
+              </p>
+            </div>
             <div
-              className="flex cursor-pointer items-center gap-2"
-              onClick={() => onNavigate("dashboard")}
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-muted/60 hover:bg-muted"
+              onClick={() => onNavigate("profileSettings")}
+              role="button"
+              tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  onNavigate("dashboard");
+                  onNavigate("profileSettings");
                 }
               }}
-              role="button"
-              tabIndex={0}
+              aria-label={t("nav.accountSettings")}
             >
-              <FinEraShieldIcon size={32} className="rounded-lg ring-1 ring-white/35" />
-              <div className="hidden flex-col leading-tight sm:flex">
-                <FinEraLogoText
-                  variant="dark"
-                  size="md"
-                  as="span"
-                  className="font-bold text-lg text-white [&_.fin]:text-white [&_.era]:text-emerald-100"
-                />
-                <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
-                  INCLUSIVE CREDIT
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <NotificationsDropdown onNavigate={onNavigate} />
-            <div className="mx-1 h-8 w-px bg-white/35" />
-            <div className="flex items-center gap-2 pl-2">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-semibold leading-none text-white">{userName}</p>
-                <p className="text-[10px] font-medium tracking-wide text-emerald-100/90">
-                  {walletNumericId
-                    ? `Wallet ID: ${walletNumericId}`
-                    : accountNumber
-                      ? `Acc: ${accountNumber}`
-                      : "Verified Member"}
-                </p>
-              </div>
-              <div
-                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-2 border-white/40 bg-white/20 hover:bg-white/30"
-                onClick={() => onNavigate("profileSettings")}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onNavigate("profileSettings");
-                  }
-                }}
-                aria-label={t("nav.accountSettings")}
-              >
-                <User className="h-6 w-6 text-white" />
-              </div>
+              <User className="h-5 w-5 text-foreground" />
             </div>
           </div>
         </div>
@@ -136,7 +103,7 @@ export function MainNavigation({
 
       <aside
         className={cn(
-          "fixed bottom-0 left-0 top-16 z-30 hidden w-64 flex-col border-r border-slate-100 bg-white shadow-[1px_0_12px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-950 md:flex",
+          "fixed bottom-0 left-0 top-14 z-30 hidden w-64 flex-col border-r border-slate-100 bg-white shadow-[1px_0_12px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-950 md:flex",
         )}
       >
         <nav className="flex flex-1 flex-col gap-1 p-3" aria-label="Main">

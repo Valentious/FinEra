@@ -1,20 +1,15 @@
 import type { ReactNode } from "react";
 import { adminColors } from "../design-system/tokens";
 import { ShieldOff, AlertTriangle, Scale } from "lucide-react";
-import { DashboardTrustRibbon } from "@/app/components/DashboardTrustRibbon";
-
 export function AccessDenied() {
   return (
-    <>
-      <div className="flex min-h-screen flex-col items-center justify-center px-4 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]">
-        <FailShell
-          icon={<ShieldOff className="h-10 w-10 text-red-600" />}
-          title="Access denied"
-          body="Your session does not have rights for this action. All authorization is enforced on the server."
-        />
-      </div>
-      <DashboardTrustRibbon insetForSidebar={false} />
-    </>
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+      <FailShell
+        icon={<ShieldOff className="h-10 w-10 text-red-600" />}
+        title="Access denied"
+        body="Your session does not have rights for this action. All authorization is enforced on the server."
+      />
+    </div>
   );
 }
 

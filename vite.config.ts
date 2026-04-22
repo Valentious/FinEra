@@ -12,6 +12,9 @@ export default defineConfig({
   ],
   server: {
     host: true,
+    port: 5173,
+    /** If 5173 is busy (another Vite), try the next free port instead of failing */
+    strictPort: false,
     proxy: {
       "/api": { target: "http://localhost:4000", changeOrigin: true },
       "/ws": { target: "ws://localhost:4000", ws: true },

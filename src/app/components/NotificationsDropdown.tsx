@@ -127,9 +127,8 @@ interface NotificationsDropdownProps {
   onNavigate?: (screen: string) => void;
 }
 
-/** Top offset for panel/backdrop: safe area + slim notification bar (h-12) */
-/** Align with member top bar (`h-16` = 4rem) */
-const NOTIFICATION_PANEL_TOP = "calc(env(safe-area-inset-top, 0px) + 4rem)";
+/** Top offset for panel/backdrop: safe area + member top bar (`h-14` = 3.5rem) */
+const NOTIFICATION_PANEL_TOP = "calc(env(safe-area-inset-top, 0px) + 3.5rem)";
 
 export function NotificationsDropdown({ onNavigate }: NotificationsDropdownProps) {
   const [items, setItems] = useState<NotificationItem[]>([]);
