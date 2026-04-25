@@ -5,7 +5,7 @@ interface FinEraLogoProps {
   size?: "sm" | "md" | "lg" | "xl";
   /** Show tagline "INCLUSIVE CREDIT" */
   showTagline?: boolean;
-  /** "dark" = Fin white (on dark bg), "light" = Fin dark (on light bg) */
+  /** "dark" = Fin in deep white, INCLUSIVE CREDIT in brand orange; "light" = Fin in gold, tagline in brand orange */
   variant?: "dark" | "light";
   /** Custom class name */
   className?: string;
@@ -48,13 +48,13 @@ export const FinEraLogo = forwardRef<SVGSVGElement, FinEraLogoProps>(
             x={width / 2}
             y={fontSize + 2}
             textAnchor="middle"
-            fill="#FFFFFF"
+            fill="#ffffff"
             fontFamily="system-ui, -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif"
             fontSize={fontSize}
             fontWeight="700"
             letterSpacing="-0.02em"
           >
-            <tspan fill={variant === "light" ? "#0f172a" : "#FFFFFF"}>Fin</tspan>
+            <tspan fill={variant === "light" ? "#a67c00" : "#f8fafc"}>Fin</tspan>
             <tspan fill={`url(#eraGrad-${id})`}>Era</tspan>
           </text>
         </g>
@@ -64,7 +64,7 @@ export const FinEraLogo = forwardRef<SVGSVGElement, FinEraLogoProps>(
             x={width / 2}
             y={taglineY + 4}
             textAnchor="middle"
-            fill="#F97316"
+            fill="var(--brand-inclusive-credit-orange, #ea580c)"
             fontFamily="system-ui, -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif"
             fontSize={taglineSize}
             fontWeight="600"

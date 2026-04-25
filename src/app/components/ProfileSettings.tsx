@@ -369,18 +369,16 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                         className="h-11 rounded-xl bg-slate-50 text-muted-foreground cursor-not-allowed" 
                       />
                     </div>
-                    {userData.accountType !== "staff" && (
+                    {userData.accountType === "student" && userData.studentStaffId ? (
                       <div className="space-y-2">
-                        <Label className="text-xs font-bold text-muted-foreground">
-                          {userData.accountType === "student" ? "Student" : "Employer"} ID
-                        </Label>
+                        <Label className="text-xs font-bold text-muted-foreground">Student ID</Label>
                         <Input
                           defaultValue={userData.studentStaffId}
                           disabled
                           className="h-11 rounded-xl bg-slate-50 text-muted-foreground cursor-not-allowed"
                         />
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="pt-4 border-t border-border/60 flex justify-end">

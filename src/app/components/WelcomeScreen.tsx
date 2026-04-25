@@ -16,7 +16,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
           <FinEraShieldIcon size={56} className="rounded-xl" />
           <div className="flex flex-col items-center gap-2">
             <FinEraLogoText variant="light" size="xl" />
-            <p className="inclusive-text text-lg font-semibold text-muted-foreground tracking-[0.25em] uppercase mt-2 mb-0">INCLUSIVE CREDIT</p>
+            <p className="inclusive-text finera-inclusive-credit-tagline text-lg font-semibold tracking-[0.25em] uppercase mt-2 mb-0">INCLUSIVE CREDIT</p>
             <p className="text-base text-muted-foreground font-medium mt-1 mb-0">Formal Institutions Hub</p>
           </div>
         </div>

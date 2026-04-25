@@ -73,6 +73,14 @@ export function QuickActionsPanel({
 
   const items: QuickActionItem[] = [
     {
+      key: "repay",
+      label: t("quick.repayLoan"),
+      Icon: HandCoins,
+      onClick: onViewRepayment,
+      shell: "bg-green-600 shadow-green-950/30",
+      iconClass: "text-white",
+    },
+    {
       key: "cashIn",
       label: t("quick.cashIn"),
       Icon: Plus,
@@ -100,14 +108,6 @@ export function QuickActionsPanel({
           } satisfies QuickActionItem,
         ]
       : []),
-    {
-      key: "repay",
-      label: t("quick.repayLoan"),
-      Icon: HandCoins,
-      onClick: onViewRepayment,
-      shell: "bg-green-600 shadow-green-950/30",
-      iconClass: "text-white",
-    },
     ...(onMakePayment
       ? [
           {
@@ -130,6 +130,9 @@ export function QuickActionsPanel({
           : "rounded-2xl border border-slate-100 bg-card p-6 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
       }
     >
+      <p className="mb-4 text-balance text-left text-xs font-extrabold uppercase leading-snug tracking-wide text-foreground sm:text-sm">
+        {t("quick.eyebrow")}
+      </p>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(4.75rem,1fr))] justify-items-center gap-x-3 gap-y-4 sm:gap-x-4 sm:gap-y-5">
         {items.map((item) => (
           <AppIconTile

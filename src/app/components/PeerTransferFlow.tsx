@@ -48,7 +48,7 @@ export function PeerTransferFlow({
   const handleLookup = async () => {
     const acc = accountNumber.replace(/\D/g, "").slice(0, 10);
     if (acc.length !== 10) {
-      toast.error(t("transfer.walletIdInvalid"));
+      toast.error(t("transfer.walletIdInvalid", { currency: cc }));
       return;
     }
     setLoading(true);
@@ -128,7 +128,7 @@ export function PeerTransferFlow({
         <Card className="p-6 border-slate-100 shadow-xl">
           <div className="space-y-4">
             <div>
-              <Label>{t("transfer.walletIdLabel")}</Label>
+              <Label>{t("transfer.walletIdLabel", { currency: cc })}</Label>
               <Input
                 className="mt-1 h-12 rounded-xl font-mono text-lg tracking-widest"
                 placeholder={t("transfer.walletIdPlaceholder")}

@@ -50,7 +50,7 @@ function StatusBadge({ status }: { status: MemberDocVerificationStatus | null | 
 
 function accountLabel(accountType: "student" | "staff" | "alumni"): string {
   if (accountType === "staff") return "Professional Account";
-  if (accountType === "alumni") return "Business Account";
+  if (accountType === "alumni") return "Sole Trader Account";
   return "Student Account";
 }
 

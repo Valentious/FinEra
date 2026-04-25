@@ -6,10 +6,10 @@
   "main": "dist/api-gateway/server.js",
   "scripts": {
     "build": "tsc",
-    "postinstall": "prisma generate",
-    "dev": "prisma generate && npx --yes tsx watch src/api-gateway/server.ts",
+    "postinstall": "node scripts/prisma-generate-safe.mjs",
+    "dev": "node scripts/prisma-generate-safe.mjs && npx --yes tsx watch src/api-gateway/server.ts",
     "start": "node dist/api-gateway/server.js",
-    "db:generate": "npx prisma generate",
+    "db:generate": "node scripts/prisma-generate-safe.mjs",
     "db:push": "npx prisma db push",
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "npx tsx prisma/seed.ts",

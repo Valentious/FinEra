@@ -10,7 +10,6 @@ import {
 } from "@/app/components/ui/select";
 import {
   CreditCard,
-  TrendingUp,
   ArrowUpRight,
   ArrowDownLeft,
   Info,
@@ -45,6 +44,7 @@ import {
   onDisciplineGradientShellShadow,
 } from "@/lib/disciplineGradient";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
+import { BrandHeroFigure } from "@/app/components/BrandHeroFigure";
 
 export type CurrencyOption = "USD" | "ZIG" | "ZAR" | "EUR" | "GBP";
 
@@ -285,12 +285,26 @@ export function DashboardV2({
   const balanceAmountClassName = `m-0 inline-block whitespace-nowrap text-[clamp(1.375rem,calc(0.75rem+2.25vw),2.5rem)] leading-none ${finAmountPrimary}`;
 
   return (
-    <div className="mx-auto w-full max-w-[min(100%,90rem)] space-y-6 animate-in fade-in duration-700 pb-10 sm:space-y-8 sm:pb-12 lg:space-y-10">
+    <div className="relative mx-auto w-full max-w-[min(100%,90rem)]">
+      <div
+        className="pointer-events-none absolute -right-1 top-[clamp(1rem,12dvh,6rem)] z-0 hidden h-[min(48dvh,400px)] w-[min(38vw,15.5rem)] sm:block md:-right-2 md:h-[min(50dvh,420px)] md:w-[min(32vw,17.5rem)] lg:top-[clamp(1.5rem,10dvh,5rem)] lg:-right-4 lg:w-[min(28vw,20rem)]"
+        aria-hidden
+      >
+        <BrandHeroFigure variant="dashboard-ambient" />
+      </div>
+
+      <div className="relative z-10 space-y-6 pb-10 animate-in fade-in duration-700 sm:space-y-8 sm:pb-12 lg:space-y-10">
       {/* Top ribbon — same canvas as splash (intense green bottom-right → soft top-left). */}
       <div
         className={`relative overflow-hidden rounded-2xl border border-white/25 p-6 sm:p-8 ${onDisciplineGradientShellShadow} ${onDisciplineGradientText}`}
       >
         <div className="finera-gradient-plate finera-gradient-plate--ribbon pointer-events-none" aria-hidden />
+        <div
+          className="pointer-events-none absolute bottom-0 right-0 z-[1] hidden h-[5.5rem] w-[46%] max-w-[7.5rem] overflow-hidden sm:block sm:h-[6.5rem] sm:max-w-[9.5rem] md:h-[7.75rem] md:max-w-[11rem] lg:h-[8.5rem] lg:max-w-[12rem]"
+          aria-hidden
+        >
+          <BrandHeroFigure variant="dashboard-ribbon" />
+        </div>
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
             <h1 className="text-[12pt] font-semibold tracking-tight text-black">
@@ -299,7 +313,7 @@ export function DashboardV2({
             {displayAccountNumber &&
             /^\d{10}$/.test(String(displayAccountNumber).replace(/\s/g, "")) ? (
               <p className={`mt-2 text-xs font-medium ${onDisciplineGradientMuted}`}>
-                Wallet ID · {displayAccountNumber}
+                {selectedCurrency} Wallet ID · {displayAccountNumber}
               </p>
             ) : null}
           </div>
@@ -315,14 +329,17 @@ export function DashboardV2({
               <Select value={selectCurrency} onValueChange={(v) => onCurrencyChange(v as CurrencyOption)}>
                 <SelectTrigger
                   aria-labelledby="dash-ribbon-currency-label"
-                  className={`h-10 border font-semibold text-sm shadow-none sm:min-w-[13.75rem] lg:min-w-[15rem] ${onDisciplineGradientGlass} ${onDisciplineGradientText}`}
+                  className="h-10 w-full min-w-0 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] px-4 py-2 text-left text-sm font-semibold text-[#1A1A1A] shadow-none hover:bg-[#F9FAFB] focus:bg-[#F9FAFB] data-[state=open]:bg-[#F9FAFB] focus-visible:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-200/40 sm:min-w-[13.75rem] lg:min-w-[15rem] dark:bg-[#FFFFFF] dark:text-[#1A1A1A] dark:hover:bg-[#F9FAFB] dark:focus:bg-[#F9FAFB] dark:data-[state=open]:bg-[#F9FAFB] [&_svg]:shrink-0 [&_svg]:text-gray-700"
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-2">
-                    <Coins className={`h-4 w-4 shrink-0 ${onDisciplineGradientIcon}`} aria-hidden />
+                    <Coins className="h-4 w-4 shrink-0 text-gray-600" aria-hidden />
                     <SelectValue placeholder="Select currency" />
                   </div>
                 </SelectTrigger>
-                <SelectContent align="end">
+                <SelectContent
+                  align="end"
+                  className="z-50 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] text-[#1A1A1A] shadow-md dark:bg-[#FFFFFF] dark:text-[#1A1A1A]"
+                >
                   {tabs.map((tab) => (
                     <SelectItem key={tab.currencyCode} value={tab.currencyCode}>
                       {tab.currencyCode} - {tab.displayName} ({tab.symbol})
@@ -335,13 +352,43 @@ export function DashboardV2({
         </div>
       </div>
 
+      <div>
+        <QuickActionsPanel
+          onAddSavings={onAddSavings}
+          onViewRepayment={onViewRepayment}
+          onWithdrawFunds={onWithdrawFunds}
+          onMakePayment={onMakePayment}
+          onPeerTransfer={onPeerTransfer}
+          compact
+        />
+      </div>
+
       {/* Primary row: stacks on small screens; two balanced columns md+ with fluid gap */}
       <div className="grid w-full grid-cols-1 items-stretch gap-[clamp(1rem,3.5vw,2rem)] sm:gap-6 lg:gap-8 md:grid-cols-2">
         <motion.div whileHover={{ y: -4 }} className="order-1 flex min-h-0 w-full min-w-0">
           <Card
             className={`relative flex h-full min-h-[18rem] w-full min-w-0 flex-col overflow-hidden rounded-[1.75rem] border-none p-[clamp(1.25rem,3vw,1.75rem)] sm:min-h-[20rem] sm:p-6 lg:min-h-[22rem] lg:p-7 ${onDisciplineGradientShellShadow} ${onDisciplineGradientText}`}
           >
-            <div className="finera-gradient-plate finera-gradient-plate--card pointer-events-none" aria-hidden />
+            <div
+              className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[1.75rem]"
+              aria-hidden
+            >
+              <img
+                src="/potential-credit-frame-bg.png"
+                alt=""
+                className="h-full w-full min-h-[12rem] object-cover object-[78%_100%] sm:object-[72%_center]"
+                loading="lazy"
+                decoding="async"
+              />
+              <div
+                className="absolute inset-0 bg-gradient-to-r from-white/[0.96] from-0% via-white/40 via-[38%] to-transparent to-[68%] dark:from-zinc-950/90 dark:via-zinc-950/35 dark:via-[38%] dark:to-transparent dark:to-[68%]"
+                aria-hidden
+              />
+            </div>
+            <div
+              className="finera-gradient-plate finera-gradient-plate--card pointer-events-none z-[1] opacity-[0.7]"
+              aria-hidden
+            />
             <div className="relative z-10 flex min-h-0 flex-1 flex-col">
               <div className="mb-4 flex items-start justify-between">
                 <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border p-0 ${onDisciplineGradientGlass}`}>
@@ -378,17 +425,11 @@ export function DashboardV2({
               </div>
               <div className="relative z-10 flex min-h-min min-w-0 flex-1 flex-col">
                 <div className="min-w-0 shrink-0">
-                  <div className="mb-3 flex items-start justify-between gap-2">
-                    <div className="shrink-0" role="img" aria-label="FinEra wallet">
-                      <FinEraShieldIcon
-                        dimensionClassName="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12"
-                        className="rounded-full ring-1 ring-white/45 shadow-lg"
-                      />
-                    </div>
-                    <div className={`flex items-center gap-1 rounded-full border px-2 py-1 ${onDisciplineGradientGlass}`}>
-                      <TrendingUp className={`h-3 w-3 ${onDisciplineGradientIcon}`} />
-                      <span className={`text-[10px] font-bold ${onDisciplineGradientText}`}>+12.5%</span>
-                    </div>
+                  <div className="mb-3" role="img" aria-label="FinEra wallet">
+                    <FinEraShieldIcon
+                      dimensionClassName="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12"
+                      className="rounded-full ring-1 ring-white/45 shadow-lg"
+                    />
                   </div>
                   <p className={`text-[10px] font-semibold uppercase tracking-widest sm:text-xs ${onDisciplineGradientText}`}>{walletLabel}</p>
                   <p className={`mt-0.5 text-[10px] font-semibold uppercase tracking-wider sm:text-[11px] ${onDisciplineGradientMuted}`}>
@@ -448,17 +489,6 @@ export function DashboardV2({
             </Card>
           </motion.div>
         </div>
-      </div>
-
-      <div>
-        <QuickActionsPanel
-          onAddSavings={onAddSavings}
-          onViewRepayment={onViewRepayment}
-          onWithdrawFunds={onWithdrawFunds}
-          onMakePayment={onMakePayment}
-          onPeerTransfer={onPeerTransfer}
-          compact
-        />
       </div>
 
       {/* 5️⃣ Financial Identity — TrustScore */}
@@ -635,14 +665,14 @@ export function DashboardV2({
 
             <p className={`text-sm mb-4 font-medium ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-muted-foreground'}`}>
               {safeLoyaltyProgress === 10 
-                ? "10% interest rate reduction activated on your next loan." 
-                : "Complete 10 loans with zero defaults to unlock a 10% interest rate reduction."}
+                ? "5% interest rate reduction activated on your next loan." 
+                : "Complete 10 loans with zero defaults to unlock a 5% interest rate reduction."}
             </p>
 
             {safeLoyaltyProgress === 9 && (
               <div className="px-4 py-3 bg-amber-50 border-2 border-amber-400 rounded-xl mb-4 dark:bg-amber-950/60 dark:border-amber-600">
                 <p className="text-amber-900 dark:text-amber-100 font-black text-sm text-center">
-                  🎉 One loan away from your 10% rate reduction!
+                  🎉 One loan away from your 5% rate reduction!
                 </p>
               </div>
             )}
@@ -729,6 +759,7 @@ export function DashboardV2({
           </div>
           </div>
         </Card>
+      </div>
       </div>
     </div>
   );

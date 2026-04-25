@@ -17,11 +17,21 @@ export function toBackendAccountType(accountType: AppAccountType): "STUDENT" | "
   return accountType === "student" ? "STUDENT" : accountType === "staff" ? "STAFF" : "ALUMNI";
 }
 
+/** Staff: asset + salary. Sole trader (alumni): asset only. Student: non-collateral only. */
 export function isLoanTypeAllowedForAccount(loanType: LoanType, accountType: AppAccountType): boolean {
   if (accountType === "student") {
-    return loanType === "COLLATERAL" || loanType === "NON_COLLATERAL";
+    return loanType === "NON_COLLATERAL";
+  }
+  if (accountType === "alumni") {
+    return loanType === "ASSET_BACKED";
   }
   return loanType === "ASSET_BACKED" || loanType === "SALARY_BACKED";
+}
+
+/** When stored loanType is not allowed, snap back to a safe default. */
+export function getDefaultLoanTypeForAccount(accountType: AppAccountType): LoanType {
+  if (accountType === "student") return "NON_COLLATERAL";
+  return "ASSET_BACKED";
 }
 
 export function requiresCollateralStep(loanType: LoanType): boolean {

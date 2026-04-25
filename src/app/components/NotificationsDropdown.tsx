@@ -57,8 +57,7 @@ const BUILTIN_SYSTEM_NOTIFICATION_ROWS: ReadonlyArray<{
     id: "finera-builtin-account-purpose",
     visual: "system",
     title: "Account purpose",
-    message:
-      "Your Wallet IDs identify you for transfers and support. Fund your FinCash wallets for savings, loans, and repayments in FinEra Inclusive Credit.",
+    message: "",
   },
   {
     id: "finera-builtin-security",
@@ -125,12 +124,14 @@ function handleActionUrl(
 
 interface NotificationsDropdownProps {
   onNavigate?: (screen: string) => void;
+  /** Match green top bar (frosted bell on solid green) */
+  headerTone?: "default" | "green";
 }
 
 /** Top offset for panel/backdrop: safe area + member top bar (`h-14` = 3.5rem) */
 const NOTIFICATION_PANEL_TOP = "calc(env(safe-area-inset-top, 0px) + 3.5rem)";
 
-export function NotificationsDropdown({ onNavigate }: NotificationsDropdownProps) {
+export function NotificationsDropdown({ onNavigate, headerTone = "default" }: NotificationsDropdownProps) {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -317,7 +318,17 @@ export function NotificationsDropdown({ onNavigate }: NotificationsDropdownProps
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-bold text-emerald-950">{row.title}</p>
-                            <p className="mt-0.5 text-xs leading-relaxed text-emerald-900/85">{row.message}</p>
+                            <p className="mt-0.5 text-xs leading-relaxed text-emerald-900/85">
+                              {row.id === "finera-builtin-account-purpose" ? (
+                                <>
+                                  Your Wallet IDs identify you for transfers and support. Fund your FinCash wallets for
+                                  savings, loans, and repayments in{" "}
+                                  <span className="finera-inclusive-credit-phrase">FinEra Inclusive Credit</span>.
+                                </>
+                              ) : (
+                                row.message
+                              )}
+                            </p>
                             <p className="mt-2 text-[10px] font-semibold text-emerald-700/70">FinEra guide</p>
                           </div>
                         </div>
@@ -449,17 +460,30 @@ export function NotificationsDropdown({ onNavigate }: NotificationsDropdownProps
         aria-haspopup="dialog"
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "relative h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 rounded-full",
-          "border border-emerald-200/90 bg-emerald-50/90 text-emerald-900 shadow-sm shadow-emerald-900/5 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-50",
-          "ring-2 ring-emerald-500/15 ring-offset-2 ring-offset-transparent dark:ring-emerald-400/20",
-          "hover:bg-emerald-100/90 hover:ring-emerald-500/25 dark:hover:bg-emerald-900/50",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          "relative h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 rounded-full shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+          headerTone === "green"
+            ? cn(
+                "border border-white/30 bg-white/15 text-white ring-2 ring-white/10 ring-offset-transparent shadow-black/10",
+                "hover:bg-white/25 hover:ring-white/20",
+                "focus-visible:ring-white focus-visible:ring-offset-emerald-800",
+              )
+            : cn(
+                "border border-emerald-200/90 bg-emerald-50/90 text-emerald-900 shadow-emerald-900/5 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-50",
+                "ring-2 ring-emerald-500/15 ring-offset-transparent dark:ring-emerald-400/20",
+                "hover:bg-emerald-100/90 hover:ring-emerald-500/25 dark:hover:bg-emerald-900/50",
+                "focus-visible:ring-primary focus-visible:ring-offset-background",
+              ),
         )}
       >
         <Bell className="h-5 w-5" strokeWidth={2.25} aria-hidden />
         {unreadCount > 0 && (
           <span
-            className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-emerald-100 bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-sm"
+            className={cn(
+              "absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 px-1 text-[10px] font-bold shadow-sm",
+              headerTone === "green"
+                ? "border-emerald-900/40 bg-amber-300 text-emerald-950"
+                : "border-emerald-100 bg-primary text-primary-foreground",
+            )}
             aria-hidden
           >
             {unreadCount > 9 ? "9+" : unreadCount}

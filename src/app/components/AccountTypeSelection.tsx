@@ -41,8 +41,8 @@ export function AccountTypeSelection({
           <div className="flex flex-col items-center gap-4 mb-4">
             <FinEraShieldIcon size={56} />
             <div className="hero-header flex flex-col items-center justify-center text-center">
-              <FinEraLogoText variant="light" size="lg" className="font-black" />
-              <p className="inclusive-text text-sm font-semibold text-muted-foreground tracking-[0.2em] uppercase mt-2 mb-0">
+              <FinEraLogoText variant="dark" size="lg" className="font-black" />
+              <p className="inclusive-text finera-inclusive-credit-tagline--on-dark text-sm font-semibold tracking-[0.2em] uppercase mt-2 mb-0">
                 INCLUSIVE CREDIT
               </p>
             </div>
@@ -132,7 +132,7 @@ export function AccountTypeSelection({
                 <Users className="w-8 h-8 text-explore-primary" />
               </div>
             </div>
-            <h3 className="text-xl">Business Account</h3>
+            <h3 className="text-xl">Sole Trader Account</h3>
             <p className="text-muted-foreground">For Enterprise Representatives</p>
             <Button className="w-full">Select</Button>
           </Card>

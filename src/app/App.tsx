@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { SplashScreen } from "@/app/components/SplashScreen";
 import { LoginRegister } from "@/app/components/LoginRegister";
@@ -29,8 +29,14 @@ import { MakePayment } from "@/app/components/MakePayment";
 import { AccountCreationSuccess } from "@/app/components/AccountCreationSuccess";
 import { Toaster, toast } from "sonner";
 import { apiService, checkBackendHealth, USE_MOCK_DATA, type UserData, type Transaction, type CreditApplication, type FinEraAccountNumbers, type CurrencyConfig } from "@/services/index";
+import type { LoginRequest } from "@/services/api";
 import type { LoanType } from "@/loan/loanTypes";
-import { isLoanTypeAllowedForAccount, requiresCollateralStep, requiresWalletDisciplineForAmount } from "@/loan/loanTypes";
+import {
+  getDefaultLoanTypeForAccount,
+  isLoanTypeAllowedForAccount,
+  requiresCollateralStep,
+  requiresWalletDisciplineForAmount,
+} from "@/loan/loanTypes";
 import { useAccountStore } from "@/stores/accountStore";
 import { fetchWalletsForStore } from "@/lib/walletFetcher";
 import { normalizeStoredMemberTrust } from "@/lib/memberTrustDefaults";
@@ -154,6 +160,15 @@ export default function App() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setLocale } = useI18n();
+  const simEmbedded = searchParams.get("simEmbedded") === "1";
+
+  useLayoutEffect(() => {
+    if (simEmbedded) {
+      document.documentElement.setAttribute("data-sim-embedded", "true");
+      return () => document.documentElement.removeAttribute("data-sim-embedded");
+    }
+    document.documentElement.removeAttribute("data-sim-embedded");
+  }, [simEmbedded]);
 
   const [currentScreen, setCurrentScreen] = useState<Screen>("splash");
   const [preSelectedAccountType, setPreSelectedAccountType] = useState<'student' | 'staff' | 'alumni' | null>(null);
@@ -552,6 +567,18 @@ export default function App() {
 
   const [agreementsLoanType, setAgreementsLoanType] = useState<LoanType>("NON_COLLATERAL");
 
+  useEffect(() => {
+    if (!userData.accountType) return;
+    setCreditApplication((p) => {
+      if (isLoanTypeAllowedForAccount(p.loanType, userData.accountType)) return p;
+      return { ...p, loanType: getDefaultLoanTypeForAccount(userData.accountType) };
+    });
+    setAgreementsLoanType((g) => {
+      if (isLoanTypeAllowedForAccount(g, userData.accountType)) return g;
+      return getDefaultLoanTypeForAccount(userData.accountType);
+    });
+  }, [userData.accountType]);
+
   const startLoanFromDashboard = useCallback(
     (loanType: LoanType) => {
       if (!isLoanTypeAllowedForAccount(loanType, userData.accountType)) {
@@ -585,8 +612,15 @@ export default function App() {
     "";
 
   const handleLogin = async (email: string, password?: string) => {
+    const line = preSelectedAccountType ?? "student";
+    const accountType: LoginRequest["accountType"] =
+      line === "staff" ? "STAFF" : line === "alumni" ? "ALUMNI" : "STUDENT";
     try {
-      const { user, token } = await apiService.login({ email, password: password || "" });
+      const { user, token } = await apiService.login({
+        email,
+        password: password || "",
+        accountType,
+      });
       if (user && token) {
         const normalizedEmail = normalizeStorageEmail(user.email || email);
         const updated: UserData = {
@@ -634,8 +668,15 @@ export default function App() {
       const email = String(data.email || "")
         .trim()
         .toLowerCase();
-      navigate(`/verify-email?email=${encodeURIComponent(email)}`);
-      toast.success("Account created. Check your email for a verification code.");
+      const phone = String(data.phoneNumber || "").trim();
+      const q = new URLSearchParams({ email });
+      if (phone) q.set("phone", phone);
+      navigate(`/verify-email?${q.toString()}`);
+      toast.success(
+        phone
+          ? "Account created. Check your email and phone for verification instructions."
+          : "Account created. Check your email for a verification code."
+      );
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Registration failed.";
       const isConnectionError =
@@ -778,6 +819,9 @@ export default function App() {
           activeScreen={currentScreen}
           onNavigate={handleMemberNavigate}
           onLogout={handleLogout}
+          userName={userData.fullName || "Member"}
+          walletNumericId={displayWalletNumericId || undefined}
+          walletCurrencyCode={selectedCurrency}
         />
       )}
 

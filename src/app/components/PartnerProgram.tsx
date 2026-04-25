@@ -11,7 +11,6 @@ import { Label } from "@/app/components/ui/label";
 import { PhoneInputField } from "@/app/components/PhoneInputField";
 import {
   Users,
-  DollarSign,
   Briefcase,
   UserPlus,
   Loader2,
@@ -50,7 +49,6 @@ export function PartnerProgram() {
   const [showForm, setShowForm] = useState(false);
   const [phoneError, setPhoneError] = useState("");
   const latestContactRef = useRef("");
-  latestContactRef.current = formData.contactNumber;
   const [formData, setFormData] = useState<PartnerProgramApplication & { services: string[] }>({
     fullName: "",
     idNumber: "",
@@ -58,6 +56,10 @@ export function PartnerProgram() {
     location: "",
     services: [],
   });
+
+  useEffect(() => {
+    latestContactRef.current = formData.contactNumber;
+  }, [formData.contactNumber]);
 
   const fetchProgram = useCallback(async () => {
     setLoading(true);
@@ -150,21 +152,20 @@ export function PartnerProgram() {
             <span className="text-[10px] font-black uppercase tracking-widest text-white/85">Partner Program</span>
           </div>
           <h1 className="mb-2 text-4xl font-black leading-tight">Transaction Partner Program</h1>
-          <p className="text-sm text-white/80">
+          <p className="text-sm font-medium text-black max-w-2xl rounded-lg bg-white/95 px-3 py-2 shadow-sm">
             Become a registered agent and earn through system-based financial services.
           </p>
         </div>
       </div>
 
       {error && (
-        <Card className="relative overflow-hidden border-white/25 shadow-md">
-          <FineraGradientBackdrop clip="panel" />
-          <CardContent className="relative z-10 flex items-center justify-between py-4 text-white">
-            <span className="text-sm text-white/95">{error}</span>
+        <Card className="border-amber-200/80 bg-white shadow-md dark:bg-card dark:border-amber-900/40">
+          <CardContent className="flex items-center justify-between gap-3 py-4 text-black">
+            <span className="text-sm font-medium text-black">{error}</span>
             <Button
               variant="outline"
               size="sm"
-              className="border-white/50 bg-white/15 text-white hover:bg-white/25"
+              className="shrink-0 border-slate-300 text-foreground hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
               onClick={fetchProgram}
             >
               <RefreshCw className="mr-2 h-4 w-4" /> Retry
@@ -206,7 +207,7 @@ export function PartnerProgram() {
       )}
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-8 border-none bg-white shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
           <div className="relative z-10">
@@ -223,20 +224,6 @@ export function PartnerProgram() {
                 Start Application
               </Button>
             )}
-          </div>
-        </Card>
-
-        <Card className="p-8 border-none bg-white shadow-xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-          <div className="relative z-10">
-            <DollarSign className="w-10 h-10 text-green-600 mb-6" />
-            <h3 className="text-xl font-black text-foreground mb-2">Earnings Calculator</h3>
-            <p className="text-muted-foreground text-sm font-medium mb-6">
-              Estimate your monthly revenue based on transaction volume and community size.
-            </p>
-            <Button variant="outline" className="w-full border-slate-200 font-black rounded-xl">
-              Calculate Revenue
-            </Button>
           </div>
         </Card>
 

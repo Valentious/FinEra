@@ -12,6 +12,14 @@
   --primary-green: #25D366;
   --primary-green-hover: #1ebe5d;
   --primary-green-light: #E8F8F1;
+  /** "Fin" wordmark: dark gold on light UI backgrounds (SVG light variant) */
+  --brand-fin-gold: #a67c00;
+  /** Legacy bright gold; prefer --brand-deep-white for Fin on dark/hero */
+  --brand-fin-gold-bright: #e4c35a;
+  /** Fin + INCLUSIVE CREDIT on dark, splash, and saturated brand surfaces */
+  --brand-deep-white: #f8fafc;
+  /** "INCLUSIVE CREDIT" / product name subbrand */
+  --brand-inclusive-credit-orange: #ea580c;
   --background-main: #F7FDF9;
   /* Light theme: UI copy is black / near-black (strict monochrome discipline) */
   --text-primary: #000000;

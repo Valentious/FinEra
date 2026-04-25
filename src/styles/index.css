@@ -2,6 +2,7 @@
 @import './tailwind.css';
 @import './theme.css';
 @import './app-canvas.css';
+@import './mobile-sim.css';
 @import './financial.css';
 
 /* react-phone-input-2 — FinEra: side-by-side flag + field (no text under dial code) */
@@ -74,7 +75,14 @@
   text-align: center;
 }
 
-/* FinEra Logo - Fin (white) + Era (green) */
+/* "INCLUSIVE CREDIT" and matching product name highlights */
+.finera-inclusive-credit-tagline,
+.finera-inclusive-credit-tagline--on-dark,
+.finera-inclusive-credit-phrase {
+  color: var(--brand-inclusive-credit-orange);
+}
+
+/* FinEra Logo — Fin + INCLUSIVE CREDIT: deep white on dark/hero; readable on light UI */
 .finera-logo {
   font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif;
   font-weight: 700;
@@ -82,15 +90,15 @@
   line-height: 1.1;
   margin: 0;
 }
-.finera-logo .fin {
-  color: #ffffff;
+.finera-logo:not(.finera-logo-light) .fin {
+  color: var(--brand-deep-white);
 }
 .finera-logo .era {
   color: var(--primary-green);
 }
-/* Dark mode: Fin on light backgrounds */
+/* Fin on light card backgrounds (contrast) */
 .finera-logo-light .fin {
-  color: #0f172a;
+  color: var(--text-primary);
 }
 .finera-logo-light .era {
   color: var(--primary-green);

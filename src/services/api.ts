@@ -100,6 +100,8 @@ export interface UserData {
    * Operating mode chosen at onboarding (Deriv-style): explore (stored as `demo`) = simulated workflows only; real = live operations.
    */
   accountMode?: "real" | "demo";
+  /** Set after SMS OTP when a phone is on the account; mirrors backend `User.phoneVerified`. */
+  phoneVerified?: boolean;
   /** ISO 8601 — when Terms + Privacy were accepted at registration (mirrors backend audit). */
   registrationConsentAt?: string;
   registrationConsentVersion?: string;
@@ -139,6 +141,8 @@ export interface CreditApplication {
 export interface LoginRequest {
   email: string;
   password: string;
+  /** Must match the account line selected at sign-up (maps to backend enum). */
+  accountType: "STUDENT" | "STAFF" | "ALUMNI";
 }
 
 export interface RegisterRequest {
@@ -150,9 +154,9 @@ export interface RegisterRequest {
   accountType: 'student' | 'staff' | 'alumni';
   /** Zimbabwe-only onboarding — must be `ZW`. */
   country: string;
-  /** City display name from the Zimbabwe registration list */
+  /** City (optional at signup; may be empty). */
   city: string;
-  /** Institution display name from the Zimbabwe registration list */
+  /** Institution or organisation (optional at signup; may be empty). */
   institution: string;
   /** Explore (practice) vs live account; API value `demo` = explore (stored in user metadata on the backend) */
   accountMode?: "real" | "demo";
@@ -311,6 +315,7 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
       accountMode: mode,
       registrationConsentAt: consentAt,
       registrationConsentVersion: data.consentVersion,
+      phoneVerified: !data.phoneNumber?.trim(),
     },
     message: res.message || 'Account created. Check your email for a verification code.',
   };
@@ -322,11 +327,16 @@ export async function register(data: RegisterRequest): Promise<{ user: UserData;
 export async function verifyRegistrationEmail(
   email: string,
   code: string
-): Promise<{ user: UserData; token: string; message: string }> {
+): Promise<{ user: UserData; token: string; message: string; requiresPhoneVerification?: boolean }> {
   const res = await apiCall<{
     success: boolean;
     message?: string;
-    data?: { accessToken: string; refreshToken: string; expiresIn: number };
+    data?: {
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
+      requiresPhoneVerification?: boolean;
+    };
   }>("/auth/verify-email", {
     method: "POST",
     body: JSON.stringify({ email: email.trim().toLowerCase(), code: code.trim() }),
@@ -342,7 +352,46 @@ export async function verifyRegistrationEmail(
     user,
     token: res.data?.accessToken || "",
     message: res.message || "Email verified.",
+    requiresPhoneVerification: res.data?.requiresPhoneVerification === true,
   };
+}
+
+/**
+ * POST /auth/verify-phone - confirms SMS code after email is verified.
+ */
+export async function verifyPhone(
+  email: string,
+  code: string
+): Promise<{ user: UserData; token: string; message: string }> {
+  const res = await apiCall<{
+    success: boolean;
+    message?: string;
+    data?: { accessToken: string; refreshToken: string; expiresIn: number };
+  }>("/auth/verify-phone", {
+    method: "POST",
+    body: JSON.stringify({ email: email.trim().toLowerCase(), code: code.trim() }),
+  });
+  if (res.data?.accessToken) {
+    localStorage.setItem("auth_token", res.data.accessToken);
+    localStorage.setItem("accessToken", res.data.accessToken);
+    localStorage.setItem("refreshToken", res.data.refreshToken || "");
+  }
+  localStorage.setItem("active_user_email", email.trim().toLowerCase());
+  const user = await getUserProfile();
+  return {
+    user,
+    token: res.data?.accessToken || "",
+    message: res.message || "Phone verified.",
+  };
+}
+
+/** POST /auth/resend-phone-otp - resend SMS for registration phone verification. */
+export async function resendPhoneOtp(email: string): Promise<{ success: boolean; message: string }> {
+  const res = await apiCall<{ success: boolean; message?: string }>("/auth/resend-phone-otp", {
+    method: "POST",
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  });
+  return { success: !!res.success, message: res.message || "Verification code sent." };
 }
 
 /**
@@ -759,6 +808,7 @@ export async function getUserProfile(currency: string = 'USD'): Promise<UserData
       zig: zigWallet?.accountNumber || '',
       zar: zarWallet?.accountNumber || '',
     },
+    phoneVerified: p.phoneVerified === true,
     ...(accountMode ? { accountMode } : {}),
   };
 }
@@ -1821,7 +1871,9 @@ export default {
   login,
   verifyOTP,
   verifyRegistrationEmail,
+  verifyPhone,
   resendOTP,
+  resendPhoneOtp,
   requestPasswordReset,
   verifyPasswordResetOtp,
   completePasswordReset,

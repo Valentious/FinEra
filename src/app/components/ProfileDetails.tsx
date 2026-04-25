@@ -15,16 +15,13 @@ import {
 } from "lucide-react";
 import type { CompleteProfilePayload } from "@/types/profileCompletion";
 import {
-  extractStaffEmployerIdContent,
   extractStudentIdContent,
   formatNationalIdDisplay,
   isNationalIdValid,
-  isStaffEmployerIdValid,
   isStudentIdValid,
   normalizeCommaAddressPart,
   normalizeNationalIdForSubmit,
   NATIONAL_ID_ERROR,
-  STAFF_EMPLOYER_ID_ERROR,
   stripKycInvisible,
   STRUCTURED_ADDRESS_ERROR,
   STUDENT_ID_ERROR,
@@ -51,12 +48,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
   const [titleBlurred, setTitleBlurred] = useState(false);
 
   const nationalOk = isNationalIdValid(nationalIdNumber);
-  const studentOk =
-    accountType === "staff"
-      ? true
-      : accountType === "student"
-        ? isStudentIdValid(studentStaffId)
-        : isStaffEmployerIdValid(studentStaffId);
+  const studentOk = accountType === "student" ? isStudentIdValid(studentStaffId) : true;
   const addressResult = useMemo(
     () => validateStructuredResidentialAddress(addressLine1, addressLine2),
     [addressLine1, addressLine2]
@@ -68,7 +60,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
   const showNationalError =
     (nationalBlurred || nationalIdNumber.length > 0) && nationalIdNumber.length > 0 && !nationalOk;
   const showStudentError =
-    accountType !== "staff" &&
+    accountType === "student" &&
     (studentBlurred || studentStaffId.length > 0) &&
     studentStaffId.length > 0 &&
     !studentOk;
@@ -88,17 +80,10 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
     onNationalChange(text);
   }, [onNationalChange]);
 
-  const onStudentChange = useCallback(
-    (raw: string) => {
-      const cleaned = stripKycInvisible(raw).replace(/\s+/g, "");
-      if (accountType === "student") {
-        setStudentStaffId(extractStudentIdContent(cleaned));
-      } else if (accountType === "alumni") {
-        setStudentStaffId(extractStaffEmployerIdContent(cleaned));
-      }
-    },
-    [accountType]
-  );
+  const onStudentChange = useCallback((raw: string) => {
+    const cleaned = stripKycInvisible(raw).replace(/\s+/g, "");
+    setStudentStaffId(extractStudentIdContent(cleaned));
+  }, []);
 
   const onStudentPaste = useCallback(
     (e: React.ClipboardEvent<HTMLInputElement>) => {
@@ -119,7 +104,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
   const handleComplete = () => {
     setTitleBlurred(true);
     setNationalBlurred(true);
-    if (accountType !== "staff") setStudentBlurred(true);
+    if (accountType === "student") setStudentBlurred(true);
     setAddressBlurred(true);
     if (accountType === "staff" || accountType === "alumni") setSalaryBlurred(true);
     if (!canSubmit) return;
@@ -130,40 +115,13 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
     const payload: CompleteProfilePayload = {
       title: title.trim(),
       nationalIdNumber: normalizeNationalIdForSubmit(nationalIdNumber),
-      studentStaffId:
-        accountType === "student"
-          ? extractStudentIdContent(studentStaffId)
-          : accountType === "alumni"
-            ? extractStaffEmployerIdContent(studentStaffId)
-            : "",
+      studentStaffId: accountType === "student" ? extractStudentIdContent(studentStaffId) : "",
       salaryRange: accountType === "student" ? null : salaryRange,
       addressLine1: addr.normalizedLine1,
       addressLine2: addr.normalizedLine2,
     };
 
     void onComplete(payload);
-  };
-
-  const getIdLabel = () => {
-    switch (accountType) {
-      case "student":
-        return "Student ID Number";
-      case "alumni":
-        return "Employer ID Number";
-      default:
-        return "";
-    }
-  };
-
-  const getIdPlaceholder = () => {
-    switch (accountType) {
-      case "student":
-        return "N02427344M";
-      case "alumni":
-        return "E.g. ABCDEF12345";
-      default:
-        return "";
-    }
   };
 
   const getIcon = () => {
@@ -230,8 +188,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
     { value: "5001+", label: "$5,001+" },
   ];
 
-  const studentIdErrorMessage =
-    accountType === "student" ? STUDENT_ID_ERROR : accountType === "alumni" ? STAFF_EMPLOYER_ID_ERROR : "";
+  const studentIdErrorMessage = accountType === "student" ? STUDENT_ID_ERROR : "";
 
   return (
     <div className="max-w-md mx-auto space-y-6 animate-in fade-in duration-500">
@@ -300,22 +257,22 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
             </p>
           </div>
 
-          {(accountType === "student" || accountType === "alumni") && (
+          {accountType === "student" && (
             <div className="space-y-2">
               <Label className="font-bold text-foreground ml-1 flex items-center gap-2" htmlFor="kyc-student-staff-id">
                 <Icon className="w-4 h-4 text-emerald-600" />
-                {getIdLabel()}
+                Student ID Number
               </Label>
               <Input
                 id="kyc-student-staff-id"
-                placeholder={getIdPlaceholder()}
+                placeholder="N02427344M"
                 autoComplete="off"
                 spellCheck={false}
                 value={studentStaffId}
                 onChange={(e) => onStudentChange(e.target.value)}
                 onBlur={() => setStudentBlurred(true)}
                 onPaste={onStudentPaste}
-                maxLength={accountType === "student" ? 10 : 20}
+                maxLength={10}
                 aria-invalid={showStudentError}
                 className={`h-14 rounded-2xl border-slate-200 focus:ring-emerald-600 font-semibold text-base uppercase ${
                   showStudentError ? "border-red-500 focus-visible:ring-red-500" : ""
@@ -325,9 +282,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
                 <p className="text-sm font-medium text-red-600">{studentIdErrorMessage}</p>
               ) : null}
               <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1 px-1">
-                {accountType === "student"
-                  ? "* One letter, eight digits, one letter — letters auto-uppercased"
-                  : "* 7–20 characters: start with a letter; letters and digits only"}
+                * One letter, eight digits, one letter — letters auto-uppercased
               </p>
             </div>
           )}
@@ -336,7 +291,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
             <div className="space-y-2">
               <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-emerald-600" />
-                Monthly Salary Range
+                Monthly Income Range
               </Label>
               <select
                 value={salaryRange}
@@ -347,7 +302,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
                   showSalaryError ? "border border-red-500" : ""
                 }`}
               >
-                <option value="">Select your salary range</option>
+                <option value="">Select your income range</option>
                 {salaryRanges.map((range) => (
                   <option key={range.value} value={range.value}>
                     {range.label}
@@ -355,7 +310,7 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
                 ))}
               </select>
               {showSalaryError ? (
-                <p className="text-sm font-medium text-red-600">Salary range is required</p>
+                <p className="text-sm font-medium text-red-600">Income range is required</p>
               ) : null}
               <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1 px-1">
                 * Used to determine your credit limit eligibility

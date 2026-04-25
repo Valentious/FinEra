@@ -6,13 +6,17 @@
  */
 
 import { prisma } from "../../infrastructure/database/index.js";
-import type { UserStatus } from "@prisma/client";
+import type { AccountType, UserStatus } from "@prisma/client";
 
 /** Result: User + UserAuth for login. Identity + Credentials joined. */
 export type UserAuthRow = {
   id: string;
   email: string;
+  accountType: AccountType;
   status: UserStatus;
+  emailVerified: boolean;
+  phoneNumber: string | null;
+  phoneVerified: boolean;
   passwordHash: string;
   lockedUntil: Date | null;
 };
@@ -27,7 +31,11 @@ export async function findUserByEmail(normalizedEmail: string): Promise<UserAuth
     select: {
       id: true,
       email: true,
+      accountType: true,
       status: true,
+      emailVerified: true,
+      phoneNumber: true,
+      phoneVerified: true,
       authCredentials: {
         select: { passwordHash: true, lockedUntil: true },
       },
@@ -37,7 +45,11 @@ export async function findUserByEmail(normalizedEmail: string): Promise<UserAuth
   return {
     id: user.id,
     email: user.email,
+    accountType: user.accountType,
     status: user.status,
+    emailVerified: user.emailVerified,
+    phoneNumber: user.phoneNumber,
+    phoneVerified: user.phoneVerified,
     passwordHash: user.authCredentials.passwordHash,
     lockedUntil: user.authCredentials.lockedUntil,
   };

@@ -3,7 +3,6 @@ import { Card } from "@/app/components/ui/card";
 import { 
   PiggyBank, 
   CreditCard, 
-  TrendingUp, 
   ArrowUpRight, 
   ArrowDownLeft, 
   Wallet,
@@ -136,13 +135,9 @@ export function Dashboard({
             <div className={`absolute -right-16 -top-16 h-32 w-32 rounded-full blur-3xl ${onDisciplineGradientOrb}`} />
             <div className="relative z-10 flex flex-1 flex-col justify-between">
               <div>
-                <div className="mb-4 flex items-start justify-between">
-                  <div className={`rounded-2xl border p-3 ${onDisciplineGradientGlass}`}>
+                <div className="mb-4">
+                  <div className={`inline-flex rounded-2xl border p-3 ${onDisciplineGradientGlass}`}>
                     <Wallet className={`h-6 w-6 ${onDisciplineGradientIcon}`} />
-                  </div>
-                  <div className={`flex items-center gap-1 rounded-full border px-2 py-1 ${onDisciplineGradientGlass}`}>
-                    <TrendingUp className={`h-3 w-3 ${onDisciplineGradientIcon}`} />
-                    <span className={`text-[10px] font-bold ${onDisciplineGradientText}`}>+12.5%</span>
                   </div>
                 </div>
                 <p className={`text-xs font-semibold uppercase tracking-widest ${onDisciplineGradientText}`}>{walletLabel}</p>

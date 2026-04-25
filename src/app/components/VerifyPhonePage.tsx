@@ -5,18 +5,24 @@ import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
 import { Input } from "@/app/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/app/components/ui/input-otp";
-import { Loader2, Mail, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, Phone, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { apiService } from "@/services";
 import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 import { FinEraLogoText } from "@/app/components/FinEraLogoText";
 const RESEND_COOLDOWN_SEC = 30;
 
-export function VerifyEmailPage() {
+function maskPhoneHint(phone: string): string {
+  const t = phone.replace(/\s/g, "");
+  if (t.length < 4) return "your number";
+  return `${t.slice(0, 3)}…${t.slice(-2)}`;
+}
+
+export function VerifyPhonePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const emailFromQuery = (searchParams.get("email") || "").trim().toLowerCase();
-  const regPhone = (searchParams.get("phone") || "").trim();
+  const phoneHint = (searchParams.get("phone") || "").trim();
 
   const [email, setEmail] = useState(emailFromQuery);
   const [code, setCode] = useState("");
@@ -43,20 +49,13 @@ export function VerifyEmailPage() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      const result = await apiService.verifyRegistrationEmail(email, code);
+      const result = await apiService.verifyPhone(email, code);
       const payload = {
         user: result.user,
         nextScreen: "verify" as const,
       };
       sessionStorage.setItem("finera_post_verify", JSON.stringify(payload));
-      toast.success(result.message || "Email verified. Welcome!");
-      if (result.requiresPhoneVerification) {
-        const phone = String(result.user.phoneNumber || result.user.mobile || "").trim();
-        const q = new URLSearchParams({ email: email });
-        if (phone) q.set("phone", phone);
-        navigate(`/verify-phone?${q.toString()}`);
-        return;
-      }
+      toast.success(result.message || "Phone verified.");
       navigate("/?continue=onboarding");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed.");
@@ -70,7 +69,7 @@ export function VerifyEmailPage() {
     setResending(true);
     setError("");
     try {
-      const r = await apiService.resendOTP(email);
+      const r = await apiService.resendPhoneOtp(email);
       setResendTimer(RESEND_COOLDOWN_SEC);
       toast.success(r.message || "Code sent.");
     } catch (err) {
@@ -80,15 +79,11 @@ export function VerifyEmailPage() {
     }
   }, [email, resendTimer]);
 
-  const goChangeEmail = () => {
-    navigate("/?resume=register");
-  };
-
   return (
     <div className="flex min-h-dvh items-center justify-center bg-transparent p-4 pb-[max(1.5rem,calc(3.25rem+env(safe-area-inset-bottom,0px)))]">
       <div className="w-full max-w-md">
         <div className="flex justify-start mb-4">
-          <Button variant="ghost" onClick={() => navigate("/")} className="gap-2 text-muted-foreground">
+          <Button variant="ghost" onClick={() => navigate("/?resume=register")} className="gap-2 text-muted-foreground">
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
@@ -99,7 +94,7 @@ export function VerifyEmailPage() {
             <div className="hero-header flex flex-col items-center text-center">
               <FinEraLogoText variant="light" size="md" />
               <p className="inclusive-text text-xs font-semibold text-muted-foreground tracking-[0.2em] uppercase mt-2 mb-0">
-                VERIFY YOUR EMAIL
+                VERIFY YOUR PHONE
               </p>
             </div>
           </div>
@@ -107,26 +102,21 @@ export function VerifyEmailPage() {
 
         <Card className="border-slate-200 shadow-xl rounded-2xl">
           <CardHeader className="space-y-1 pt-8">
-            <CardTitle className="text-2xl font-bold text-center">Enter the code we sent you</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">Enter the code we texted you</CardTitle>
             <CardDescription className="text-center">
-              We sent a 6-digit code to your email. It expires in a few minutes.
-              {regPhone ? (
-                <>
-                  {" "}
-                  If you provided a phone number, you will receive a separate SMS code to verify it after you confirm
-                  this email.
-                </>
-              ) : null}
+              We sent a 6-digit code by SMS
+              {phoneHint ? ` to ${maskPhoneHint(phoneHint)}` : " to the number you used to register"}. It expires in a
+              few minutes.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 pb-8 px-8">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="ve-email">Email</Label>
+                <Label htmlFor="vp-email">Account email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="ve-email"
+                    id="vp-email"
                     type="email"
                     autoComplete="email"
                     className="pl-10 h-12 rounded-lg"
@@ -142,7 +132,7 @@ export function VerifyEmailPage() {
               </div>
 
               <div className="space-y-3">
-                <Label>6-digit code</Label>
+                <Label>6-digit SMS code</Label>
                 <InputOTP maxLength={6} value={code} onChange={(v) => { setCode(v); setError(""); }}>
                   <InputOTPGroup className="gap-1.5 justify-center">
                     {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -154,6 +144,10 @@ export function VerifyEmailPage() {
                     ))}
                   </InputOTPGroup>
                 </InputOTP>
+                <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 shrink-0" />
+                  Standard message and data rates may apply from your carrier.
+                </p>
               </div>
 
               {error && <p className="text-sm text-red-600 font-medium text-center">{error}</p>}
@@ -190,16 +184,9 @@ export function VerifyEmailPage() {
                 ) : resendTimer > 0 ? (
                   `Resend in ${resendTimer}s`
                 ) : (
-                  "Resend code"
+                  "Resend SMS"
                 )}
               </Button>
-              <button
-                type="button"
-                className="text-emerald-700 font-medium hover:underline text-left"
-                onClick={goChangeEmail}
-              >
-                Use a different email
-              </button>
             </div>
           </CardContent>
         </Card>

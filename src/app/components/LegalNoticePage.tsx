@@ -1,6 +1,7 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/app/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { withInclusiveCreditBrandColor } from "@/lib/brandText";
 
 const TERMS_BODY = [
   "This summary describes how FinEra Inclusive Credit operates the member platform. Replace this page with your organisation’s full Terms of Service before production.",
@@ -44,7 +45,7 @@ export function LegalNoticePage() {
         <p className="mt-2 text-sm font-medium text-muted-foreground">Last updated: informational placeholder</p>
         <div className="mt-8 space-y-4 text-sm leading-relaxed text-foreground">
           {paragraphs.map((p, i) => (
-            <p key={i}>{p}</p>
+            <p key={i}>{withInclusiveCreditBrandColor(p)}</p>
           ))}
         </div>
         <p className="mt-10 text-sm">

@@ -150,7 +150,7 @@ export function getInstitutionsByCountryAndType(
   return inCountry.filter((i) => i.type === "university");
 }
 
-/** Zimbabwe-only registration city list (must match auth.registerSchema city enum). */
+/** Zimbabwe reference city list (e.g. profile or admin UIs; not required at signup). */
 export const ZW_REGISTRATION_CITIES: City[] = CITIES.filter((c) => c.countryId === "zw");
 
 const ZW_REGISTRATION_CITY_ID_SET = new Set(ZW_REGISTRATION_CITIES.map((c) => c.id));
@@ -179,7 +179,7 @@ export function getZimbabweRegistrationInstitutions(accountType: "student" | "st
   return inZw.filter((i) => i.type !== "polytechnic");
 }
 
-/** Allowed institution display names for POST /auth/register (Zimbabwe onboarding). */
+/** Allowed institution display names for flows that still use the Zimbabwe reference list (not required at signup). */
 export function getZimbabweRegistrationInstitutionNames(accountType: "STUDENT" | "STAFF" | "ALUMNI"): string[] {
   const at = accountType.toLowerCase() as "student" | "staff" | "alumni";
   return getZimbabweRegistrationInstitutions(at).map((i) => i.name);

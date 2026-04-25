@@ -23,3 +23,6 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Local dev cache (Prisma generate fingerprint, etc.)
+backend-core/.cache/

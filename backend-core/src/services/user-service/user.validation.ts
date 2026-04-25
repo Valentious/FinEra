@@ -9,14 +9,11 @@ import {
   phoneNumberSchema,
 } from "../../shared/validation/zod-schemas.js";
 import {
-  extractStaffEmployerIdContent,
   extractStudentIdContent,
   isNationalIdValid,
-  isStaffEmployerIdValid,
   isStudentIdValid,
   normalizeNationalIdForSubmit,
   NATIONAL_ID_ERROR,
-  STAFF_EMPLOYER_ID_ERROR,
   STUDENT_ID_ERROR,
   validateStructuredResidentialAddress,
 } from "../../shared/validation/kyc-identity-formats.js";
@@ -110,7 +107,7 @@ export function buildCompleteProfileSchema(accountType: AccountType) {
     .object({
       title: z.string().trim().min(1, "Title is required").max(64),
       nationalIdNumber: z.string().min(1),
-      /** Omitted or empty for STAFF (no staff ID collected). */
+      /** Student ID for STUDENT only; empty for STAFF and ALUMNI (employer ID removed). */
       studentStaffId: z.preprocess(
         (v) => (v === undefined || v === null ? "" : String(v)),
         z.string()
@@ -134,14 +131,6 @@ export function buildCompleteProfileSchema(accountType: AccountType) {
         if (!isStudentIdValid(data.studentStaffId)) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: STUDENT_ID_ERROR, path: ["studentStaffId"] });
         }
-      } else if (bucket === "ALUMNI") {
-        if (!isStaffEmployerIdValid(data.studentStaffId)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: STAFF_EMPLOYER_ID_ERROR,
-            path: ["studentStaffId"],
-          });
-        }
       }
       const addr = validateStructuredResidentialAddress(data.addressLine1, data.addressLine2);
       if (!addr.ok) {
@@ -161,7 +150,7 @@ export function buildCompleteProfileSchema(accountType: AccountType) {
         ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Salary range is required",
+            message: "Income range is required",
             path: ["salaryRange"],
           });
         }
@@ -173,12 +162,7 @@ export function buildCompleteProfileSchema(accountType: AccountType) {
       return {
         title: data.title.trim(),
         nationalIdNumber: normalizeNationalIdForSubmit(data.nationalIdNumber),
-        studentStaffId:
-          bucket === "STUDENT"
-            ? extractStudentIdContent(data.studentStaffId)
-            : bucket === "ALUMNI"
-              ? extractStaffEmployerIdContent(data.studentStaffId)
-              : "",
+        studentStaffId: bucket === "STUDENT" ? extractStudentIdContent(data.studentStaffId) : "",
         salaryRange:
           bucket === "STAFF" || bucket === "ALUMNI"
             ? (data.salaryRange as (typeof salaryRangeValues)[number])

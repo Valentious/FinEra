@@ -9,6 +9,7 @@ import {
   loginSchema,
   refreshSchema,
   verifyEmailSchema,
+  verifyPhoneSchema,
   resendOtpSchema,
   passwordResetRequestSchema,
   passwordResetVerifySchema,
@@ -32,7 +33,8 @@ router.post("/register", async (req, res, next) => {
     const result = await authService.register(parsed.data, { ip, userAgent });
     res.status(201).json({
       success: true,
-      message: "Account created. Check your email for a verification code.",
+      message:
+        "Account created. Check your email for a verification code. If you added a phone number, you will also receive an SMS code to verify it after your email is confirmed.",
       data: result,
     });
   } catch (e) {
@@ -64,6 +66,36 @@ router.post("/resend-otp", async (req, res, next) => {
       throw validationError("Validation failed", { fields: zodErrorToFieldErrors(parsed.error) });
     }
     const result = await authService.resendEmailOtp(parsed.data.email);
+    res.json({ success: true, message: result.message });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/verify-phone", async (req, res, next) => {
+  try {
+    const parsed = verifyPhoneSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw validationError("Validation failed", { fields: zodErrorToFieldErrors(parsed.error) });
+    }
+    const tokens = await authService.verifyPhone(parsed.data);
+    res.json({
+      success: true,
+      message: "Phone number verified. You are signed in.",
+      data: tokens,
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post("/resend-phone-otp", async (req, res, next) => {
+  try {
+    const parsed = resendOtpSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw validationError("Validation failed", { fields: zodErrorToFieldErrors(parsed.error) });
+    }
+    const result = await authService.resendPhoneOtp(parsed.data.email);
     res.json({ success: true, message: result.message });
   } catch (e) {
     next(e);

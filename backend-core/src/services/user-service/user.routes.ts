@@ -37,6 +37,7 @@ const profileSelect = {
   city: true,
   institution: true,
   emailVerified: true,
+  phoneVerified: true,
   createdAt: true,
   authCredentials: {
     select: { lastLoginAt: true },
@@ -80,7 +81,7 @@ router.get("/profile", async (req, res, next) => {
 });
 
 /**
- * POST /user/complete-profile — KYC profile step after onboarding (national ID, student or employer ID, structured address).
+ * POST /user/complete-profile — KYC profile step after onboarding (national ID, student ID for students, structured address).
  * Persists normalized values under `User.metadata.profileKyc` until dedicated columns exist.
  */
 router.post("/complete-profile", async (req, res, next) => {

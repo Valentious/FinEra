@@ -70,8 +70,8 @@ export const FinEraInclusiveCreditLogo = forwardRef<
         <p
           className={`
             inclusive-text font-extrabold tracking-wide mt-2 mb-0
+            finera-inclusive-credit-tagline${dark ? " finera-inclusive-credit-tagline--on-dark" : ""}
             ${config.subtitleSize}
-            ${dark ? "text-muted-foreground" : "text-muted-foreground"}
           `}
         >
           INCLUSIVE CREDIT

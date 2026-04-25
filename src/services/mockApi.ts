@@ -29,17 +29,18 @@ import { requiresWalletDisciplineForAmount } from "@/loan/loanTypes";
 import { FINERA_REGISTRATION_CONSENT_VERSION } from "@/legal/consentVersion";
 import { normalizeStoredMemberTrust } from "@/lib/memberTrustDefaults";
 import {
-  extractStaffEmployerIdContent,
   extractStudentIdContent,
   isNationalIdValid,
-  isStaffEmployerIdValid,
   isStudentIdValid,
   normalizeNationalIdForSubmit,
   NATIONAL_ID_ERROR,
-  STAFF_EMPLOYER_ID_ERROR,
   STUDENT_ID_ERROR,
   validateStructuredResidentialAddress,
 } from "@/lib/kycIdentityFormats";
+
+/** Aligned with backend `auth-messages` + strict email–account-line binding. */
+const AUTH_MSG_EMAIL_ACCOUNT_IN_USE = `This email is already associated with an existing account. Please log in or use a different email.`;
+const AUTH_MSG_SIGN_IN_INSTEAD = `This email is already in use. Sign in if you already have an account.`;
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -248,6 +249,10 @@ function loadUserData(email: string): MockUserData | null {
     Object.assign(parsed, trustNorm.user);
     saveUserData(parsed);
   }
+  if (parsed.phoneVerified === undefined) {
+    parsed.phoneVerified = true;
+    saveUserData(parsed);
+  }
   ensureMockWalletNumericIds(parsed);
   return parsed;
 }
@@ -316,6 +321,7 @@ export async function mockGetCreditLimitForCurrency(currency: string): Promise<{
 
 /** Pending 6-digit codes (mock “email send”) */
 const EMAIL_VERIFY_KEY = (e: string) => `email_verify_${normalizeEmail(e)}`;
+const PHONE_VERIFY_KEY = (e: string) => `finera_reg_phone_${normalizeEmail(e)}`;
 /** Send a 6-digit code (stored locally; in production the backend emails it). */
 export async function mockSendEmailVerificationCode(email: string): Promise<{ success: boolean; message: string }> {
   await delay(500);
@@ -449,7 +455,7 @@ export async function mockCompletePasswordReset(body: {
 export async function mockVerifyRegistrationEmail(
   email: string,
   code: string
-): Promise<{ user: UserData; token: string; message: string }> {
+): Promise<{ user: UserData; token: string; message: string; requiresPhoneVerification?: boolean }> {
   await delay(500);
   const normalized = normalizeEmail(email);
   const trimmed = code.trim();
@@ -475,11 +481,66 @@ export async function mockVerifyRegistrationEmail(
   localStorage.setItem("refreshToken", "mock_refresh_" + Date.now());
   localStorage.setItem("active_user_email", normalized);
 
+  const needsPhone = Boolean(user.phoneNumber?.trim()) && !user.phoneVerified;
   return {
     user: toPublicUser(user),
     token,
     message: "Email verified.",
+    requiresPhoneVerification: needsPhone,
   };
+}
+
+/** POST /auth/verify-phone (mock) */
+export async function mockVerifyPhone(
+  email: string,
+  code: string
+): Promise<{ user: UserData; token: string; message: string }> {
+  await delay(500);
+  const normalized = normalizeEmail(email);
+  const trimmed = code.trim();
+  if (!/^\d{6}$/.test(trimmed)) {
+    throw new Error("Enter a 6-digit code.");
+  }
+  const user = loadUserData(normalized) as MockUserData | null;
+  if (!user) throw new Error("User not found. Register again.");
+  if (user._pendingVerification) {
+    throw new Error("Verify your email before your phone number.");
+  }
+  if (!user.phoneNumber?.trim()) {
+    throw new Error("No phone number on this account.");
+  }
+  if (user.phoneVerified) {
+    throw new Error("Phone number already verified.");
+  }
+  /* Any 6-digit code (aligns with email verify mock + backend OTP bypass for local testing). */
+  user.phoneVerified = true;
+  localStorage.removeItem(PHONE_VERIFY_KEY(normalized));
+  saveUserData(user);
+  const token = "mock_jwt_token_" + Date.now();
+  localStorage.setItem("auth_token", token);
+  localStorage.setItem("accessToken", token);
+  localStorage.setItem("refreshToken", "mock_refresh_" + Date.now());
+  localStorage.setItem("active_user_email", normalized);
+  return { user: toPublicUser(user), token, message: "Phone number verified." };
+}
+
+export async function mockResendPhoneOtp(email: string): Promise<{ success: boolean; message: string }> {
+  await delay(500);
+  const normalized = normalizeEmail(email);
+  const u = loadUserData(normalized) as MockUserData | null;
+  if (!u || u._pendingVerification) {
+    throw new Error("Verify your email first.");
+  }
+  if (!u.phoneNumber?.trim() || u.phoneVerified) {
+    throw new Error("No phone verification required.");
+  }
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = Date.now() + 10 * 60 * 1000;
+  localStorage.setItem(PHONE_VERIFY_KEY(normalized), JSON.stringify({ code, expiresAt }));
+  if (typeof import.meta !== "undefined" && (import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
+    console.info(`[FinEra mock] Phone verification code for ${normalized}: ${code}`);
+  }
+  return { success: true, message: "Verification code sent to your phone (mock: see console)." };
 }
 
 // ==================== MOCK API IMPLEMENTATIONS ====================
@@ -497,7 +558,10 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
 
   const existing = loadUserData(email);
   if (existing) {
-    throw new Error("User already exists");
+    if (existing.accountType !== data.accountType) {
+      throw new Error(AUTH_MSG_EMAIL_ACCOUNT_IN_USE);
+    }
+    throw new Error(AUTH_MSG_SIGN_IN_INSTEAD);
   }
 
   const passwordHash = await hashPassword(data.password);
@@ -506,6 +570,16 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
   localStorage.setItem(EMAIL_VERIFY_KEY(email), JSON.stringify({ code, expiresAt }));
   if (typeof import.meta !== "undefined" && (import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
     console.info(`[FinEra mock] Registration OTP for ${email}: ${code}`);
+  }
+
+  const hasPhone = Boolean(data.phoneNumber?.trim());
+  const phoneRegCode = hasPhone ? String(Math.floor(100000 + Math.random() * 900000)) : null;
+  if (phoneRegCode) {
+    const phoneExpiresAt = Date.now() + 10 * 60 * 1000;
+    localStorage.setItem(PHONE_VERIFY_KEY(email), JSON.stringify({ code: phoneRegCode, expiresAt: phoneExpiresAt }));
+    if (typeof import.meta !== "undefined" && (import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
+      console.info(`[FinEra mock] Registration phone OTP for ${email}: ${phoneRegCode}`);
+    }
   }
 
   const user: MockUserData = {
@@ -519,6 +593,7 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
     dateOfBirth: data.dateOfBirth,
     dateOfBirthLocked: false,
     phoneNumber: data.phoneNumber,
+    phoneVerified: hasPhone ? false : true,
     accountNumber: generateAccountNumber(),
     nationalIdNumber: "",
     studentStaffId: "",
@@ -553,7 +628,9 @@ export async function mockRegister(data: RegisterRequest): Promise<{ user: UserD
 
   return {
     user: toPublicUser(user),
-    message: "Check your email for a verification code (mock: see browser console).",
+    message: hasPhone
+      ? "Check your email and phone for verification codes (mock: see browser console)."
+      : "Check your email for a verification code (mock: see browser console).",
   };
 }
 
@@ -567,18 +644,15 @@ export async function mockCompleteProfile(data: CompleteProfilePayload): Promise
   if (!isNationalIdValid(data.nationalIdNumber)) throw new Error(NATIONAL_ID_ERROR);
   const at = user.accountType;
   if (at === "student" && !isStudentIdValid(data.studentStaffId ?? "")) throw new Error(STUDENT_ID_ERROR);
-  if (at === "alumni" && !isStaffEmployerIdValid(data.studentStaffId ?? "")) throw new Error(STAFF_EMPLOYER_ID_ERROR);
   const addr = validateStructuredResidentialAddress(data.addressLine1, data.addressLine2);
   if (!addr.ok) throw new Error(addr.error);
   if ((at === "staff" || at === "alumni") && (!data.salaryRange || String(data.salaryRange).trim().length === 0)) {
-    throw new Error("Salary range is required");
+    throw new Error("Income range is required");
   }
 
   user.nationalIdNumber = normalizeNationalIdForSubmit(data.nationalIdNumber);
   if (at === "student") {
     user.studentStaffId = extractStudentIdContent(data.studentStaffId ?? "");
-  } else if (at === "alumni") {
-    user.studentStaffId = extractStaffEmployerIdContent(data.studentStaffId ?? "");
   } else {
     user.studentStaffId = "";
   }
@@ -605,6 +679,10 @@ export async function mockLogin(data: LoginRequest): Promise<{ user: UserData; t
     throw new Error("User not found");
   }
 
+  if (user.accountType.toUpperCase() !== data.accountType) {
+    throw new Error(AUTH_MSG_EMAIL_ACCOUNT_IN_USE);
+  }
+
   // STEP 2: Validate password (bcrypt-style: compare hash, not plaintext)
   const storedHash = (user as MockUserData)._passwordHash;
   if (storedHash) {
@@ -615,6 +693,9 @@ export async function mockLogin(data: LoginRequest): Promise<{ user: UserData; t
   }
   if ((user as MockUserData)._pendingVerification) {
     throw new Error("Please verify your email before signing in.");
+  }
+  if (user.phoneNumber?.trim() && user.phoneVerified === false) {
+    throw new Error("Please verify your phone number. We sent a code to your number when you registered.");
   }
   // Legacy users without _passwordHash: allow login (migration path)
 

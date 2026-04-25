@@ -244,6 +244,8 @@ enum AdminRole {
 
 model User {
   id                      String    @id @default(uuid())
+  /// Stored lowercased from API. Globally unique: one email may not register under multiple account lines
+  /// (STUDENT, STAFF, ALUMNI). Enforced in auth registration + login (see auth.service).
   email                   String    @unique
   fullName                String
   /// Sensitive PII (KYC / GDPR). Stored as calendar date; use DB/app encryption at rest in production.
@@ -257,6 +259,10 @@ model User {
   institution             String?
   institutionId           String?
   phoneNumber             String?   @unique
+  /// Bcrypt hash of phone OTP during registration (cleared when verified); mirrors email flow.
+  phoneVerificationToken  String?   @db.Text
+  phoneVerificationExpiry DateTime?
+  phoneOtpLastSentAt      DateTime?
   /// Salutation shown in profile (Mr, Mrs, Ms, Dr, ...)
   title                   String?
   /// UI locale: en, es, fr, pt, sw, sn, nd, af (ISO-style codes)

@@ -81,7 +81,8 @@ export function AccountCreationSuccess({
                 Account Successfully Created
               </CardTitle>
               <p className="text-base sm:text-lg font-medium text-white/95">
-                Welcome to FinEra INCLUSIVE CREDIT
+                Welcome to FinEra{" "}
+                <span className="finera-inclusive-credit-tagline--on-dark font-semibold">INCLUSIVE CREDIT</span>
               </p>
             </div>
           </CardHeader>
@@ -199,7 +200,8 @@ export function AccountCreationSuccess({
                 <h4 className="text-xs font-black text-amber-900 dark:text-amber-200 mb-1.5">Account purpose</h4>
                 <p className="text-xs text-amber-900/90 dark:text-amber-100/90 leading-relaxed">
                   Your Wallet IDs identify you for transfers and support. Fund your FinCash wallets for savings, loans,
-                  and repayments in FinEra Inclusive Credit.
+                  and repayments in{" "}
+                  <span className="finera-inclusive-credit-phrase">FinEra Inclusive Credit</span>.
                 </p>
               </div>
               <div className="bg-emerald-50 dark:bg-emerald-950/25 rounded-xl p-4 border border-emerald-200/90 dark:border-emerald-900">

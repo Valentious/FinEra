@@ -227,7 +227,7 @@ export function ForgotPasswordFlow({ onBackToLogin }: ForgotPasswordFlowProps) {
           <FinEraShieldIcon size={48} className="rounded-xl" />
           <div className="flex flex-col items-center text-center">
             <FinEraLogoText variant="light" size="md" />
-            <p className="inclusive-text mb-0 mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            <p className="inclusive-text finera-inclusive-credit-tagline mb-0 mt-2 text-xs font-semibold uppercase tracking-[0.2em]">
               INCLUSIVE CREDIT
             </p>
           </div>

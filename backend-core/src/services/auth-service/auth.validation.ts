@@ -9,10 +9,6 @@ import {
   fullNameSchema,
   phoneNumberSchema,
 } from "../../shared/validation/zod-schemas.js";
-import {
-  ZW_REGISTRATION_CITY_NAMES,
-  getZimbabweRegistrationInstitutionNames,
-} from "../user-service/reference.data.js";
 import { FINERA_REGISTRATION_CONSENT_VERSION } from "../../shared/legal/consent-version.js";
 
 const PASSWORD_MIN = 8;
@@ -20,6 +16,13 @@ const PASSWORD_MAX = 128;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,128}$/;
 
 export const verifyEmailSchema = z
+  .object({
+    email: emailSchema,
+    code: z.string().length(6).regex(/^\d{6}$/, "Enter the 6-digit code"),
+  })
+  .strict();
+
+export const verifyPhoneSchema = z
   .object({
     email: emailSchema,
     code: z.string().length(6).regex(/^\d{6}$/, "Enter the 6-digit code"),
@@ -47,16 +50,12 @@ export const registerSchema = z
     accountType: z.enum(["STUDENT", "STAFF", "ALUMNI"]),
     /** Onboarding is Zimbabwe-only; API accepts only ZW. */
     country: z.literal("ZW"),
-    city: z
-      .string()
-      .min(1, "City is required")
-      .refine((v) => (ZW_REGISTRATION_CITY_NAMES as readonly string[]).includes(v), {
-        message: "City must be a supported Zimbabwe location",
-      }),
+    /** Optional at signup; may be completed later in profile. */
+    city: z.string().max(200, "City name is too long").default(""),
     institution: z
       .string()
-      .min(1, "Institution is required")
-      .max(200, "Institution name is too long"),
+      .max(200, "Institution or organisation name is too long")
+      .default(""),
     dateOfBirth: dateIsoSchema,
     phoneNumber: phoneNumberSchema,
     /** Optional: practice explore mode (stored as `demo`) vs live account - persisted in User.metadata */
@@ -76,30 +75,9 @@ export const registerSchema = z
     }),
   })
   .strict()
-  .superRefine((data, ctx) => {
-    const inst = data.institution.trim();
-    if (data.accountType === "STUDENT") {
-      const allowed = getZimbabweRegistrationInstitutionNames("STUDENT");
-      if (!allowed.includes(inst)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Institution must be selected from the Zimbabwe onboarding list",
-          path: ["institution"],
-        });
-      }
-    } else {
-      /** Professional (STAFF) and Business (ALUMNI): free-text organisation / employer name. */
-      if (inst.length < 2) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Enter your institution or organisation name (at least 2 characters)",
-          path: ["institution"],
-        });
-      }
-    }
-  })
   .transform((data) => ({
     ...data,
+    city: data.city.trim(),
     institution: data.institution.trim(),
   }));
 
@@ -111,6 +89,8 @@ export const loginSchema = z
       .email("Invalid email address")
       .transform((v) => v.trim().toLowerCase()),
     password: z.string().min(1, "Password required"),
+    /** Must match the account line selected at sign-up (STUDENT / STAFF / ALUMNI). */
+    accountType: z.enum(["STUDENT", "STAFF", "ALUMNI"]),
     deviceId: z.string().optional(),
   })
   .strict();

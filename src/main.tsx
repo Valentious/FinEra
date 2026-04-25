@@ -4,9 +4,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./app/App.tsx";
 import AdminApp from "./admin/AdminApp.tsx";
 import { VerifyEmailPage } from "./app/components/VerifyEmailPage.tsx";
+import { VerifyPhonePage } from "./app/components/VerifyPhonePage.tsx";
 import { TermsOfServicePage } from "./app/components/legal/TermsOfServicePage.tsx";
 import { PrivacyPolicyPage } from "./app/components/legal/PrivacyPolicyPage.tsx";
 import { LegalNoticePage } from "./app/components/LegalNoticePage.tsx";
+import { MobileSimPage } from "./app/components/MobileSimPage.tsx";
 import { ThemeProvider } from "./app/providers/ThemeProvider.tsx";
 import { I18nProvider } from "./app/providers/I18nProvider.tsx";
 import { AppErrorBoundary } from "./app/components/AppErrorBoundary.tsx";
@@ -42,7 +44,9 @@ if (!rootEl) {
                 <Route path="/legal/terms" element={<TermsOfServicePage />} />
                 <Route path="/legal/privacy" element={<PrivacyPolicyPage />} />
                 <Route path="/verify-email" element={<VerifyEmailPage />} />
+                <Route path="/verify-phone" element={<VerifyPhonePage />} />
                 <Route path="/legal/:doc" element={<LegalNoticePage />} />
+                <Route path="/mobile-preview" element={<MobileSimPage />} />
                 {/* `/admin` and nested paths - must stay above `/*` so the member app does not mount for /admin* */}
                 <Route path="/admin/*" element={<AdminApp />} />
                 <Route path="/*" element={<App />} />

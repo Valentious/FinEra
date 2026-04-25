@@ -14,6 +14,8 @@ interface MainNavigationProps {
   accountNumber?: string;
   /** 10-digit public Wallet ID (Binance-style peer transfer) */
   walletNumericId?: string;
+  /** Active dashboard currency (labels e.g. USD Wallet ID) */
+  walletCurrencyCode?: string;
 }
 
 function SidebarNavItem({
@@ -60,6 +62,7 @@ export function MainNavigation({
   userName,
   accountNumber,
   walletNumericId,
+  walletCurrencyCode,
 }: MainNavigationProps) {
   const { t } = useI18n();
   const navItems = useMemberNavItems();
@@ -67,23 +70,23 @@ export function MainNavigation({
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 dark:bg-slate-950/95 md:pl-64">
+      <header className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center border-b border-emerald-800/35 bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-500 px-4 shadow-[0_1px_0_rgba(255,255,255,0.2)_inset] dark:border-emerald-950/50 dark:from-emerald-800 dark:via-emerald-700 dark:to-green-800 dark:shadow-[0_1px_0_rgba(0,0,0,0.15)_inset] md:pl-64">
         <div className="flex w-full items-center justify-end gap-3 sm:gap-4">
-          <NotificationsDropdown onNavigate={onNavigate} />
-          <div className="mx-1 hidden h-8 w-px bg-border sm:block" aria-hidden />
+          <NotificationsDropdown onNavigate={onNavigate} headerTone="green" />
+          <div className="mx-1 hidden h-8 w-px bg-white/25 sm:block dark:bg-emerald-950/40" aria-hidden />
           <div className="flex items-center gap-2">
             <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold leading-none text-foreground">{userName}</p>
-              <p className="text-[10px] font-medium tracking-wide text-muted-foreground">
+              <p className="text-sm font-semibold leading-none text-white">{userName}</p>
+              <p className="text-[10px] font-medium tracking-wide text-emerald-50/90">
                 {walletNumericId
-                  ? `Wallet ID: ${walletNumericId}`
+                  ? `${walletCurrencyCode ? `${walletCurrencyCode} ` : ""}Wallet ID: ${walletNumericId}`
                   : accountNumber
                     ? `Acc: ${accountNumber}`
                     : "Verified Member"}
               </p>
             </div>
             <div
-              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-muted/60 hover:bg-muted"
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/30 bg-white/15 hover:bg-white/25 dark:border-emerald-200/20 dark:bg-black/20 dark:hover:bg-black/30"
               onClick={() => onNavigate("profileSettings")}
               role="button"
               tabIndex={0}
@@ -95,7 +98,7 @@ export function MainNavigation({
               }}
               aria-label={t("nav.accountSettings")}
             >
-              <User className="h-5 w-5 text-foreground" />
+              <User className="h-5 w-5 text-white dark:text-emerald-50" />
             </div>
           </div>
         </div>

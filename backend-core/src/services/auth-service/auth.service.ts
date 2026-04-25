@@ -22,10 +22,12 @@ import type { JwtPayload } from "../../types/index.js";
 import * as authRepo from "./auth.repository.js";
 import { logLoginAttempt } from "./auth.audit.js";
 import { sendOtpEmail, logDevOtpFallback, maskEmailForLog } from "./email-delivery.js";
-import { isTwilioConfigured, sendPasswordResetSms } from "./sms-delivery.js";
+import { deliverRegistrationPhoneOtp, isTwilioConfigured, sendPasswordResetSms } from "./sms-delivery.js";
 import { logger } from "../../core/utils/logger.js";
 import { assertHourlyOtpLimit, recordOtpSend } from "./otp-rate-limit.js";
-import type { RegisterInput } from "./auth.validation.js";
+import type { LoginInput, RegisterInput } from "./auth.validation.js";
+import { AUTH_MSG_EMAIL_ACCOUNT_IN_USE, AUTH_MSG_SIGN_IN_INSTEAD } from "./auth-messages.js";
+import { logRegistrationAttempt } from "./auth.audit.js";
 import { FINERA_REGISTRATION_CONSENT_VERSION } from "../../shared/legal/consent-version.js";
 import { createUserCurrencyAccountStack } from "../ledger-service/account-stack.service.js";
 import { publishDomainEvent } from "../../infrastructure/messaging/event-bus.js";
@@ -36,18 +38,20 @@ const OTP_TTL_MS = 5 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 30 * 1000;
 const PASSWORD_RESET_SESSION_EXPIRY = "15m";
 
-/** When true, any 6-digit code verifies (dev / progress only). Off in production unless explicitly enabled. */
-function emailOtpAcceptAny(): boolean {
-  const v = process.env.EMAIL_OTP_ACCEPT_ANY;
-  if (v === "false" || v === "0") return false;
-  if (v === "true" || v === "1") return true;
-  return process.env.NODE_ENV === "development";
-}
-
-export interface LoginInput {
-  email: string;
-  password: string;
-  deviceId?: string;
+/**
+ * When true, any 6-digit code passes email/phone verification (no hash compare, no expiry check).
+ * - `OTP_ACCEPT_ANY` overrides (set "false" to force real OTP in non-production).
+ * - `EMAIL_OTP_ACCEPT_ANY` legacy alias.
+ * - If unset: lenient for any `NODE_ENV` other than `production` (local / preview / staging); production requires `OTP_ACCEPT_ANY=true` to allow.
+ */
+function verificationOtpAcceptAny(): boolean {
+  const o = process.env.OTP_ACCEPT_ANY;
+  if (o === "false" || o === "0") return false;
+  if (o === "true" || o === "1") return true;
+  const e = process.env.EMAIL_OTP_ACCEPT_ANY;
+  if (e === "false" || e === "0") return false;
+  if (e === "true" || e === "1") return true;
+  return process.env.NODE_ENV !== "production";
 }
 
 export interface AuthTokens {
@@ -55,6 +59,9 @@ export interface AuthTokens {
   refreshToken: string;
   expiresIn: number;
 }
+
+/** JWTs returned after email verification, plus whether the client should prompt for phone OTP. */
+export type AuthTokensWithRegistrationFlags = AuthTokens & { requiresPhoneVerification: boolean };
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -142,7 +149,28 @@ export async function register(
   }
 
   const existing = await authRepo.findUserByEmail(email);
-  if (existing) throw conflictError("Email already registered");
+  if (existing) {
+    if (existing.accountType !== data.accountType) {
+      logRegistrationAttempt({
+        email,
+        outcome: "DUPLICATE_DIFFERENT_ACCOUNT_TYPE",
+        requestedAccountType: data.accountType,
+        existingAccountType: existing.accountType,
+        ip: ctx.ip,
+        userAgent: ctx.userAgent,
+      });
+      throw conflictError(AUTH_MSG_EMAIL_ACCOUNT_IN_USE);
+    }
+    logRegistrationAttempt({
+      email,
+      outcome: "DUPLICATE_SAME_ACCOUNT_TYPE",
+      requestedAccountType: data.accountType,
+      existingAccountType: existing.accountType,
+      ip: ctx.ip,
+      userAgent: ctx.userAgent,
+    });
+    throw conflictError(AUTH_MSG_SIGN_IN_INSTEAD);
+  }
 
   const { prisma } = await import("../../infrastructure/database/index.js");
 
@@ -159,6 +187,8 @@ export async function register(
   const dateOfBirth = parseDateOfBirth(data.dateOfBirth);
   const plainOtp = generateOtp();
   const otpHash = await hashEmailOtp(plainOtp);
+  const plainPhoneOtp = phone ? generateOtp() : null;
+  const phoneOtpHash = plainPhoneOtp ? await hashEmailOtp(plainPhoneOtp) : null;
   const now = new Date();
   const expiry = new Date(now.getTime() + OTP_TTL_MS);
   const walletCurrencies = ["USD", "ZIG", "ZAR"] as const;
@@ -175,6 +205,10 @@ export async function register(
         institution: data.institution?.trim(),
         dateOfBirth,
         phoneNumber: phone || null,
+        phoneVerified: !phone,
+        phoneVerificationToken: phoneOtpHash,
+        phoneVerificationExpiry: plainPhoneOtp ? expiry : null,
+        phoneOtpLastSentAt: plainPhoneOtp ? now : null,
         status: "PENDING_VERIFICATION",
         emailVerified: false,
         emailVerificationToken: otpHash,
@@ -205,6 +239,20 @@ export async function register(
 
   await deliverRegistrationOtp(email, plainOtp);
 
+  if (phone && plainPhoneOtp) {
+    try {
+      await deliverRegistrationPhoneOtp(phone, plainPhoneOtp);
+    } catch (err) {
+      logger.error(
+        { err: err instanceof Error ? err.message : String(err), userId: user.id },
+        "Registration phone OTP delivery failed"
+      );
+      if (process.env.NODE_ENV === "production") {
+        throw validationError("Could not send SMS verification. Try again or contact support.");
+      }
+    }
+  }
+
   await publishDomainEvent("USER_REGISTERED", { userId: user.id, email: user.email });
   for (const c of walletCurrencies) {
     await publishDomainEvent("WALLET_CREATED", { userId: user.id, currency: c });
@@ -213,7 +261,7 @@ export async function register(
   return { userId: user.id, email: user.email };
 }
 
-export async function verifyEmail(data: { email: string; code: string }): Promise<AuthTokens> {
+export async function verifyEmail(data: { email: string; code: string }): Promise<AuthTokensWithRegistrationFlags> {
   const email = normalizeEmail(data.email);
   const code = data.code.trim();
   const { prisma } = await import("../../infrastructure/database/index.js");
@@ -226,13 +274,15 @@ export async function verifyEmail(data: { email: string; code: string }): Promis
       emailVerified: true,
       emailVerificationToken: true,
       emailVerificationExpiry: true,
+      phoneNumber: true,
+      phoneVerified: true,
     },
   });
 
   if (!user) throw userNotFoundError("User not found");
   if (user.emailVerified) throw validationError("Email already verified.");
 
-  const acceptAny = emailOtpAcceptAny();
+  const acceptAny = verificationOtpAcceptAny();
   if (acceptAny) {
     if (!/^\d{6}$/.test(code)) {
       throw validationError("Enter the 6-digit code.");
@@ -246,11 +296,15 @@ export async function verifyEmail(data: { email: string; code: string }): Promis
     if (!valid) throw validationError("Invalid verification code.");
   }
 
+  const hasPhone = Boolean(user.phoneNumber?.trim());
+  const needsPhone = hasPhone && !user.phoneVerified;
+  const nextStatus = needsPhone ? "PENDING_VERIFICATION" : "ACTIVE";
+
   await prisma.user.update({
     where: { id: user.id },
     data: {
       emailVerified: true,
-      status: "ACTIVE",
+      status: nextStatus,
       emailVerificationToken: null,
       emailVerificationExpiry: null,
       emailOtpLastSentAt: null,
@@ -260,7 +314,130 @@ export async function verifyEmail(data: { email: string; code: string }): Promis
   const { ensureCreditProfile } = await import("../credit-engine/domain/trust-score.service.js");
   await ensureCreditProfile(user.id).catch(() => {});
 
+  const tokens = generateTokens(user.id, user.email);
+  return { ...tokens, requiresPhoneVerification: needsPhone };
+}
+
+/** When email is verified, accept 6-digit SMS code to set phoneVerified and activate the account. */
+export async function verifyPhone(data: { email: string; code: string }): Promise<AuthTokens> {
+  const email = normalizeEmail(data.email);
+  const code = data.code.trim();
+  const { prisma } = await import("../../infrastructure/database/index.js");
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      emailVerified: true,
+      phoneNumber: true,
+      phoneVerified: true,
+      phoneVerificationToken: true,
+      phoneVerificationExpiry: true,
+    },
+  });
+
+  if (!user) throw userNotFoundError("User not found");
+  if (!user.emailVerified) {
+    throw validationError("Verify your email before confirming your phone number.");
+  }
+  if (!user.phoneNumber?.trim()) {
+    throw validationError("No phone number on this account.");
+  }
+  if (user.phoneVerified) {
+    throw validationError("Phone number is already verified.");
+  }
+
+  const acceptAny = verificationOtpAcceptAny();
+  if (acceptAny) {
+    if (!/^\d{6}$/.test(code)) {
+      throw validationError("Enter the 6-digit code.");
+    }
+  } else {
+    if (!user.phoneVerificationToken || !user.phoneVerificationExpiry || user.phoneVerificationExpiry < new Date()) {
+      throw validationError("Invalid or expired verification code.");
+    }
+    const valid = await bcrypt.compare(code, user.phoneVerificationToken);
+    if (!valid) throw validationError("Invalid verification code.");
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      phoneVerified: true,
+      status: "ACTIVE",
+      phoneVerificationToken: null,
+      phoneVerificationExpiry: null,
+      phoneOtpLastSentAt: null,
+    },
+  });
+
   return generateTokens(user.id, user.email);
+}
+
+export async function resendPhoneOtp(emailRaw: string): Promise<{ message: string }> {
+  const email = normalizeEmail(emailRaw);
+  assertHourlyOtpLimit(email);
+
+  const { prisma } = await import("../../infrastructure/database/index.js");
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      emailVerified: true,
+      phoneNumber: true,
+      phoneVerified: true,
+      phoneOtpLastSentAt: true,
+    },
+  });
+
+  if (!user) throw userNotFoundError("User not found");
+  if (!user.emailVerified) {
+    throw validationError("Verify your email before requesting a phone code.");
+  }
+  if (!user.phoneNumber?.trim()) {
+    throw validationError("No phone number on this account.");
+  }
+  if (user.phoneVerified) {
+    throw validationError("Phone number is already verified.");
+  }
+
+  const now = Date.now();
+  if (user.phoneOtpLastSentAt) {
+    const waitMs = RESEND_COOLDOWN_MS - (now - user.phoneOtpLastSentAt.getTime());
+    if (waitMs > 0) {
+      throw validationError(`Please wait ${Math.ceil(waitMs / 1000)}s before requesting another code.`);
+    }
+  }
+
+  const plainOtp = generateOtp();
+  const otpHash = await hashEmailOtp(plainOtp);
+  const sentAt = new Date();
+  const expiry = new Date(sentAt.getTime() + OTP_TTL_MS);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      phoneVerificationToken: otpHash,
+      phoneVerificationExpiry: expiry,
+      phoneOtpLastSentAt: sentAt,
+    },
+  });
+
+  recordOtpSend(email);
+  try {
+    await deliverRegistrationPhoneOtp(user.phoneNumber, plainOtp);
+  } catch (err) {
+    logger.error(
+      { err: err instanceof Error ? err.message : String(err), userId: user.id },
+      "Resend phone OTP delivery failed"
+    );
+    if (process.env.NODE_ENV === "production") {
+      throw validationError("Could not send SMS. Try again later.");
+    }
+  }
+
+  return { message: "Verification code sent to your phone number." };
 }
 
 export async function resendEmailOtp(emailRaw: string): Promise<{ message: string }> {
@@ -329,15 +506,57 @@ export async function login(
     throw userNotFoundError("User not found");
   }
 
-  if (user.status === "PENDING_VERIFICATION") {
+  if (user.accountType !== data.accountType) {
     logLoginAttempt({
       email,
-      outcome: "EMAIL_NOT_VERIFIED",
+      outcome: "ACCOUNT_TYPE_MISMATCH",
       userId: user.id,
       ip: meta?.ip,
       userAgent: meta?.userAgent,
     });
-    throw authError("Please verify your email before signing in.");
+    logger.warn(
+      {
+        event: "login_account_type_mismatch",
+        email,
+        userId: user.id,
+        storedAccountType: user.accountType,
+        requestedAccountType: data.accountType,
+        ip: meta?.ip,
+      },
+      "Login rejected: account type does not match registration"
+    );
+    throw authError(AUTH_MSG_EMAIL_ACCOUNT_IN_USE);
+  }
+
+  if (user.status === "PENDING_VERIFICATION") {
+    if (!user.emailVerified) {
+      logLoginAttempt({
+        email,
+        outcome: "EMAIL_NOT_VERIFIED",
+        userId: user.id,
+        ip: meta?.ip,
+        userAgent: meta?.userAgent,
+      });
+      throw authError("Please verify your email before signing in.");
+    }
+    if (user.phoneNumber && !user.phoneVerified) {
+      logLoginAttempt({
+        email,
+        outcome: "PHONE_NOT_VERIFIED",
+        userId: user.id,
+        ip: meta?.ip,
+        userAgent: meta?.userAgent,
+      });
+      throw authError("Please verify your phone number. We sent a code to your number when you registered.");
+    }
+    logLoginAttempt({
+      email,
+      outcome: "PENDING_VERIFICATION",
+      userId: user.id,
+      ip: meta?.ip,
+      userAgent: meta?.userAgent,
+    });
+    throw authError("Please complete account verification.");
   }
 
   if (user.status !== "ACTIVE") {

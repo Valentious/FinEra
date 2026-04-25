@@ -28,7 +28,8 @@ function requiresWalletDisciplineForAmount(loanType: LoanProductType, creditType
 }
 
 function loanTypeAllowedForAccount(loanType: LoanProductType, accountType: AccountType): boolean {
-  if (accountType === "STUDENT") return loanType === "COLLATERAL" || loanType === "NON_COLLATERAL";
+  if (accountType === "STUDENT") return loanType === "NON_COLLATERAL";
+  if (accountType === "ALUMNI") return loanType === "ASSET_BACKED";
   return loanType === "ASSET_BACKED" || loanType === "SALARY_BACKED";
 }
 

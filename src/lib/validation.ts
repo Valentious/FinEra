@@ -42,15 +42,32 @@ export function validateEmail(email: string): boolean {
 /** Institutional domain patterns: .edu, .ac.*, .gov, org domains */
 const INSTITUTIONAL_DOMAIN_REGEX = /@([a-z0-9-]+\.(edu|ac\.[a-z]{2,}|gov\.[a-z]{2,}|gov)|[a-z0-9-]+\.(edu|ac\.[a-z]{2,}|gov\.[a-z]{2,}|gov)(\.[a-z]{2})?)$/i;
 
-/** Validate institutional email (Staff & Employer): academic, research, government, org domains */
+/** Google addresses allowed alongside institutional rules (Gmail, Googlemail, @google.com). */
+const GOOGLE_EMAIL_DOMAINS = new Set(["gmail.com", "googlemail.com", "google.com"]);
+
+function emailDomainLower(email: string): string {
+  const t = email.trim();
+  const at = t.lastIndexOf("@");
+  if (at < 0) return "";
+  return t.slice(at + 1).toLowerCase();
+}
+
+export function isGoogleEmailDomain(email: string): boolean {
+  if (!VALIDATION.EMAIL_REGEX.test(email)) return false;
+  return GOOGLE_EMAIL_DOMAINS.has(emailDomainLower(email));
+}
+
+/** Validate institutional email (Staff & Employer): academic, research, government, org domains, or Google */
 export function validateInstitutionalEmail(email: string): boolean {
   if (!VALIDATION.EMAIL_REGEX.test(email)) return false;
+  if (isGoogleEmailDomain(email)) return true;
   return INSTITUTIONAL_DOMAIN_REGEX.test(email) || /\.(edu|ac\.|gov)\.?/i.test(email);
 }
 
-/** Validate student email: university educational institution domains */
+/** Validate student email: university educational institution domains, or Google */
 export function validateStudentEmail(email: string): boolean {
   if (!VALIDATION.EMAIL_REGEX.test(email)) return false;
+  if (isGoogleEmailDomain(email)) return true;
   return /\.(edu|ac\.[a-z]{2,}|ac\.uk|ac\.za|ac\.zw)/i.test(email) || /@[a-z0-9-]+\.(edu|ac\.)/i.test(email);
 }
 

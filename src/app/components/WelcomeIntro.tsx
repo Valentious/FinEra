@@ -17,7 +17,11 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
     },
     {
       icon: <CreditCard className="w-6 h-6 text-emerald-600" />,
-      title: "Access FinEra INCLUSIVE CREDIT",
+      title: (
+        <>
+          Access FinEra <span className="finera-inclusive-credit-tagline">INCLUSIVE CREDIT</span>
+        </>
+      ),
       description: "Get student-friendly loans with flexible repayment terms."
     },
     {
