@@ -9,6 +9,13 @@ interface FinEraShieldIconProps {
   size?: number;
   /** When set, width/height come from Tailwind (e.g. `h-10 w-10 sm:h-12 sm:w-12`) instead of the `size` prop. */
   dimensionClassName?: string;
+  /**
+   * Classes for the inner white shield SVG. Default is `w-[70%] h-[70%]`; use a larger
+   * percentage to shrink the visible green margin around the shield.
+   */
+  innerSvgClassName?: string;
+  /** `circle` = full circular green badge (e.g. splash). Default = rounded square. */
+  variant?: "default" | "circle";
   className?: string;
 }
 
@@ -18,13 +25,16 @@ const BRAND_GREEN_DARK = "#16a34a";
 export function FinEraShieldIcon({
   size = 40,
   dimensionClassName,
+  innerSvgClassName,
+  variant = "default",
   className = "",
 }: FinEraShieldIconProps) {
   const sizeFromClass = Boolean(dimensionClassName);
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-xl shadow-md",
+        "flex shrink-0 items-center justify-center shadow-md",
+        variant === "circle" ? "rounded-full" : "rounded-xl",
         sizeFromClass && "aspect-square",
         dimensionClassName,
         className
@@ -37,7 +47,7 @@ export function FinEraShieldIcon({
     >
       <svg
         viewBox="0 0 48 48"
-        className="w-[70%] h-[70%]"
+        className={cn("h-[70%] w-[70%]", innerSvgClassName)}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >

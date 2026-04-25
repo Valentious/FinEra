@@ -1,10 +1,10 @@
 /**
- * FinEra logo text — Fin (deep white on dark / hero) + Era (green).
- * On light cards use variant "light" so "Fin" stays high-contrast.
+ * FinEra logo text — "Fin" in white, "Era" in brand green. `variant` is kept for API compatibility
+ * (e.g. layout); colour comes from `index.css` under `.finera-logo`.
  */
 
 interface FinEraLogoTextProps {
-  /** "dark" = Fin in deep white (saturated or dark backdrops), "light" = Fin on light UI */
+  /** "light" adds `finera-logo-light` for any layout hooks; "Fin" is always white via CSS. */
   variant?: "dark" | "light";
   /** Size class - only used when className doesn't specify text size */
   size?: "sm" | "md" | "lg" | "xl";

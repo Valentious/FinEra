@@ -12,14 +12,13 @@
   --primary-green: #25D366;
   --primary-green-hover: #1ebe5d;
   --primary-green-light: #E8F8F1;
-  /** "Fin" wordmark: dark gold on light UI backgrounds (SVG light variant) */
+  /** Optional accent; "Fin" wordmark is white in UI (see .finera-logo) */
   --brand-fin-gold: #a67c00;
-  /** Legacy bright gold; prefer --brand-deep-white for Fin on dark/hero */
   --brand-fin-gold-bright: #e4c35a;
-  /** Fin + INCLUSIVE CREDIT on dark, splash, and saturated brand surfaces */
+  /** Fin + Inclusive Credit wordmark (legacy token name kept for compatibility) */
   --brand-deep-white: #f8fafc;
-  /** "INCLUSIVE CREDIT" / product name subbrand */
-  --brand-inclusive-credit-orange: #ea580c;
+  /** "Inclusive Credit" / subbrand line (legacy token name) */
+  --brand-inclusive-credit-orange: #0a0a0a;
   --background-main: #F7FDF9;
   /* Light theme: UI copy is black / near-black (strict monochrome discipline) */
   --text-primary: #000000;

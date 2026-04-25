@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { FinEraLogo } from "./FinEraLogo";
-import { FinEraShieldIcon } from "./FinEraShieldIcon";
+import { FinEraBrandMark } from "./FinEraBrandMark";
 import { FineraGradientBackdrop } from "@/app/components/FineraGradientBackdrop";
 import { PoweredByCbz } from "@/app/components/PoweredByCbz";
 import { BrandHeroFigure } from "@/app/components/BrandHeroFigure";
@@ -59,18 +58,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               initial={{ y: 8, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1, duration: 0.45, ease: "easeOut" }}
-              className="mb-4 sm:mb-5"
             >
-              <FinEraShieldIcon size={80} className="mx-auto drop-shadow-sm" />
-            </motion.div>
-
-            <motion.div
-              initial={{ y: 8, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.45, ease: "easeOut" }}
-              className="mb-6 sm:mb-8"
-            >
-              <FinEraLogo size="lg" showTagline={true} />
+              <FinEraBrandMark surface="onDark" />
             </motion.div>
 
             <motion.p

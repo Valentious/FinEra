@@ -19,8 +19,7 @@ import {
 } from "@/lib/validation";
 import { toast } from "sonner";
 import { PASSWORD_POLICY_HINT } from "@/lib/passwordPolicy";
-import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
-import { FinEraLogoText } from "@/app/components/FinEraLogoText";
+import { FinEraBrandMark } from "@/app/components/FinEraBrandMark";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { FINERA_REGISTRATION_CONSENT_VERSION } from "@/legal/consentVersion";
 
@@ -145,14 +144,8 @@ export function LoginRegister({
           </div>
         )}
 
-        <div className="flex justify-center mb-8">
-          <div className="flex flex-col items-center gap-4">
-            <FinEraShieldIcon size={48} className="rounded-xl" />
-            <div className="hero-header flex flex-col items-center justify-center text-center">
-              <FinEraLogoText variant="light" size="md" />
-              <p className="inclusive-text finera-inclusive-credit-tagline text-xs font-semibold tracking-[0.2em] uppercase mt-2 mb-0">INCLUSIVE CREDIT</p>
-            </div>
-          </div>
+        <div className="mb-8 flex w-full justify-center">
+          <FinEraBrandMark surface="onLight" className="mb-0" />
         </div>
 
         {accountMode === "demo" && (

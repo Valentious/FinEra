@@ -80,7 +80,7 @@ export function MobileSimPage() {
       <div className="finera-mobile-sim-chrome border-b border-white/10 bg-black/20 px-4 py-3 backdrop-blur-md sm:px-6">
         <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary">FinEra Inclusive Credit</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#0a0a0a]">FinEra Inclusive Credit</p>
             <h1 className="text-balance text-lg font-semibold text-white sm:text-xl">Mobile app simulation</h1>
             <p className="mt-1 max-w-2xl text-balance text-xs text-zinc-400 sm:text-sm">
               True device viewport in the frame below — the same app as production, for demos and presentations. Touch or

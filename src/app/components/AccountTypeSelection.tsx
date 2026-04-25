@@ -1,8 +1,7 @@
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { GraduationCap, Briefcase, Users, ArrowLeft, Building2, Sparkles } from "lucide-react";
-import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
-import { FinEraLogoText } from "@/app/components/FinEraLogoText";
+import { FinEraBrandMark } from "@/app/components/FinEraBrandMark";
 import { ToggleGroup, ToggleGroupItem } from "@/app/components/ui/toggle-group";
 
 export type AccountOperatingMode = "real" | "demo";
@@ -37,20 +36,13 @@ export function AccountTypeSelection({
           </div>
         )}
 
-        <div className="flex flex-col items-center justify-center mb-6">
-          <div className="flex flex-col items-center gap-4 mb-4">
-            <FinEraShieldIcon size={56} />
-            <div className="hero-header flex flex-col items-center justify-center text-center">
-              <FinEraLogoText variant="dark" size="lg" className="font-black" />
-              <p className="inclusive-text finera-inclusive-credit-tagline--on-dark text-sm font-semibold tracking-[0.2em] uppercase mt-2 mb-0">
-                INCLUSIVE CREDIT
-              </p>
-            </div>
+        <div className="flex w-full flex-col items-center gap-3 sm:gap-4">
+          <div className="flex w-full flex-col items-center gap-4 sm:gap-5">
+            <FinEraBrandMark showSubline={false} surface="onDark" className="mb-0" />
+            <p className="m-0 text-center text-xs font-black uppercase tracking-[0.25em] text-muted-foreground">
+              Operating mode
+            </p>
           </div>
-        </div>
-
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-muted-foreground">Operating mode</p>
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
             <span className="text-base font-bold text-foreground">Select</span>
             <ToggleGroup

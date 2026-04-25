@@ -5,7 +5,12 @@ interface FinEraLogoProps {
   size?: "sm" | "md" | "lg" | "xl";
   /** Show tagline "INCLUSIVE CREDIT" */
   showTagline?: boolean;
-  /** "dark" = Fin in deep white, INCLUSIVE CREDIT in brand orange; "light" = Fin in gold, tagline in brand orange */
+  /**
+   * "start" = wordmark is left-anchored in a tight viewBox (no extra canvas to the left).
+   * Use beside an icon; ignored when `showTagline` is true (keeps full centered layout for tagline).
+   */
+  wordmarkAlign?: "center" | "start";
+  /** `variant` is retained for theming hooks. "Fin" is white; SVG tagline "INCLUSIVE CREDIT" is black when `showTagline`. */
   variant?: "dark" | "light";
   /** Custom class name */
   className?: string;
@@ -19,18 +24,30 @@ const sizes = {
 };
 
 export const FinEraLogo = forwardRef<SVGSVGElement, FinEraLogoProps>(
-  ({ size = "md", showTagline = true, variant = "dark", className = "" }, ref) => {
+  (
+    { size = "md", showTagline = true, wordmarkAlign = "center", variant = "dark", className = "" },
+    ref
+  ) => {
     const id = useId().replace(/:/g, "");
     const { width, height, fontSize, taglineSize } = sizes[size];
     const taglineY = fontSize + taglineSize + 14;
+    const useTightStart = !showTagline && wordmarkAlign === "start";
+    const tightWidth = Math.max(Math.round(fontSize * 3.85), 120);
+    /** Strip unused vertical canvas (else flex align centers empty space and misaligns e.g. splash + shield). */
+    const tightHeight = useTightStart ? Math.round(fontSize + 24) : height;
+    const viewW = useTightStart ? tightWidth : width;
+    const viewH = useTightStart ? tightHeight : height;
+    const textX = useTightStart ? 2 : width / 2;
+    const textAnchor: "start" | "middle" = useTightStart ? "start" : "middle";
 
     return (
       <svg
         ref={ref}
+        data-wordmark-theme={variant}
         xmlns="http://www.w3.org/2000/svg"
-        viewBox={`0 0 ${width} ${height}`}
-        width={width}
-        height={height}
+        viewBox={useTightStart ? `0 0 ${tightWidth} ${tightHeight}` : `0 0 ${width} ${height}`}
+        width={viewW}
+        height={viewH}
         className={className}
       >
         <defs>
@@ -45,16 +62,16 @@ export const FinEraLogo = forwardRef<SVGSVGElement, FinEraLogoProps>(
 
         <g filter={`url(#logoShadow-${id})`}>
           <text
-            x={width / 2}
+            x={textX}
             y={fontSize + 2}
-            textAnchor="middle"
+            textAnchor={textAnchor}
             fill="#ffffff"
             fontFamily="system-ui, -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif"
             fontSize={fontSize}
             fontWeight="700"
             letterSpacing="-0.02em"
           >
-            <tspan fill={variant === "light" ? "#a67c00" : "#f8fafc"}>Fin</tspan>
+            <tspan fill="#f8fafc">Fin</tspan>
             <tspan fill={`url(#eraGrad-${id})`}>Era</tspan>
           </text>
         </g>
@@ -64,7 +81,7 @@ export const FinEraLogo = forwardRef<SVGSVGElement, FinEraLogoProps>(
             x={width / 2}
             y={taglineY + 4}
             textAnchor="middle"
-            fill="var(--brand-inclusive-credit-orange, #ea580c)"
+            fill="#0a0a0a"
             fontFamily="system-ui, -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif"
             fontSize={taglineSize}
             fontWeight="600"

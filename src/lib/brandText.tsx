@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 const INCLUSIVE_NAME_RE = /(FinEra Inclusive Credit|INCLUSIVE CREDIT)/g;
 
-/** Wraps “INCLUSIVE CREDIT” or “FinEra Inclusive Credit” in the orange subbrand style. */
+/** Wraps “INCLUSIVE CREDIT” or “FinEra Inclusive Credit” in the black subbrand style. */
 export function withInclusiveCreditBrandColor(text: string): ReactNode {
   const parts: ReactNode[] = [];
   let last = 0;

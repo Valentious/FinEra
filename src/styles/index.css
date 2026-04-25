@@ -75,14 +75,14 @@
   text-align: center;
 }
 
-/* "INCLUSIVE CREDIT" and matching product name highlights */
+/* "Inclusive Credit" — always black (not tied to theme text tokens) */
 .finera-inclusive-credit-tagline,
 .finera-inclusive-credit-tagline--on-dark,
 .finera-inclusive-credit-phrase {
-  color: var(--brand-inclusive-credit-orange);
+  color: #0a0a0a;
 }
 
-/* FinEra Logo — Fin + INCLUSIVE CREDIT: deep white on dark/hero; readable on light UI */
+/* FinEra text logo — "Fin" white, "Era" green, all surfaces */
 .finera-logo {
   font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif;
   font-weight: 700;
@@ -90,16 +90,11 @@
   line-height: 1.1;
   margin: 0;
 }
-.finera-logo:not(.finera-logo-light) .fin {
+.finera-logo .fin,
+.finera-logo-light .fin {
   color: var(--brand-deep-white);
 }
-.finera-logo .era {
-  color: var(--primary-green);
-}
-/* Fin on light card backgrounds (contrast) */
-.finera-logo-light .fin {
-  color: var(--text-primary);
-}
+.finera-logo .era,
 .finera-logo-light .era {
   color: var(--primary-green);
 }
