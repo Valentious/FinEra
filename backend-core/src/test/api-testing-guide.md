@@ -161,7 +161,7 @@ curl -X POST http://localhost:4000/api/v1/transactions/withdraw \
     "currency": "USD",
     "withdrawalMethod": "BANK_TRANSFER",
     "accountDetails": {
-      "bankName": "CBZ Bank",
+      "bankName": "Stanbic Bank",
       "accountNumber": "1234567890",
       "accountName": "John Doe"
     }

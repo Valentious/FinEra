@@ -12,17 +12,16 @@ import {
 import { USE_MOCK_DATA } from "@/services/index";
 import { Button } from "@/app/components/ui/button";
 import { Checkbox } from "@/app/components/ui/checkbox";
-import { Download, FileUp, ShieldCheck, ArrowLeft, Building2 } from "lucide-react";
+import { Download, FileUp, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import {
   onDisciplineGradientButtonOutline,
   onDisciplineGradientGlass,
-  onDisciplineGradientIcon,
   onDisciplineGradientMuted,
-  onDisciplineGradientPill,
   onDisciplineGradientText,
 } from "@/lib/disciplineGradient";
 import { FineraGradientBackdrop } from "@/app/components/FineraGradientBackdrop";
+import { LoanApplicationFlow } from "@/app/components/LoanApplicationFlow";
 import { isCheckboxChecked } from "@/lib/checkboxState";
 
 function StatusBadge({ status }: { status: MemberDocVerificationStatus | null | undefined }) {
@@ -48,34 +47,33 @@ function StatusBadge({ status }: { status: MemberDocVerificationStatus | null | 
   );
 }
 
-function accountLabel(accountType: "student" | "staff" | "alumni"): string {
-  if (accountType === "staff") return "Professional Account";
-  if (accountType === "alumni") return "Sole Trader Account";
-  return "Student Account";
-}
-
 interface AgreementsConsentScreenProps {
   loanType: LoanType;
   accountType: "student" | "staff" | "alumni";
-  /** Drives the same TrustScore gradient shell as the dashboard (0–100). */
+  /** Retained for API compatibility; product header no longer displays TrustScore. */
   disciplineScore?: number;
-  onContinue: () => void;
+  onContinue: () => void | Promise<void>;
   onBack: () => void;
   /** When true, member can switch product (e.g. opened from Account settings). */
   showLoanTypeSelector?: boolean;
   onLoanTypeChange?: (lt: LoanType) => void;
+  /** Last step of loan application: full-width primary CTA in the footer and async submit. */
+  isLoanApplicationFinal?: boolean;
+  /** Label for the primary action (default: "Continue", or "Submit loan application" when isLoanApplicationFinal). */
+  continueButtonLabel?: string;
 }
 
 export function AgreementsConsentScreen({
   loanType,
   accountType,
-  disciplineScore: disciplineScoreProp,
+  disciplineScore: _disciplineScore,
   onContinue,
   onBack,
   showLoanTypeSelector,
   onLoanTypeChange,
+  isLoanApplicationFinal = false,
+  continueButtonLabel,
 }: AgreementsConsentScreenProps) {
-  const safeDisciplineScore = Number.isFinite(Number(disciplineScoreProp)) ? Number(disciplineScoreProp) : 50;
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [agreementStatus, setAgreementStatus] = useState<MemberDocVerificationStatus | null>(null);
@@ -86,8 +84,15 @@ export function AgreementsConsentScreen({
     defaultFlagged: boolean;
     payrollEnforcementEligible: boolean;
   } | null>(null);
+  const [primaryPending, setPrimaryPending] = useState(false);
 
   const isSalary = loanType === "SALARY_BACKED";
+  const isAssetBased = loanType === "ASSET_BACKED";
+  /** Student portal loans: address proof via utility or parent/guardian residence letter (not employer). */
+  const utilityOrResidenceDocLabel =
+    accountType === "student"
+      ? "utility bill or parent/guardian residence confirmation letter"
+      : "utility bill or employer residence confirmation letter";
 
   const refresh = useCallback(async () => {
     if (USE_MOCK_DATA) {
@@ -143,18 +148,6 @@ export function AgreementsConsentScreen({
     }
   };
 
-  const onDownloadConsent = async () => {
-    try {
-      if (USE_MOCK_DATA) {
-        toast.message("Mock mode: connect backend and upload payroll template in Admin.");
-        return;
-      }
-      await downloadMemberTemplate("PAYROLL_CONSENT", "payroll-consent-template.pdf");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Download failed");
-    }
-  };
-
   const onPickUpload = (kind: "agreement" | "consent") => {
     const input = document.createElement("input");
     input.type = "file";
@@ -186,13 +179,18 @@ export function AgreementsConsentScreen({
 
   const canContinue = agreed && hasAgreement && (!isSalary || hasConsent);
 
+  const primaryLabel =
+    continueButtonLabel ?? (isLoanApplicationFinal ? "Submit loan application" : "Continue");
+
   const continueBlockers = useMemo(() => {
     const parts: string[] = [];
     if (!agreed) parts.push("confirm the acknowledgment");
-    if (!hasAgreement) parts.push("upload the signed member agreement");
-    if (isSalary && !hasConsent) parts.push("upload the payroll consent form");
+    if (!hasAgreement) {
+      parts.push(isAssetBased ? "upload member agreement" : `upload ${utilityOrResidenceDocLabel}`);
+    }
+    if (isSalary && !hasConsent) parts.push("upload a copy of payslip (within 3 months)");
     return parts;
-  }, [agreed, hasAgreement, isSalary, hasConsent]);
+  }, [agreed, hasAgreement, isAssetBased, isSalary, hasConsent, utilityOrResidenceDocLabel]);
 
   const glassPanel = `rounded-2xl border p-5 shadow-md shadow-primary/12 backdrop-blur-md dark:shadow-primary/10 ${onDisciplineGradientGlass} ${onDisciplineGradientText}`;
   const innerRow = `flex flex-col gap-2 rounded-xl border border-white/40 bg-white/55 p-4 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between dark:border-white/12 dark:bg-white/10 ${onDisciplineGradientText}`;
@@ -208,23 +206,22 @@ export function AgreementsConsentScreen({
     >
       <FineraGradientBackdrop />
       <div className="relative z-10 mx-auto max-w-lg space-y-5 px-4 md:px-0">
-        <div className={`${glassPanel} relative overflow-hidden`}>
-          <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-white/30 blur-2xl dark:bg-white/10" aria-hidden />
-          <div className="relative flex items-start gap-3">
-            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border backdrop-blur-md ${onDisciplineGradientGlass}`}>
-              <ShieldCheck className={`h-6 w-6 ${onDisciplineGradientIcon}`} aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${onDisciplineGradientMuted}`}>Agreements &amp; consent</p>
-                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${onDisciplineGradientPill}`}>
-                  TrustScore · {safeDisciplineScore}
-                </span>
-              </div>
-              <h1 className={`mt-1 text-xl font-semibold tracking-tight ${onDisciplineGradientText}`}>{getLoanProductLabel(loanType)}</h1>
+        {isLoanApplicationFinal ? <LoanApplicationFlow loanType={loanType} step="confirm" /> : null}
+        {(loanType !== "SALARY_BACKED" || (showLoanTypeSelector && onLoanTypeChange)) && (
+          <div className={`${glassPanel} relative overflow-hidden`}>
+            <div
+              className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-white/30 blur-2xl dark:bg-white/10"
+              aria-hidden
+            />
+            <div className="relative z-10">
+              {loanType !== "SALARY_BACKED" ? (
+                <h1 className={`text-xl font-semibold tracking-tight ${onDisciplineGradientText}`}>
+                  {getLoanProductLabel(loanType)}
+                </h1>
+              ) : null}
               {showLoanTypeSelector && onLoanTypeChange && (
                 <select
-                  className={`${fieldClass} mt-3 w-full font-semibold`}
+                  className={`${fieldClass} w-full font-semibold ${loanType !== "SALARY_BACKED" ? "mt-3" : ""}`}
                   value={loanType}
                   onChange={(e) => onLoanTypeChange(e.target.value as LoanType)}
                 >
@@ -235,13 +232,9 @@ export function AgreementsConsentScreen({
                   ))}
                 </select>
               )}
-              <p className={`mt-2 flex items-center gap-2 text-xs ${onDisciplineGradientMuted}`}>
-                <Building2 className={`h-3.5 w-3.5 shrink-0 ${onDisciplineGradientIcon}`} aria-hidden />
-                {accountLabel(accountType)}
-              </p>
             </div>
           </div>
-        </div>
+        )}
 
         {compliance?.defaultFlagged && (
           <div className="rounded-2xl border border-red-300/50 bg-red-950/55 p-4 text-sm text-red-50 shadow-lg backdrop-blur-md">
@@ -254,31 +247,24 @@ export function AgreementsConsentScreen({
           </div>
         )}
 
-        <div className={glassPanel}>
-          <p className={`text-[10px] font-semibold uppercase tracking-widest ${onDisciplineGradientMuted}`}>Download templates</p>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <Button
-              type="button"
-              variant="outline"
-              className={`flex-1 border font-semibold ${onDisciplineGradientButtonOutline} ${onDisciplineGradientText}`}
-              onClick={() => void onDownloadAgreement()}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Member agreement
-            </Button>
-            {isSalary && (
+        {!isSalary ? (
+          <div className={glassPanel}>
+            <p className={`text-[10px] font-semibold uppercase tracking-widest ${onDisciplineGradientMuted}`}>
+              Download templates
+            </p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <Button
                 type="button"
                 variant="outline"
                 className={`flex-1 border font-semibold ${onDisciplineGradientButtonOutline} ${onDisciplineGradientText}`}
-                onClick={() => void onDownloadConsent()}
+                onClick={() => void onDownloadAgreement()}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Payroll consent
+                Member agreement
               </Button>
-            )}
+            </div>
           </div>
-        </div>
+        ) : null}
 
         <div className={glassPanel}>
           <p className={`text-[10px] font-semibold uppercase tracking-widest ${onDisciplineGradientMuted}`}>Upload signed documents</p>
@@ -288,8 +274,9 @@ export function AgreementsConsentScreen({
             <div className="mt-4 space-y-4">
               <div className={innerRow}>
                 <div>
-                  <p className="text-sm font-bold">Signed member agreement</p>
-                  <p className="text-xs opacity-90">Required for all loan types</p>
+                  <p className="text-sm font-bold leading-snug">
+                    {isAssetBased ? "Member agreement" : utilityOrResidenceDocLabel}
+                  </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={agreementStatus} />
@@ -308,8 +295,9 @@ export function AgreementsConsentScreen({
               {isSalary && (
                 <div className={innerRow}>
                   <div>
-                    <p className="text-sm font-bold">Payroll consent form</p>
-                    <p className="text-xs opacity-90">Required for salary-backed loans</p>
+                    <p className="text-sm font-bold leading-snug">
+                      Copy of payslip, which should be within 3 months
+                    </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge status={consentStatus} />
@@ -332,7 +320,7 @@ export function AgreementsConsentScreen({
         <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
           <p className="font-bold text-black">Acknowledgment</p>
           <p className="mt-2 text-xs leading-relaxed text-black">
-            You understand that repayment compliance is monitored and that repeated missed repayments may trigger default handling and, for payroll-linked
+            You understand that repayment compliance is monitored and that repeated missed repayments may trigger default handling and, for salary-based
             products, employer coordination (without automatic payroll deduction by FinEra).
           </p>
           <div className="mt-4 flex items-start gap-3">
@@ -364,31 +352,70 @@ export function AgreementsConsentScreen({
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            className={`flex-1 border font-semibold ${onDisciplineGradientButtonOutline} ${onDisciplineGradientText}`}
-            onClick={onBack}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <Button
-            type="button"
-            className="flex-[2] bg-white font-semibold text-primary hover:bg-white/90 disabled:opacity-40"
-            disabled={!canContinue}
-            onClick={() => {
-              if (!canContinue) return;
-              onContinue();
-            }}
-          >
-            Continue
-          </Button>
-        </div>
+        {isLoanApplicationFinal ? (
+          <div className="sticky bottom-0 z-20 -mx-4 border-t border-white/20 bg-gradient-to-b from-white/0 via-white/90 to-white/95 pt-3 pb-4 dark:from-slate-950/0 dark:via-slate-950/90 dark:to-slate-950 md:-mx-0">
+            <div className="mx-auto max-w-lg space-y-2 px-4 md:px-0">
+              <Button
+                type="button"
+                variant="ghost"
+                className={`h-12 w-full border font-semibold ${onDisciplineGradientButtonOutline} ${onDisciplineGradientText}`}
+                onClick={onBack}
+                disabled={primaryPending}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                type="button"
+                className="h-14 w-full bg-primary text-lg font-bold text-primary-foreground shadow-lg hover:bg-primary/90 disabled:opacity-40"
+                disabled={!canContinue || primaryPending}
+                onClick={async () => {
+                  if (!canContinue || primaryPending) return;
+                  setPrimaryPending(true);
+                  try {
+                    await Promise.resolve(onContinue());
+                  } finally {
+                    setPrimaryPending(false);
+                  }
+                }}
+              >
+                {primaryPending ? "Submitting…" : primaryLabel}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              className={`flex-1 border font-semibold ${onDisciplineGradientButtonOutline} ${onDisciplineGradientText}`}
+              onClick={onBack}
+              disabled={primaryPending}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button
+              type="button"
+              className="flex-[2] bg-white font-semibold text-primary hover:bg-white/90 disabled:opacity-40"
+              disabled={!canContinue || primaryPending}
+              onClick={async () => {
+                if (!canContinue || primaryPending) return;
+                setPrimaryPending(true);
+                try {
+                  await Promise.resolve(onContinue());
+                } finally {
+                  setPrimaryPending(false);
+                }
+              }}
+            >
+              {primaryPending ? "…" : primaryLabel}
+            </Button>
+          </div>
+        )}
         {!canContinue && continueBlockers.length > 0 ? (
           <p className="text-center text-xs font-medium text-amber-900 dark:text-amber-100" role="status">
-            To continue: {continueBlockers.join(", ")}.
+            {isLoanApplicationFinal ? "To submit your application" : "To continue"}: {continueBlockers.join(", ")}.
           </p>
         ) : null}
       </div>

@@ -72,36 +72,40 @@ export function RepaymentDashboard({
         </Button>
 
         <div>
-          <h1 className="text-3xl font-black text-foreground">Repayment Overview</h1>
-          <p className="text-sm font-bold text-muted-foreground mt-1">All amounts in {cc}</p>
+          <h1 className="text-3xl font-black text-black dark:text-zinc-100">Repayment Overview</h1>
+          <p className="text-sm font-bold text-black/90 dark:text-zinc-300 mt-1">All amounts in {cc}</p>
         </div>
 
-        <Card className="p-6">
+        <Card className="border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950">
           <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-muted-foreground">Repayment Progress</span>
-              <span className="text-sm font-semibold">{repaymentPercentage.toFixed(1)}%</span>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm font-semibold text-black dark:text-zinc-100">Repayment Progress</span>
+              <span className="text-sm font-bold tabular-nums text-black dark:text-zinc-100">
+                {repaymentPercentage.toFixed(1)}%
+              </span>
             </div>
             <Progress value={Math.min(repaymentPercentage, 100)} className="h-3" />
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="relative overflow-hidden rounded-lg p-4 text-white shadow-md">
-              <FineraGradientBackdrop clip="rounded-lg" />
-              <div className="relative z-10">
-                <p className="mb-1 text-sm text-white/80">Outstanding ({cc})</p>
-                <p className="text-2xl font-black">{formatAmountWithCurrency(outstandingBalance, cc)}</p>
-                <p className="mt-1 text-xs text-white/75">Remaining on this currency loan</p>
-              </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <p className="mb-1 text-sm font-semibold text-black dark:text-zinc-100">Outstanding ({cc})</p>
+              <p className="text-2xl font-black text-black dark:text-zinc-100">
+                {formatAmountWithCurrency(outstandingBalance, cc)}
+              </p>
+              <p className="mt-1 text-xs font-medium text-black dark:text-zinc-200">
+                Remaining on this currency loan
+              </p>
             </div>
 
-            <div className="relative overflow-hidden rounded-lg p-4 text-white shadow-md">
-              <FineraGradientBackdrop clip="rounded-lg" />
-              <div className="relative z-10">
-                <p className="mb-1 text-sm text-white/80">Repaid so far</p>
-                <p className="text-2xl font-black">{formatAmountWithCurrency(amountRepaid, cc)}</p>
-                <p className="mt-1 text-xs text-white/75">Toward total {formatAmountWithCurrency(totalDue, cc)}</p>
-              </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <p className="mb-1 text-sm font-semibold text-black dark:text-zinc-100">Repaid so far</p>
+              <p className="text-2xl font-black text-black dark:text-zinc-100">
+                {formatAmountWithCurrency(amountRepaid, cc)}
+              </p>
+              <p className="mt-1 text-xs font-medium text-black dark:text-zinc-200">
+                Toward total {formatAmountWithCurrency(totalDue, cc)}
+              </p>
             </div>
           </div>
         </Card>

@@ -486,7 +486,7 @@ Authorization: Bearer <token>
   "repaymentSchedule": {
     "totalAmount": 1195.00,
     "monthlyInstallment": 99.58,
-    "repaymentCycle": "12 months",
+    "repaymentCycle": "6 months",
     "firstDueDate": "2026-04-13"
   }
 }

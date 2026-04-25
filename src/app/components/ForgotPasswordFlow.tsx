@@ -8,8 +8,7 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/app/components/ui/input-otp";
 import { PhoneInputField } from "@/app/components/PhoneInputField";
-import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
-import { FinEraLogoText } from "@/app/components/FinEraLogoText";
+import { FinEraBrandMark } from "@/app/components/FinEraBrandMark";
 import { validateEmail, validatePhoneE164, validatePassword } from "@/lib/validation";
 import { cn } from "@/app/components/ui/utils";
 import { apiService } from "@/services/index";
@@ -223,14 +222,8 @@ export function ForgotPasswordFlow({ onBackToLogin }: ForgotPasswordFlowProps) {
           </Button>
         </div>
 
-        <div className="mb-8 flex flex-col items-center justify-center gap-4">
-          <FinEraShieldIcon size={48} className="rounded-xl" />
-          <div className="flex flex-col items-center text-center">
-            <FinEraLogoText variant="light" size="md" />
-            <p className="inclusive-text finera-inclusive-credit-tagline mb-0 mt-2 text-xs font-semibold uppercase tracking-[0.2em]">
-              INCLUSIVE CREDIT
-            </p>
-          </div>
+        <div className="mb-8 flex flex-col items-center justify-center">
+          <FinEraBrandMark surface="onLight" />
         </div>
 
         <AnimatePresence mode="wait">

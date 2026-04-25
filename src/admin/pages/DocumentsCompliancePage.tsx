@@ -131,7 +131,7 @@ export function DocumentsCompliancePage() {
           <h2 className="text-xs font-black uppercase tracking-[0.2em] text-emerald-500">Delinquency (missed installments)</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Increments loan <code className="text-emerald-400">delinquencyStage</code>. When it reaches the configured threshold, the member is flagged and
-            notifications are created (employer path for salary-backed only).
+            notifications are created (employer path for salary-based only).
           </p>
           <div className="mt-4 flex flex-wrap items-end gap-2">
             <div className="flex flex-col gap-1">

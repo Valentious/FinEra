@@ -5,7 +5,7 @@ import { withInclusiveCreditBrandColor } from "@/lib/brandText";
 
 const TERMS_BODY = [
   "This summary describes how FinEra Inclusive Credit operates the member platform. Replace this page with your organisation’s full Terms of Service before production.",
-  "By registering and using wallets, credit, or repayments, you agree to follow product-specific rules shown in the app (including loan agreements, collateral disclosures, and salary-backed consent where applicable).",
+  "By registering and using wallets, credit, or repayments, you agree to follow product-specific rules shown in the app (including loan agreements, collateral disclosures, and salary-based consent where applicable).",
 ];
 
 const PRIVACY_BODY = [

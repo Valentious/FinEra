@@ -75,15 +75,17 @@ export function MainNavigation({
           <NotificationsDropdown onNavigate={onNavigate} headerTone="green" />
           <div className="mx-1 hidden h-8 w-px bg-white/25 sm:block dark:bg-emerald-950/40" aria-hidden />
           <div className="flex items-center gap-2">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold leading-none text-white">{userName}</p>
-              <p className="text-[10px] font-medium tracking-wide text-emerald-50/90">
-                {walletNumericId
-                  ? `${walletCurrencyCode ? `${walletCurrencyCode} ` : ""}Wallet ID: ${walletNumericId}`
-                  : accountNumber
-                    ? `Acc: ${accountNumber}`
-                    : "Verified Member"}
-              </p>
+            <div className="hidden max-w-[min(100%,14rem)] text-right sm:block">
+              <div className="rounded-lg border border-white/50 bg-white/95 px-2.5 py-1.5 shadow-sm backdrop-blur-sm dark:border-emerald-950/30 dark:bg-white/92">
+                <p className="truncate text-sm font-semibold leading-none text-black">{userName}</p>
+                <p className="mt-1 truncate text-[10px] font-medium tracking-wide text-black">
+                  {walletNumericId
+                    ? `${walletCurrencyCode ? `${walletCurrencyCode} ` : ""}Wallet ID: ${walletNumericId}`
+                    : accountNumber
+                      ? `Acc: ${accountNumber}`
+                      : "Verified Member"}
+                </p>
+              </div>
             </div>
             <div
               className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/30 bg-white/15 hover:bg-white/25 dark:border-emerald-200/20 dark:bg-black/20 dark:hover:bg-black/30"

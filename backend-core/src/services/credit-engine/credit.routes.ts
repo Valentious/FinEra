@@ -91,7 +91,7 @@ router.post("/apply", async (req, res, next) => {
       throw validationError("Validation failed", { fields: zodErrorToFieldErrors(parsed.error) });
     }
     const { amount, currency } = parsed.data;
-    const term = parsed.data.term ?? 12;
+    const term = parsed.data.term ?? 6;
     const loanType = parsed.data.loanType as LoanProductType;
 
     const limitResult = await creditService.calculateCreditLimit(req.user!.id, { currency });
@@ -253,7 +253,7 @@ router.post("/apply-instant", async (req, res, next) => {
 
     const interestRatePct = assignLoanInterestRatePercent(amount);
     const processingFee = processingFeeForLoan();
-    const term = creditType === "essential" ? 12 : 24;
+    const term = 6;
     const interest = amount * (interestRatePct / 100) * (term / 12);
     const totalRepayable = amount + processingFee + interest;
 
@@ -287,7 +287,7 @@ router.post("/apply-instant", async (req, res, next) => {
         approvedCreditBalance: result.approvedCreditBalance,
         activeLoanBalance: result.activeLoanBalance,
         transaction: result.transaction,
-        repaymentCycle: `${term} months`,
+        repaymentCycle: "MONTHLY",
       },
     });
   } catch (e) {

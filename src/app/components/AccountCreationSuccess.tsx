@@ -62,11 +62,11 @@ export function AccountCreationSuccess({
         initial={{ scale: 0.98, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.45 }}
-        className="w-full max-w-2xl"
+        className="w-full max-w-lg sm:max-w-xl"
       >
         <Card className="border border-slate-200/80 dark:border-slate-800 shadow-2xl shadow-slate-200/40 dark:shadow-black/40 rounded-3xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white pt-10 pb-8 px-6 sm:px-10">
-            <div className="flex flex-col items-center text-center max-w-xl mx-auto">
+          <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white pt-10 pb-8 px-5 sm:px-8">
+            <div className="flex flex-col items-center text-center max-w-sm mx-auto sm:max-w-md">
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -77,17 +77,17 @@ export function AccountCreationSuccess({
                   <CheckCircle2 className="w-16 h-16 text-white" />
                 </div>
               </motion.div>
-              <CardTitle className="text-2xl sm:text-3xl font-black mb-2 tracking-tight">
+              <CardTitle className="text-xl sm:text-2xl font-black mb-2 tracking-tight text-balance">
                 Account Successfully Created
               </CardTitle>
-              <p className="text-base sm:text-lg font-medium text-white/95">
+              <p className="text-sm sm:text-base font-medium text-white/95 text-balance">
                 Welcome to FinEra{" "}
                 <span className="finera-inclusive-credit-tagline--on-dark font-semibold">INCLUSIVE CREDIT</span>
               </p>
             </div>
           </CardHeader>
 
-          <CardContent className="p-6 sm:p-8 lg:p-10 space-y-6">
+          <CardContent className="p-5 sm:p-7 space-y-6">
             <div className="bg-gradient-to-br from-emerald-50/90 to-white dark:from-emerald-950/30 dark:to-slate-900 rounded-2xl p-6 sm:p-7 border border-emerald-100 dark:border-emerald-900/60 shadow-sm">
               <h3 className="text-xs font-black text-muted-foreground mb-5 text-center uppercase tracking-[0.2em]">
                 Your account

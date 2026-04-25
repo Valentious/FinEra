@@ -8,8 +8,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/app/components/ui/input
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { apiService } from "@/services";
-import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
-import { FinEraLogoText } from "@/app/components/FinEraLogoText";
+import { FinEraBrandMark } from "@/app/components/FinEraBrandMark";
 const RESEND_COOLDOWN_SEC = 30;
 
 export function VerifyEmailPage() {
@@ -94,14 +93,11 @@ export function VerifyEmailPage() {
           </Button>
         </div>
         <div className="flex justify-center mb-8">
-          <div className="flex flex-col items-center gap-4">
-            <FinEraShieldIcon size={48} className="rounded-xl" />
-            <div className="hero-header flex flex-col items-center text-center">
-              <FinEraLogoText variant="light" size="md" />
-              <p className="inclusive-text text-xs font-semibold text-muted-foreground tracking-[0.2em] uppercase mt-2 mb-0">
-                VERIFY YOUR EMAIL
-              </p>
-            </div>
+          <div className="flex flex-col items-center gap-3 text-center">
+            <FinEraBrandMark surface="onLight" showSubline={false} />
+            <p className="inclusive-text mb-0 mt-0 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              VERIFY YOUR EMAIL
+            </p>
           </div>
         </div>
 

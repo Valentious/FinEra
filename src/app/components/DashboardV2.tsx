@@ -43,7 +43,7 @@ import {
   onDisciplineGradientText,
   onDisciplineGradientShellShadow,
 } from "@/lib/disciplineGradient";
-import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
+import { FinEraHexLogo } from "@/app/components/FinEraHexLogo";
 import { BrandHeroFigure } from "@/app/components/BrandHeroFigure";
 
 export type CurrencyOption = "USD" | "ZIG" | "ZAR" | "EUR" | "GBP";
@@ -95,6 +95,7 @@ interface DashboardV2Props {
   walletBalance: number;
   /** e.g. FinCash USD Wallet - must match active dashboard currency */
   walletLabel: string;
+  /** Outstanding / active loan balance for the selected dashboard currency. */
   activeCredit: number;
   availableCreditLimit: number;
   disciplineScore: number;
@@ -307,12 +308,12 @@ export function DashboardV2({
         </div>
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
-            <h1 className="text-[12pt] font-semibold tracking-tight text-black">
+            <h1 className="text-[12pt] font-semibold tracking-tight text-black dark:text-white">
               Welcome, {userName}
             </h1>
             {displayAccountNumber &&
             /^\d{10}$/.test(String(displayAccountNumber).replace(/\s/g, "")) ? (
-              <p className={`mt-2 text-xs font-medium ${onDisciplineGradientMuted}`}>
+              <p className="mt-2 text-xs font-medium text-black dark:text-white">
                 {selectedCurrency} Wallet ID · {displayAccountNumber}
               </p>
             ) : null}
@@ -322,7 +323,7 @@ export function DashboardV2({
             <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:min-w-[min(100%,17.5rem)] sm:items-end">
               <span
                 id="dash-ribbon-currency-label"
-                className="text-balance text-left text-xs font-extrabold uppercase leading-snug tracking-wide text-black sm:text-right sm:text-sm"
+                className="text-balance text-left text-xs font-extrabold uppercase leading-snug tracking-wide text-black dark:text-white sm:text-right sm:text-sm"
               >
                 CHANGE DASHBOARD CURRENCY
               </span>
@@ -426,9 +427,9 @@ export function DashboardV2({
               <div className="relative z-10 flex min-h-min min-w-0 flex-1 flex-col">
                 <div className="min-w-0 shrink-0">
                   <div className="mb-3" role="img" aria-label="FinEra wallet">
-                    <FinEraShieldIcon
-                      dimensionClassName="h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12"
-                      className="rounded-full ring-1 ring-white/45 shadow-lg"
+                    <FinEraHexLogo
+                      size="md"
+                      className="h-10 w-10 ring-1 ring-white/45 drop-shadow-md sm:h-11 sm:w-11 md:h-12 md:w-12"
                     />
                   </div>
                   <p className={`text-[10px] font-semibold uppercase tracking-widest sm:text-xs ${onDisciplineGradientText}`}>{walletLabel}</p>
@@ -473,7 +474,9 @@ export function DashboardV2({
                       <span>Debt</span>
                     </div>
                   </div>
-                  <p className={`text-[10px] font-semibold uppercase tracking-widest sm:text-xs ${onDisciplineGradientText}`}>Active loan</p>
+                  <p className={`text-[10px] font-semibold uppercase tracking-widest sm:text-xs ${onDisciplineGradientText}`}>
+                    Active loan
+                  </p>
                   <p className={`mt-0.5 text-[10px] font-semibold uppercase tracking-wider sm:text-[11px] ${onDisciplineGradientMuted}`}>
                     {selectCurrency} outstanding
                   </p>

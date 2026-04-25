@@ -41,11 +41,11 @@ This document defines a **real-world, implementable** payment and transaction ar
 | **EcoCash** | MoMo API / USSD | Primary retail; dominates market |
 | **OneMoney** | MoMo API | Econet; redundancy |
 | **Innbucks / O'mari** | MoMo API | Multi-operator coverage |
-| **ZIPIT** | Bank-to-bank instant transfer | Instant ZiG; CBZ, Stanbic, FBC, etc. |
+| **ZIPIT** | Bank-to-bank instant transfer | Instant ZiG; Stanbic, FBC, etc. |
 | **RTGS** | High-value transfers | Corporate; same-day finality |
 | **Paynow / VPayments** | Aggregator gateway | One API → multiple rails |
 | **Mukuru** | Local cash-in / remittance (ZiG payout) | Diaspora → ZiG wallet |
-| **Bank Deposit** | CBZ, Steward, FBC, etc. | Teller / branch cash-in |
+| **Bank Deposit** | Stanbic, Steward, FBC, etc. | Teller / branch cash-in |
 
 **📌 Reality:** Mobile money + ZIPIT dominate local payments.
 
@@ -152,7 +152,7 @@ User                    FinEra SFIS                EcoCash
 | **Visa / Mastercard** | International cards | Cross-border; USD settlement |
 | **SWIFT** | International bank transfer | Nostro-to-nostro; corporates |
 | **WorldRemit / Western Union** | Remittance partners | USD inflows |
-| **Bank FCA transfer** | Local USD accounts (CBZ, Stanbic) | Domestic nostro pool |
+| **Bank FCA transfer** | Local USD accounts (Stanbic, FBC) | Domestic nostro pool |
 | **Payoneer / Wise** | Virtual accounts (semi-supported) | Diaspora freelancers |
 | **EcoCash FCA wallet** | USD side of EcoCash | FCY mobile wallet |
 | **SADC RTGS** | Regional USD/FCY | SA ↔ ZW corporate |

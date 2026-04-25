@@ -3,7 +3,7 @@ import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
+import { FinEraBrandMark } from "@/app/components/FinEraBrandMark";
 
 interface AdminLoginProps {
   onProceed: () => void;
@@ -22,8 +22,8 @@ export function AdminLogin({ onProceed, onBack }: AdminLoginProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <Card className="max-w-md w-full p-8">
-        <div className="flex justify-center mb-6">
-          <FinEraShieldIcon size={56} />
+        <div className="mb-6 flex justify-center">
+          <FinEraBrandMark surface="onLight" showSubline={false} />
         </div>
 
         <h1 className="text-3xl text-center mb-8">Administrator Login</h1>

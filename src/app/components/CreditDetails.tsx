@@ -5,7 +5,7 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { ArrowLeft, AlertTriangle, CheckCircle, Info, Loader2 } from "lucide-react";
 import { LoanApplicationFlow } from "@/app/components/LoanApplicationFlow";
-import type { LoanType } from "@/loan/loanTypes";
+import type { AppAccountType, LoanType } from "@/loan/loanTypes";
 import { requiresCollateralStep, requiresWalletDisciplineForAmount } from "@/loan/loanTypes";
 import { CreditEvaluationService } from "@/services/creditEvaluation";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ interface CreditDetailsProps {
   creditLimitError: boolean;
   limitsReady: boolean;
   loanType: LoanType;
+  accountType: AppAccountType;
   creditType: string;
   maxAmount: number;
   repaymentCycle: string;
@@ -44,6 +45,7 @@ export function CreditDetails({
   creditLimitError,
   limitsReady,
   loanType,
+  accountType,
   creditType,
   maxAmount,
   repaymentCycle,
@@ -66,12 +68,13 @@ export function CreditDetails({
   const collateralFlow = requiresCollateralStep(loanType);
   const pageBg = collateralFlow ? "min-h-dvh bg-transparent p-4 pb-24" : "min-h-dvh bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 pb-24";
 
-  const creditTypeLabel =
-    creditType === "essential"
-      ? "Essential Credit"
-      : creditType === "business"
-        ? "Business Credit"
-        : creditType;
+  const showStaffSalaryOverview = accountType === "staff" && loanType === "SALARY_BACKED";
+  const isSalaryBasedLoan = loanType === "SALARY_BACKED";
+  /** Sole trader (alumni) – asset-based flow uses this overview copy. */
+  const overviewValue =
+    accountType === "alumni"
+      ? "Working capital and capital expenditure requirements"
+      : "Personal consumption";
 
   const savingsMet = !savingsCheckApplies || currentSavings >= requiredSavings;
   const amountExceedsLimit = savingsCheckApplies && requestedAmount > maxAllowedLoan;
@@ -160,10 +163,33 @@ export function CreditDetails({
 
         <Card className="p-6 border-slate-200">
           <div className="space-y-4 mb-6">
-            <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-muted-foreground font-medium">Credit Type</span>
-              <span className="font-black">{creditTypeLabel}</span>
-            </div>
+            {showStaffSalaryOverview ? (
+              <div className="space-y-0 pb-3 border-b">
+                {(
+                  [
+                    { label: "Overview", value: "Personal consumption" },
+                    { label: "Lending Methodology", value: "Deductions through SSB" },
+                    { label: "Tenure", value: "Up to 24 months" },
+                    { label: "Collateral requirement", value: "Salary" },
+                  ] as const
+                ).map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex flex-col gap-0.5 border-t border-slate-100 py-2.5 first:border-t-0 first:pt-0 sm:flex-row sm:items-start sm:justify-between sm:gap-3"
+                  >
+                    <span className="shrink-0 text-muted-foreground font-medium">{row.label}</span>
+                    <span className="min-w-0 text-left font-black sm:max-w-[60%] sm:text-right">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-3 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                <span className="shrink-0 text-muted-foreground font-medium">Overview</span>
+                <span className="min-w-0 text-left font-black sm:max-w-[70%] sm:text-right">
+                  {overviewValue}
+                </span>
+              </div>
+            )}
 
             <div className="flex justify-between items-center pb-3 border-b">
               <span className="text-muted-foreground font-medium">Maximum Eligible Amount</span>
@@ -171,19 +197,37 @@ export function CreditDetails({
             </div>
 
             <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-muted-foreground font-medium">Repayment Cycle</span>
+              <span className="text-muted-foreground font-medium">Repayment frequency</span>
               <span className="font-black">{repaymentCycle}</span>
             </div>
 
-            <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-muted-foreground font-medium">Wallet balance rule</span>
-              <span className="font-black">{savingsCheckApplies ? "20% of loan" : "Not required"}</span>
+            <div className="pb-3 border-b">
+              <span className="text-muted-foreground font-medium">Pricing</span>
+              <ul className="mt-2 space-y-1.5 text-sm font-bold text-foreground list-disc pl-4">
+                <li>1% Establishment fees</li>
+                <li>1.2% Insurance fees</li>
+                <li>1% Arrangement fees</li>
+                <li>2% Funds transfer fees</li>
+                <li>10% per month on reducing balance method</li>
+              </ul>
             </div>
 
-            <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-muted-foreground font-medium">Your {walletLabel} ({cc})</span>
-              <span className="font-black text-green-600">{formatAmountWithCurrency(currentSavings, cc)}</span>
-            </div>
+            {isSalaryBasedLoan && (
+              <>
+                <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-muted-foreground font-medium">Grace period</span>
+                  <span className="font-black">None</span>
+                </div>
+                <div className="border-b border-slate-200 pb-3">
+                  <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <span className="shrink-0 text-muted-foreground font-medium">Qualifying criteria</span>
+                    <p className="m-0 min-w-0 text-left text-sm font-bold leading-snug text-foreground sm:max-w-[72%] sm:text-right sm:text-base">
+                      Maximum depends on the current net salary. (Affordability table attached).
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -336,7 +380,7 @@ export function CreditDetails({
               ) : requiresCollateralStep(loanType) ? (
                 "Continue to asset & collateral"
               ) : (
-                "Continue to review"
+                "Continue to member agreement"
               )}
             </Button>
           </form>

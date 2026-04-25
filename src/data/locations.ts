@@ -112,7 +112,6 @@ export const INSTITUTIONS: Institution[] = [
   { id: "zimra", name: "Zimbabwe Revenue Authority", type: "government", cityId: "zw-hre" },
   { id: "zec", name: "Zimbabwe Electoral Commission", type: "government", cityId: "zw-hre" },
   { id: "ecobank", name: "Ecobank Zimbabwe", type: "company", cityId: "zw-hre" },
-  { id: "cbz", name: "CBZ Bank", type: "company", cityId: "zw-hre" },
   { id: "zimplats", name: "Zimplats", type: "company", cityId: "zw-hre" },
   { id: "zrc", name: "Zimbabwe Research Council", type: "research", cityId: "zw-hre" },
   // South Africa

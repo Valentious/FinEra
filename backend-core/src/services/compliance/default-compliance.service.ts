@@ -86,7 +86,7 @@ async function notifyDefaultAndEmployer(userId: string, payrollEligible: boolean
       type: "SYSTEM_ALERT",
       priority: "URGENT",
       title: "Employer notification (compliance)",
-      message: `Per payroll-linked loan terms, your employer may be notified at ${employerContact} for recovery coordination. No automatic deduction is performed by FinEra.`,
+      message: `Per salary-based loan terms, your employer may be notified at ${employerContact} for recovery coordination. No automatic deduction is performed by FinEra.`,
       data: {
         kind: "employer_compliance",
         employerContact: employment?.employerContact ?? null,

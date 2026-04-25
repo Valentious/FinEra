@@ -57,8 +57,8 @@ function generateAccountNumber(): string {
 function calculateCreditLimit(accountType: 'student' | 'staff' | 'alumni'): number {
   const limits = {
     student: 30,
-    staff: 2000,
-    alumni: 2000,
+    staff: 5000,
+    alumni: 5000,
   };
   return limits[accountType];
 }
@@ -307,7 +307,7 @@ export async function mockGetCreditLimitForCurrency(currency: string): Promise<{
   if (!email) throw new Error("Not authenticated");
   const user = loadUserData(email);
   if (!user) throw new Error("User not found");
-  const limits: Record<string, number> = { student: 30, staff: 2000, alumni: 2000 };
+  const limits: Record<string, number> = { student: 30, staff: 5000, alumni: 5000 };
   const max = limits[user.accountType] ?? 30;
   const c = (currency || "USD").toUpperCase();
   const outstanding = getActiveLoanForCurrency(user, c);
@@ -1250,10 +1250,10 @@ export async function mockGetRepaymentSchedule(): Promise<{
   }
 
   const totalAmount = user.activeCredit;
-  const monthlyInstallment = totalAmount / 12; // Assume 12 months
+  const monthlyInstallment = totalAmount / 6; // 6-month repayment cycle
   const amountPaid = 0; // Mock data
-  
-  const schedule = Array.from({ length: 12 }, (_, i) => {
+
+  const schedule = Array.from({ length: 6 }, (_, i) => {
     const dueDate = new Date();
     dueDate.setMonth(dueDate.getMonth() + i + 1);
     return {

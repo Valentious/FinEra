@@ -108,7 +108,7 @@ router.post(
       const loanProductType = ltParsed.data as LoanProductType;
 
       if (kind === "consent" && loanProductType !== "SALARY_BACKED") {
-        throw validationError("Payroll consent applies only to salary-backed loans");
+        throw validationError("Payroll consent applies only to salary-based loans");
       }
 
       const userId = req.user!.id;

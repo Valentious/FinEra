@@ -58,7 +58,7 @@ export async function assertDocumentsAllowLoanApplication(
 
   if (loanProductType === "SALARY_BACKED") {
     if (!md.consentFilePath) {
-      throw validationError("Payroll consent form is required for salary-backed loans.", {
+      throw validationError("Payroll consent form is required for salary-based loans.", {
         fields: [{ field: "memberDocuments", error: "Payroll consent required" }],
       });
     }
@@ -69,7 +69,7 @@ export async function assertDocumentsAllowLoanApplication(
     }
     const emp = await prisma.employmentDetails.findUnique({ where: { userId } });
     if (!emp) {
-      throw validationError("Employment details are required for salary-backed loans.", {
+      throw validationError("Employment details are required for salary-based loans.", {
         fields: [{ field: "employment", error: "Complete employment details" }],
       });
     }

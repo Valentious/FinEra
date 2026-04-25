@@ -51,13 +51,13 @@ export function requiresWalletDisciplineForAmount(
 export function getLoanProductLabel(loanType: LoanType): string {
   switch (loanType) {
     case "ASSET_BACKED":
-      return "Asset-Backed Loan";
+      return "Asset-Based Loan";
     case "SALARY_BACKED":
-      return "Salary-Backed Loan";
+      return "Salary-Based Loan";
     case "COLLATERAL":
       return "Collateral Loan";
     case "NON_COLLATERAL":
-      return "Non-Collateral Loan";
+      return "Student Portal Based Loan";
     default:
       return "Loan";
   }
@@ -68,11 +68,11 @@ export function getLoanProductShortDescription(loanType: LoanType): string {
     case "ASSET_BACKED":
       return "Secured by verified assets and valuation.";
     case "SALARY_BACKED":
-      return "Payroll-linked capacity and automated scoring.";
+      return "Salary-based capacity and automated scoring.";
     case "COLLATERAL":
       return "Secured with pledged collateral.";
     case "NON_COLLATERAL":
-      return "Internal credit scoring - no pledged asset.";
+      return "No pledged asset.";
     default:
       return "";
   }

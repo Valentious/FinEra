@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
-import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Checkbox } from "@/app/components/ui/checkbox";
@@ -16,7 +15,6 @@ import { LoanApplicationFlow } from "@/app/components/LoanApplicationFlow";
 import type { LoanType } from "@/loan/loanTypes";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { CURRENCY_AMOUNT_SYMBOLS, currencyAmountPlaceholder } from "@/types/wallet";
 import { isCheckboxChecked } from "@/lib/checkboxState";
 interface CollateralDetailsProps {
   currencyCode: string;
@@ -29,44 +27,32 @@ const brandShell =
   "relative overflow-hidden border-none bg-gradient-to-br from-primary to-[#1ebe5d] text-white shadow-[0_8px_24px_-8px_rgba(37,211,102,0.35)]";
 
 export function CollateralDetails({
-  currencyCode,
+  currencyCode: _currencyCode,
   loanType,
   onSubmit,
   onBack,
 }: CollateralDetailsProps) {
-  const cc = currencyCode.toUpperCase();
-  const sym = CURRENCY_AMOUNT_SYMBOLS[cc] ?? cc;
-  const inputPadClass = sym.length > 2 ? "pl-24" : "pl-10";
   const [description, setDescription] = useState("");
-  const [estimatedValue, setEstimatedValue] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [disclosureAccepted, setDisclosureAccepted] = useState(false);
   const [step, setStep] = useState<"disclosure" | "form">("disclosure");
   const [collateralFiles, setCollateralFiles] = useState<string[]>([]);
   const [ownershipBypassMessage, setOwnershipBypassMessage] = useState("");
 
-  const DISCLOSURE_TEXT = "Your approved loan amount is based on: (1) Asset condition assessment, (2) Current market value, and (3) Secure storage verification. The final amount is calculated as a percentage of the liquidation value, not market value. Important: If you default and the asset is liquidated, no refund will be issued for any difference between asset value and loan balance.";
+  const DISCLOSURE_TEXT =
+    "Your approved loan amount is based on: (1) Asset condition assessment, (2) independent valuation, and (3) secure storage verification. The final amount is calculated as a percentage of the liquidation value. Important: If you default and the asset is liquidated, no refund will be issued for any difference between asset value and loan balance.";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setOwnershipBypassMessage("");
     if (!confirmed) {
-      setOwnershipBypassMessage("Confirm proof of ownership before generating a loan limit.");
+      setOwnershipBypassMessage("Confirm proof of ownership before continuing to member agreement.");
       toast.error("Please confirm proof of ownership.");
       return;
     }
 
-    // Calculation Engine (Internal Logic for display)
-    const marketValue = parseFloat(estimatedValue) || 0;
-    const conditionScore = 0.85; // Mock assessment
-    const liquidationValue = marketValue * conditionScore * 0.7; // 70% of adjusted
-    const insuranceMandate = Math.max(10, liquidationValue * 0.005);
-    
     onSubmit({
-      liquidationValue,
-      insuranceMandate,
       description,
-      marketValue,
       collateral: collateralFiles,
     });
   };
@@ -94,12 +80,14 @@ export function CollateralDetails({
               <Card className={`${brandShell} p-8`}>
                 <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-white/20 blur-3xl" />
                 <div className="relative z-10 space-y-6">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/35 bg-white/15 backdrop-blur-md">
-                    <ShieldAlert className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold tracking-tight text-white">Legal Agreement & Risk Acknowledgment</h3>
-                  <div className="rounded-2xl border border-zinc-200/50 bg-white/60 p-6 text-sm font-medium italic leading-relaxed text-zinc-700 backdrop-blur-sm dark:border-white/12 dark:bg-black/30 dark:text-zinc-200">
-                    "{DISCLOSURE_TEXT}"
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-md">
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-200/80 bg-emerald-50">
+                      <ShieldAlert className="h-6 w-6 text-emerald-700" />
+                    </div>
+                    <h3 className="text-xl font-semibold tracking-tight text-black">Legal Agreement &amp; Risk Acknowledgment</h3>
+                    <p className="mt-4 text-sm font-medium leading-relaxed text-black not-italic">
+                      {DISCLOSURE_TEXT}
+                    </p>
                   </div>
 
                   <div className="flex items-start space-x-3 rounded-xl border border-white/45 bg-white/45 p-4 backdrop-blur-sm dark:border-white/15 dark:bg-white/10">
@@ -179,23 +167,6 @@ export function CollateralDetails({
               <Card className="p-6 border-slate-100 shadow-xl shadow-slate-200/50 rounded-3xl bg-white">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <Label className="font-bold text-muted-foreground ml-1">Asset Market Value ({cc})</Label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-muted-foreground text-sm max-w-[5rem] leading-tight">
-                        {sym}
-                      </span>
-                      <Input
-                        type="number"
-                        placeholder={currencyAmountPlaceholder(cc)}
-                        value={estimatedValue}
-                        onChange={(e) => setEstimatedValue(e.target.value)}
-                        className={`h-14 ${inputPadClass} text-xl font-black rounded-2xl border-slate-200`}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
                     <Label className="font-bold text-muted-foreground ml-1">Asset Description & Condition</Label>
                     <Textarea
                       placeholder="e.g. MacBook Pro M2, 16GB RAM, No scratches, Original packaging included."
@@ -240,7 +211,7 @@ export function CollateralDetails({
                   </div>
 
                   <Button type="submit" className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-black shadow-xl shadow-emerald-100" disabled={!confirmed}>
-                    Generate Loan Limit
+                    Next to member agreement
                   </Button>
                 </form>
               </Card>

@@ -10,10 +10,8 @@ import { VerifyAccess } from "@/app/components/VerifyAccess";
 import { ProfileDetails } from "@/app/components/ProfileDetails";
 import { DashboardV2 } from "@/app/components/DashboardV2";
 import { WalletManagement } from "@/app/components/WalletManagement";
-import { ApplyForCredit } from "@/app/components/ApplyForCredit";
 import { CreditDetails } from "@/app/components/CreditDetails";
 import { CollateralDetails } from "@/app/components/CollateralDetails";
-import { ConfirmApplication } from "@/app/components/ConfirmApplication";
 import { BuyBackAgreement } from "@/app/components/BuyBackAgreement";
 import { CreditApproved } from "@/app/components/CreditApproved";
 import { WalletCredited } from "@/app/components/WalletCredited";
@@ -71,10 +69,8 @@ type Screen =
   | "depositFlow"
   | "memberAgreement"
   | "agreementsConsent"
-  | "applyForCredit"
   | "creditDetails"
   | "collateralDetails"
-  | "confirmApplication"
   | "buyBackAgreement"
   | "applicationStatus"
   | "creditApproved"
@@ -91,8 +87,8 @@ type Screen =
 // Kept here for UI reference only - backend is the source of truth
 const CREDIT_LIMITS = {
   student: { min: 20, max: 30 },
-  staff: { min: 30, max: 2000 },
-  alumni: { min: 30, max: 2000 },
+  staff: { min: 30, max: 5000 },
+  alumni: { min: 30, max: 5000 },
 };
 
 // ==================== MOCK DATA HELPERS ====================
@@ -413,10 +409,8 @@ export default function App() {
         "withdrawFlow",
         "memberAgreement",
         "agreementsConsent",
-        "applyForCredit",
         "creditDetails",
         "collateralDetails",
-        "confirmApplication",
         "repaymentDashboard",
         "makeRepayment",
         "walletCredited",
@@ -431,10 +425,8 @@ export default function App() {
     const creditScreens = [
       "memberAgreement",
       "agreementsConsent",
-      "applyForCredit",
       "creditDetails",
       "collateralDetails",
-      "confirmApplication",
     ];
     if (!creditScreens.includes(currentScreen)) return;
     let cancelled = false;
@@ -586,7 +578,7 @@ export default function App() {
         return;
       }
       setCreditApplication((prev) => ({ ...prev, loanType }));
-      setCurrentScreen("memberAgreement");
+      setCurrentScreen("creditDetails");
     },
     [userData.accountType]
   );
@@ -629,7 +621,7 @@ export default function App() {
           lastLogin: Date.now(),
           availableCreditLimit:
             user.availableCreditLimit ??
-            (user.accountType === "student" ? 30 : user.accountType === "staff" || user.accountType === "alumni" ? 2000 : 30),
+            (user.accountType === "student" ? 30 : user.accountType === "staff" || user.accountType === "alumni" ? 5000 : 30),
           disciplineScore: user.disciplineScore ?? 50,
           creditScore: user.creditScore ?? 50,
           loyaltyProgress: user.loyaltyProgress ?? 0,
@@ -707,10 +699,8 @@ export default function App() {
     "walletManagement",
     "withdrawFlow",
     "depositFlow",
-    "applyForCredit",
     "creditDetails",
     "collateralDetails",
-    "confirmApplication",
     "buyBackAgreement",
     "applicationStatus",
     "creditApproved",
@@ -731,11 +721,11 @@ export default function App() {
     const cap = creditAvailability;
     switch (creditApplication.creditType) {
       case "essential":
-        return { maxAmount: Math.min(5000, cap), repaymentCycle: "12 months", savingsRequirement: 0.2 };
+        return { maxAmount: Math.min(5000, cap), repaymentCycle: "MONTHLY", savingsRequirement: 0.2 };
       case "business":
-        return { maxAmount: Math.min(10000, cap), repaymentCycle: "24 months", savingsRequirement: 0.2 };
+        return { maxAmount: Math.min(10000, cap), repaymentCycle: "MONTHLY", savingsRequirement: 0.2 };
       default:
-        return { maxAmount: Math.min(5000, cap), repaymentCycle: "12 months", savingsRequirement: 0.2 };
+        return { maxAmount: Math.min(5000, cap), repaymentCycle: "MONTHLY", savingsRequirement: 0.2 };
     }
   }, [creditApplication.creditType, creditAvailability, creditLimitFetchError]);
 
@@ -943,8 +933,23 @@ export default function App() {
             loanType={creditApplication.loanType}
             accountType={userData.accountType}
             disciplineScore={userData.disciplineScore}
-            onContinue={() => setCurrentScreen("applyForCredit")}
-            onBack={() => setCurrentScreen("dashboard")}
+            isLoanApplicationFinal
+            onBack={() =>
+              setCurrentScreen(
+                requiresCollateralStep(creditApplication.loanType) ? "collateralDetails" : "creditDetails"
+              )
+            }
+            onContinue={async () => {
+              setCurrentScreen("applicationStatus");
+              try {
+                await apiService.applyCreditApplication({ ...creditApplication, currency: selectedCurrency });
+                await refreshUserData();
+                setCurrentScreen("creditApproved");
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Application failed");
+                setCurrentScreen("memberAgreement");
+              }
+            }}
           />
         )}
 
@@ -1051,23 +1056,6 @@ export default function App() {
           />
         )}
 
-        {currentScreen === "applyForCredit" && (
-          <ApplyForCredit
-            currencyCode={selectedCurrency}
-            isWalletLoading={creditWalletState.kind === "loading"}
-            walletError={creditWalletState.kind === "missing" ? creditWalletState.message : null}
-            walletBalance={creditWalletState.kind === "ok" ? creditWalletState.balance : 0}
-            walletLabel={creditWalletState.kind === "ok" ? creditWalletState.walletLabel : getWalletLabel(selectedCurrency)}
-            hasActiveLoan={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance > 0 : false}
-            loanType={creditApplication.loanType}
-            onSelectCreditType={(type) => {
-              setCreditApplication({ ...creditApplication, creditType: type });
-              setCurrentScreen("creditDetails");
-            }}
-            onBack={() => setCurrentScreen("dashboard")}
-          />
-        )}
-
         {currentScreen === "creditDetails" && (
           <CreditDetails
             currencyCode={selectedCurrency}
@@ -1078,6 +1066,7 @@ export default function App() {
             creditLimitError={creditLimitFetchError}
             limitsReady={creditDetails != null}
             loanType={creditApplication.loanType}
+            accountType={userData.accountType}
             creditType={creditApplication.creditType}
             maxAmount={creditDetails?.maxAmount ?? 0}
             repaymentCycle={creditDetails?.repaymentCycle ?? ""}
@@ -1102,10 +1091,10 @@ export default function App() {
               if (requiresCollateralStep(creditApplication.loanType)) {
                 setCurrentScreen("collateralDetails");
               } else {
-                setCurrentScreen("confirmApplication");
+                setCurrentScreen("memberAgreement");
               }
             }}
-            onBack={() => setCurrentScreen("applyForCredit")}
+            onBack={() => setCurrentScreen("dashboard")}
           />
         )}
 
@@ -1113,7 +1102,7 @@ export default function App() {
           <CollateralDetails
             currencyCode={selectedCurrency}
             loanType={creditApplication.loanType}
-            onSubmit={() => setCurrentScreen("confirmApplication")}
+            onSubmit={() => setCurrentScreen("memberAgreement")}
             onBack={() => setCurrentScreen("creditDetails")}
           />
         )}
@@ -1130,30 +1119,6 @@ export default function App() {
             </p>
           </div>
         )}
-        {currentScreen === "confirmApplication" && (
-          <ConfirmApplication
-            currencyCode={selectedCurrency}
-            creditType={creditApplication.creditType}
-            amount={creditApplication.amount}
-            repaymentTerms={creditDetails?.repaymentCycle ?? ""}
-            loanType={creditApplication.loanType}
-            onSubmit={async () => {
-              setCurrentScreen("applicationStatus");
-              try {
-                await apiService.applyCreditApplication({ ...creditApplication, currency: selectedCurrency });
-                await refreshUserData();
-                setCurrentScreen("creditApproved");
-              } catch (err) {
-                toast.error(err instanceof Error ? err.message : 'Application failed');
-                setCurrentScreen("confirmApplication");
-              }
-            }}
-            onBack={() =>
-              setCurrentScreen(requiresCollateralStep(creditApplication.loanType) ? "collateralDetails" : "creditDetails")
-            }
-          />
-        )}
-
         {currentScreen === "creditApproved" && (
           <CreditApproved
             currencyCode={selectedCurrency}

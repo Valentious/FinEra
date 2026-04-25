@@ -71,7 +71,7 @@ export function CreditApproved({ currencyCode, approvedAmount, repaymentSchedule
             <div className="flex items-start gap-3">
               <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div>
-                <p className="font-semibold text-sm mb-1">Repayment Schedule</p>
+                <p className="font-semibold text-sm mb-1">Repayment frequency</p>
                 <p className="text-sm text-muted-foreground">{repaymentSchedule}</p>
               </div>
             </div>

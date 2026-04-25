@@ -73,8 +73,8 @@ export const apiService = USE_MOCK_DATA ? {
     const user = await mockApi.mockGetUserProfile();
     const limits = {
       student: { min: 20, max: 30 },
-      staff: { min: 30, max: 2000 },
-      alumni: { min: 30, max: 2000 },
+      staff: { min: 30, max: 5000 },
+      alumni: { min: 30, max: 5000 },
     };
     const limit = limits[user.accountType];
     return {

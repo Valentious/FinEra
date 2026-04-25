@@ -1,7 +1,6 @@
 import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { GraduationCap, Briefcase, Users, ArrowLeft, Building2, Sparkles } from "lucide-react";
-import { FinEraBrandMark } from "@/app/components/FinEraBrandMark";
 import { ToggleGroup, ToggleGroupItem } from "@/app/components/ui/toggle-group";
 
 export type AccountOperatingMode = "real" | "demo";
@@ -37,14 +36,8 @@ export function AccountTypeSelection({
         )}
 
         <div className="flex w-full flex-col items-center gap-3 sm:gap-4">
-          <div className="flex w-full flex-col items-center gap-4 sm:gap-5">
-            <FinEraBrandMark showSubline={false} surface="onDark" className="mb-0" />
-            <p className="m-0 text-center text-xs font-black uppercase tracking-[0.25em] text-muted-foreground">
-              Operating mode
-            </p>
-          </div>
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            <span className="text-base font-bold text-foreground">Select</span>
+            <span className="text-base font-bold text-foreground">OPEN</span>
             <ToggleGroup
               type="single"
               value={accountMode}
@@ -61,7 +54,7 @@ export function AccountTypeSelection({
               >
                 <span className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 shrink-0" />
-                  Real
+                  REAL
                 </span>
               </ToggleGroupItem>
               <ToggleGroupItem
@@ -71,16 +64,16 @@ export function AccountTypeSelection({
               >
                 <span className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 shrink-0" />
-                  Explore
+                  EXPLORE
                 </span>
               </ToggleGroupItem>
             </ToggleGroup>
-            <span className="text-base font-bold text-foreground">account</span>
+            <span className="text-base font-bold text-foreground">ACCOUNT</span>
           </div>
-          <p className="max-w-md text-center text-xs font-medium text-black">
+          <p className="max-w-md text-center text-xs font-black text-black">
             {accountMode === "demo"
-              ? "Explore: no real money movement or binding credit obligations."
-              : "Real: standard member account with enforceable credit policies and live wallets."}
+              ? "EXPLORE: NO REAL MONEY MOVEMENT OR BINDING CREDIT OBLIGATIONS."
+              : "REAL: STANDARD MEMBER ACCOUNT WITH ENFORCEABLE CREDIT POLICIES AND LIVE WALLETS."}
           </p>
         </div>
 
