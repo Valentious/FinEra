@@ -70,7 +70,7 @@ export function CreditDetails({
 
   const showStaffSalaryOverview = accountType === "staff" && loanType === "SALARY_BACKED";
   const isSalaryBasedLoan = loanType === "SALARY_BACKED";
-  /** Sole trader (alumni) – asset-based flow uses this overview copy. */
+  /** Business (alumni) – asset-based flow uses this overview copy. */
   const overviewValue =
     accountType === "alumni"
       ? "Working capital and capital expenditure requirements"
@@ -378,7 +378,7 @@ export function CreditDetails({
               ) : !canProceed && requestedAmount > 0 ? (
                 "Cannot Proceed - Check Requirements"
               ) : requiresCollateralStep(loanType) ? (
-                "Continue to asset & collateral"
+                "Continue to Risk Acknowledgment"
               ) : (
                 "Continue to member agreement"
               )}

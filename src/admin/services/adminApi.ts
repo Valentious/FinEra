@@ -1,5 +1,5 @@
 /**
- * Docs often set `VITE_API_URL=http://localhost:4010/api/v1`. We always append `/api/v1` below,
+ * Docs often set `VITE_API_URL=http://localhost:4000/api/v1`. We always append `/api/v1` below,
  * so strip a trailing `/api/v1` to avoid `/api/v1/api/v1/...` (404 on admin login).
  */
 function viteApiRoot(): string {
@@ -46,7 +46,7 @@ export async function adminLogin(email: string, password: string) {
     let msg = j.message ?? j.error?.message ?? `Login failed (${res.status})`;
     if (res.status === 404) {
       msg +=
-        " - check `VITE_API_URL`: use `http://localhost:4010` (no `/api/v1`) or leave unset to use the Vite `/api` proxy.";
+        " - check `VITE_API_URL`: use `http://localhost:4000` (no `/api/v1`) or leave unset to use the Vite `/api` proxy.";
     }
     throw new Error(msg);
   }

@@ -17,7 +17,7 @@ export function toBackendAccountType(accountType: AppAccountType): "STUDENT" | "
   return accountType === "student" ? "STUDENT" : accountType === "staff" ? "STAFF" : "ALUMNI";
 }
 
-/** Staff: asset + salary. Sole trader (alumni): asset only. Student: non-collateral only. */
+/** Staff: asset + salary. Business account (alumni): asset only. Student: non-collateral only. */
 export function isLoanTypeAllowedForAccount(loanType: LoanType, accountType: AppAccountType): boolean {
   if (accountType === "student") {
     return loanType === "NON_COLLATERAL";

@@ -98,3 +98,9 @@
 .finera-logo-light .era {
   color: var(--primary-green);
 }
+
+/** Full "FinEra" wordmark in brand green (dashboard / compact lockups) */
+.finera-logo.finera-logo--all-green .fin,
+.finera-logo.finera-logo--all-green .era {
+  color: var(--primary-green);
+}

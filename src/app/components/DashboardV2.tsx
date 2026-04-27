@@ -14,9 +14,9 @@ import {
   ArrowDownLeft,
   Info,
   ShieldCheck,
-  Award,
   Coins,
   Send,
+  Wallet,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -43,7 +43,6 @@ import {
   onDisciplineGradientText,
   onDisciplineGradientShellShadow,
 } from "@/lib/disciplineGradient";
-import { FinEraHexLogo } from "@/app/components/FinEraHexLogo";
 import { BrandHeroFigure } from "@/app/components/BrandHeroFigure";
 
 export type CurrencyOption = "USD" | "ZIG" | "ZAR" | "EUR" | "GBP";
@@ -426,11 +425,12 @@ export function DashboardV2({
               </div>
               <div className="relative z-10 flex min-h-min min-w-0 flex-1 flex-col">
                 <div className="min-w-0 shrink-0">
-                  <div className="mb-3" role="img" aria-label="FinEra wallet">
-                    <FinEraHexLogo
-                      size="md"
-                      className="h-10 w-10 ring-1 ring-white/45 drop-shadow-md sm:h-11 sm:w-11 md:h-12 md:w-12"
-                    />
+                  <div className="mb-3 flex min-w-0">
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-2xl border p-0 sm:h-11 sm:w-11 md:h-12 md:w-12 ${onDisciplineGradientGlass}`}
+                    >
+                      <Wallet className={`h-5 w-5 sm:h-6 sm:w-6 ${onDisciplineGradientIcon}`} aria-hidden />
+                    </div>
                   </div>
                   <p className={`text-[10px] font-semibold uppercase tracking-widest sm:text-xs ${onDisciplineGradientText}`}>{walletLabel}</p>
                   <p className={`mt-0.5 text-[10px] font-semibold uppercase tracking-wider sm:text-[11px] ${onDisciplineGradientMuted}`}>
@@ -465,13 +465,9 @@ export function DashboardV2({
               </div>
               <div className="relative z-10 flex min-h-min min-w-0 flex-1 flex-col">
                 <div className="min-w-0 shrink-0">
-                  <div className="mb-3 flex items-start justify-between">
+                  <div className="mb-3 flex min-w-0">
                     <div className={`rounded-2xl border p-2.5 ${onDisciplineGradientGlass}`}>
-                      <CreditCard className={`h-5 w-5 sm:h-6 sm:w-6 ${onDisciplineGradientIcon}`} />
-                    </div>
-                    <div className="flex items-center gap-1 rounded-full border border-red-500/40 bg-red-100/45 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-800 backdrop-blur-md dark:border-red-400/35 dark:bg-red-950/40 dark:text-zinc-100">
-                      <Award className="h-3 w-3" aria-hidden />
-                      <span>Debt</span>
+                      <CreditCard className={`h-5 w-5 sm:h-6 sm:w-6 ${onDisciplineGradientIcon}`} aria-hidden />
                     </div>
                   </div>
                   <p className={`text-[10px] font-semibold uppercase tracking-widest sm:text-xs ${onDisciplineGradientText}`}>
@@ -545,11 +541,11 @@ export function DashboardV2({
                   </div>
                 </div>
 
-                <p className={`mb-2 text-center text-sm font-medium leading-snug ${onDisciplineGradientMuted}`}>
+                <p className="mb-2 text-center text-sm font-medium leading-snug text-black">
                   Your repayment discipline and wallet balance consistency rating.
                 </p>
-                <p className={`mb-4 text-center text-xs leading-relaxed ${onDisciplineGradientMuted}`}>
-                  Improves with on-time payments and stable wallet funding.
+                <p className="mb-4 text-center text-xs leading-relaxed text-black">
+                  Improves with on-time repayments and stable wallet funding.
                 </p>
 
                 <Button

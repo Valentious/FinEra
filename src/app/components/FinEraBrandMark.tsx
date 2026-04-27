@@ -37,8 +37,15 @@ export function FinEraBrandMark({
 
   return (
     <div className={cn("flex w-full flex-col items-center text-center", className)}>
-      <FinEraShieldIcon size={shieldSize} className={cn("mb-4 shrink-0 rounded-xl drop-shadow-sm sm:mb-5")} />
-      <FinEraLogoText variant="light" size={wordSize} />
+      <div className="flex flex-nowrap items-center justify-center gap-0">
+        <FinEraShieldIcon size={shieldSize} className="shrink-0 rounded-xl drop-shadow-sm" />
+        <FinEraLogoText
+          variant="light"
+          size={wordSize}
+          as="span"
+          className="inline !m-0 align-middle leading-none"
+        />
+      </div>
       {showSubline ? (
         <p
           className={sublineClass}

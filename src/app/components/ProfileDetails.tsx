@@ -14,6 +14,7 @@ import {
   MapPin,
 } from "lucide-react";
 import type { CompleteProfilePayload } from "@/types/profileCompletion";
+import { GoldCoinsAuthBackdrop } from "@/app/components/GoldCoinsAuthBackdrop";
 import {
   extractStudentIdContent,
   formatNationalIdDisplay,
@@ -191,18 +192,19 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
   const studentIdErrorMessage = accountType === "student" ? STUDENT_ID_ERROR : "";
 
   return (
-    <div className="max-w-md mx-auto space-y-6 animate-in fade-in duration-500">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Icon className="w-8 h-8" />
+    <GoldCoinsAuthBackdrop>
+    <div className="mx-auto w-full max-w-md space-y-6 animate-in fade-in duration-500">
+      <div className="mb-8 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-amber-300 ring-1 ring-white/15 backdrop-blur-sm">
+          <Icon className="h-8 w-8" />
         </div>
-        <h2 className="text-2xl font-black text-foreground">Complete Your Profile</h2>
-        <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest text-[10px] mt-1">
+        <h2 className="text-2xl font-black tracking-tight text-white drop-shadow-sm">Complete Your Profile</h2>
+        <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.2em] text-slate-300">
           Identity Verification Details
         </p>
       </div>
 
-      <Card className="border-slate-100 shadow-xl shadow-slate-200/50 rounded-3xl p-6">
+      <Card className="rounded-3xl border border-white/25 bg-white/[0.98] p-6 shadow-2xl shadow-black/45 backdrop-blur-sm">
         <div className="space-y-5">
           <div className="space-y-2">
             <Label className="font-bold text-foreground ml-1 flex items-center gap-2">
@@ -389,5 +391,6 @@ export function ProfileDetails({ accountType, onComplete }: ProfileDetailsProps)
         </div>
       </Card>
     </div>
+    </GoldCoinsAuthBackdrop>
   );
 }

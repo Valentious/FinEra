@@ -47,8 +47,15 @@ export const FinEraInclusiveCreditLogo = forwardRef<HTMLDivElement, FinEraInclus
       `}
       >
         <div className="hero-header flex min-w-0 flex-col items-center justify-center gap-2 text-center">
-          <FinEraShieldIcon size={shieldSize[size]} className="shrink-0 rounded-xl" />
-          <FinEraLogoText variant="light" size={wordSize[size]} />
+          <div className="flex flex-nowrap items-center justify-center gap-0">
+            <FinEraShieldIcon size={shieldSize[size]} className="shrink-0 rounded-xl" />
+            <FinEraLogoText
+              variant="light"
+              size={wordSize[size]}
+              as="span"
+              className="inline !m-0 align-middle leading-none"
+            />
+          </div>
           <p
             className={`
             inclusive-text finera-inclusive-credit-tagline mb-0 mt-1 font-semibold uppercase tracking-[0.2em]

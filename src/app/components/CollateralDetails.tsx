@@ -40,7 +40,7 @@ export function CollateralDetails({
   const [ownershipBypassMessage, setOwnershipBypassMessage] = useState("");
 
   const DISCLOSURE_TEXT =
-    "Your approved loan amount is based on: (1) Asset condition assessment, (2) independent valuation, and (3) secure storage verification. The final amount is calculated as a percentage of the liquidation value. Important: If you default and the asset is liquidated, no refund will be issued for any difference between asset value and loan balance.";
+    "Your approved loan amount is based on: (1) Asset condition assessment, (2) independent valuation, or (3) secure storage verification. The final amount is calculated as a percentage of the liquidation value. Important: If you default and the asset is liquidated, no refund will be issued for any difference between asset value and loan balance.";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,22 +143,22 @@ export function CollateralDetails({
               <Card className={`${brandShell} p-5`}>
                 <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/20 blur-2xl" />
                 <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="flex items-center gap-3 rounded-xl border border-white/45 bg-white/45 p-4 backdrop-blur-sm dark:border-white/15 dark:bg-white/10">
-                    <div className="rounded-lg border border-white/35 bg-white/15 p-2">
-                      <Calculator className="h-4 w-4 text-white" />
+                  <div className="flex items-center gap-3 rounded-xl border border-white/50 bg-white/95 p-4 shadow-sm">
+                    <div className="rounded-lg border border-emerald-200/60 bg-emerald-50/90 p-2">
+                      <Calculator className="h-4 w-4 text-emerald-700" />
                     </div>
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-white/80">Liquidation Rate</p>
-                      <p className="text-sm font-semibold tracking-tight text-white">70% of Assessment</p>
+                    <div className="min-w-0 flex-1 text-right">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-black">Liquidation Rate</p>
+                      <p className="text-sm font-semibold tracking-tight text-black">70% of Assessment</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 rounded-xl border border-white/45 bg-white/45 p-4 backdrop-blur-sm dark:border-white/15 dark:bg-white/10">
-                    <div className="rounded-lg border border-white/35 bg-white/15 p-2">
-                      <FileCheck className="h-4 w-4 text-white" />
+                  <div className="flex items-center gap-3 rounded-xl border border-white/50 bg-white/95 p-4 shadow-sm">
+                    <div className="rounded-lg border border-emerald-200/60 bg-emerald-50/90 p-2">
+                      <FileCheck className="h-4 w-4 text-emerald-700" />
                     </div>
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-white/80">Insurance Policy</p>
-                      <p className="text-sm font-semibold tracking-tight text-white">0.5% Coverage Req.</p>
+                    <div className="min-w-0 flex-1 text-right">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-black">Insurance Policy</p>
+                      <p className="text-sm font-semibold tracking-tight text-black">0.5% Coverage Req.</p>
                     </div>
                   </div>
                 </div>
@@ -178,8 +178,19 @@ export function CollateralDetails({
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="font-bold text-muted-foreground">Upload Asset Evidence (Front, Back, Serial)</Label>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <p className="ml-1 text-sm font-bold text-foreground">
+                        Upload documents that support your financial freedom journey (e.g.)
+                      </p>
+                      <ul className="ml-1 list-disc space-y-1.5 pl-4 text-sm font-medium leading-relaxed text-muted-foreground">
+                        <li>Copies of documents to be used as collateral.</li>
+                        <li>Images of the asset.</li>
+                        <li>Detailed company profile and company documents.</li>
+                        <li>Copies of IDs and Proof of Residence for all the Directors.</li>
+                        <li>Six (6) months bank statement and proof of business operations.</li>
+                      </ul>
+                    </div>
                     <CollateralMultiUpload files={collateralFiles} onChange={setCollateralFiles} />
                   </div>
 

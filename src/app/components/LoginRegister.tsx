@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { PASSWORD_POLICY_HINT } from "@/lib/passwordPolicy";
 import { FinEraBrandMark } from "@/app/components/FinEraBrandMark";
+import { GoldCoinsAuthBackdrop } from "@/app/components/GoldCoinsAuthBackdrop";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { FINERA_REGISTRATION_CONSENT_VERSION } from "@/legal/consentVersion";
 
@@ -128,15 +129,15 @@ export function LoginRegister({
     accountType === "student" ? "student@university.edu" : "you@example.com";
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-transparent p-4">
-      <div className="w-full max-w-md">
+    <GoldCoinsAuthBackdrop>
+      <div className="w-full">
         {/* Back Button */}
         {onBack && (
           <div className="flex justify-start mb-4">
             <Button
               variant="ghost"
               onClick={onBack}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+              className="flex items-center gap-2 text-white/75 hover:bg-white/10 hover:text-white"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Account Type
@@ -145,12 +146,12 @@ export function LoginRegister({
         )}
 
         <div className="mb-8 flex w-full justify-center">
-          <FinEraBrandMark surface="onLight" className="mb-0" />
+          <FinEraBrandMark surface="onDark" className="mb-0" />
         </div>
 
         {accountMode === "demo" && (
-          <div className="mb-6 rounded-2xl border border-violet-200 bg-violet-50/90 px-4 py-3 text-center shadow-sm">
-            <p className="text-sm font-semibold leading-snug text-violet-950">
+          <div className="mb-6 rounded-2xl border border-violet-300/35 bg-violet-950/45 px-4 py-3 text-center shadow-lg shadow-black/20 backdrop-blur-sm">
+            <p className="text-sm font-semibold leading-snug text-violet-100">
               Explore account - use the full digital journey with simulated balances. Upgrade to a real account when you are ready for live wallets and credit.
             </p>
           </div>
@@ -162,19 +163,25 @@ export function LoginRegister({
           transition={{ duration: 0.5 }}
         >
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4 bg-slate-100 p-1 rounded-xl">
-              <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                <LogIn className="w-4 h-4 mr-2" />
+            <TabsList className="mb-4 grid w-full grid-cols-2 rounded-xl border border-white/15 bg-white/10 p-1 shadow-inner shadow-black/20 backdrop-blur-md">
+              <TabsTrigger
+                value="login"
+                className="rounded-lg text-white/75 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-white/5 data-[state=inactive]:hover:text-white"
+              >
+                <LogIn className="mr-2 h-4 w-4" />
                 Login
               </TabsTrigger>
-              <TabsTrigger value="register" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                <UserPlus className="w-4 h-4 mr-2" />
+              <TabsTrigger
+                value="register"
+                className="rounded-lg text-white/75 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-white/5 data-[state=inactive]:hover:text-white"
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
                 Register
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
-              <Card className="border-slate-200 shadow-xl shadow-slate-200/50 rounded-2xl overflow-hidden">
+              <Card className="overflow-hidden rounded-2xl border border-white/25 bg-white/[0.98] shadow-2xl shadow-black/45 backdrop-blur-sm">
                 <CardHeader className="space-y-1 pt-8">
                   <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
                   <CardDescription className="text-center">
@@ -236,7 +243,7 @@ export function LoginRegister({
             </TabsContent>
 
             <TabsContent value="register">
-              <Card className="border-slate-200 shadow-xl shadow-slate-200/50 rounded-2xl overflow-hidden">
+              <Card className="overflow-hidden rounded-2xl border border-white/25 bg-white/[0.98] shadow-2xl shadow-black/45 backdrop-blur-sm">
                 <CardHeader className="space-y-1 pt-8">
                   <CardTitle className="text-2xl font-bold text-center">Create Account Profile</CardTitle>
                   <CardDescription className="text-center">
@@ -411,6 +418,6 @@ export function LoginRegister({
           </Tabs>
         </motion.div>
       </div>
-    </div>
+    </GoldCoinsAuthBackdrop>
   );
 }

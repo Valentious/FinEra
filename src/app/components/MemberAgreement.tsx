@@ -39,7 +39,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
       case 'staff':
       case 'alumni':
         return {
-          title: memberType === 'staff' ? "Staff Agreement" : "Employer Agreement",
+          title: memberType === "staff" ? "Staff Agreement" : "Business Account Agreement",
           icon: <UserCircle className="w-8 h-8 text-emerald-600" />,
           terms: [
             "In case of default, repayments may be automatically deducted from your linked salary/bank account.",
@@ -61,7 +61,7 @@ export function MemberAgreement({ memberType, onAgree, onBack }: MemberAgreement
               <ShieldAlert className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-black mb-2">Member Agreement</h1>
-            <p className="text-emerald-100 font-medium">Please review the terms specific to your {memberType === "alumni" ? "employer" : memberType} account.</p>
+            <p className="text-emerald-100 font-medium">Please review the terms specific to your {memberType === "alumni" ? "business" : memberType} account.</p>
           </div>
           <FileText className="absolute bottom-[-20px] right-[-20px] w-48 h-48 text-emerald-500 opacity-20 rotate-12" />
         </div>

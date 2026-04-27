@@ -11,16 +11,25 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    /** Bind 0.0.0.0 so other laptops/devices on the LAN can open `http://<this-pc-ip>:5173`. */
     host: true,
     port: 5173,
     /** If 5173 is busy (another Vite), try the next free port instead of failing */
     strictPort: false,
     proxy: {
       "/api": { target: "http://localhost:4000", changeOrigin: true },
+      "/health": { target: "http://localhost:4000", changeOrigin: true },
       "/ws": { target: "ws://localhost:4000", ws: true },
     },
   },
-  preview: { host: true },
+  preview: {
+    host: true,
+    proxy: {
+      "/api": { target: "http://localhost:4000", changeOrigin: true },
+      "/health": { target: "http://localhost:4000", changeOrigin: true },
+      "/ws": { target: "ws://localhost:4000", ws: true },
+    },
+  },
   resolve: {
     alias: {
       // Alias @ to the src directory

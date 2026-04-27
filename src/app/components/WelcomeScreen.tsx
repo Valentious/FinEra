@@ -13,10 +13,12 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <Card className="max-w-2xl w-full p-12 text-center space-y-8">
         <div className="hero-header flex flex-col items-center justify-center text-center gap-4">
-          <FinEraShieldIcon size={56} className="rounded-xl" />
+          <div className="flex flex-nowrap items-center justify-center gap-0">
+            <FinEraShieldIcon size={56} className="shrink-0 rounded-xl" />
+            <FinEraLogoText variant="light" size="xl" as="span" className="inline !m-0 align-middle leading-none" />
+          </div>
           <div className="flex flex-col items-center gap-2">
-            <FinEraLogoText variant="light" size="xl" />
-            <p className="inclusive-text finera-inclusive-credit-tagline mb-0 mt-2 text-lg font-semibold uppercase tracking-[0.25em]">
+            <p className="inclusive-text finera-inclusive-credit-tagline mb-0 mt-0 text-lg font-semibold uppercase tracking-[0.25em]">
               INCLUSIVE CREDIT
             </p>
             <p className="mb-0 mt-1 text-base font-medium text-muted-foreground">Formal Institutions Hub</p>

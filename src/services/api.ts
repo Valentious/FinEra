@@ -19,18 +19,18 @@ import type { CompleteProfilePayload } from "@/types/profileCompletion";
 
 /**
  * API base URL.
- * - Local dev (Docker backend default): `http://localhost:4010/api/v1`
- * - Docker single-port build: set `VITE_API_URL=/api/v1` so requests go through nginx on the same origin.
+ * - Default: `/api/v1` (same origin) so Vite’s dev proxy (`vite.config.ts` → `http://localhost:4000`) is used — no CORS, matches `npm run dev` + backend-core.
+ * - Override: set `VITE_API_URL` (e.g. `http://localhost:4000/api/v1` or a deployed API) in `.env` / CI.
  */
 export const API_BASE_URL =
-  (import.meta.env?.VITE_API_URL as string) || "http://localhost:4010/api/v1";
+  (import.meta.env?.VITE_API_URL as string) || "/api/v1";
 
 const BASE_URL = API_BASE_URL;
 
-/** Health check URL (backend `/health`). Relative `/health` when API is same-origin (Docker gateway). */
+/** Health check URL (backend `/health`). Relative `/health` when API is same-origin (Vite proxy or Docker gateway). */
 export const HEALTH_URL = BASE_URL.startsWith("/")
   ? "/health"
-  : `${BASE_URL.replace(/\/api\/v1\/?$/, "") || "http://localhost:4010"}/health`;
+  : `${BASE_URL.replace(/\/api\/v1\/?$/, "") || "http://localhost:4000"}/health`;
 
 /**
  * Check if backend is available. Uses retry for resilience.
@@ -527,8 +527,8 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** Fetch all registration data with retry. Returns fallback on failure - never throws. */
 export async function getRegistrationData(): Promise<RegistrationData> {
-  const base = (import.meta.env?.VITE_API_URL as string) || "http://localhost:4010/api/v1";
-  const url = `${base}/reference/registration-data`;
+  const base = API_BASE_URL;
+  const url = `${base.replace(/\/$/, "")}/reference/registration-data`;
 
   try {
     const cached = localStorage.getItem(REGISTRATION_CACHE_KEY);
