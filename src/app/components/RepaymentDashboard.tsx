@@ -9,6 +9,8 @@ interface RepaymentDashboardProps {
   currencyCode: string;
   isWalletLoading?: boolean;
   walletError?: string | null;
+  /** Show payroll stop order download/upload (salary-based loans). */
+  isSalaryBasedLoan?: boolean;
   /** Total loan obligation in this currency (for progress). */
   totalObligation: number;
   amountRepaid: number;
@@ -22,6 +24,7 @@ export function RepaymentDashboard({
   currencyCode,
   isWalletLoading,
   walletError,
+  isSalaryBasedLoan = false,
   totalObligation,
   amountRepaid,
   outstandingBalance,

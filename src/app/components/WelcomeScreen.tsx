@@ -19,7 +19,7 @@ export function WelcomeScreen({ onGetStarted, onSignIn }: WelcomeScreenProps) {
           </div>
           <div className="flex flex-col items-center gap-2">
             <p className="inclusive-text finera-inclusive-credit-tagline mb-0 mt-0 text-lg font-semibold uppercase tracking-[0.25em]">
-              INCLUSIVE CREDIT
+              INCLUSIVE Micro-Loans
             </p>
             <p className="mb-0 mt-1 text-base font-medium text-muted-foreground">Formal Institutions Hub</p>
           </div>

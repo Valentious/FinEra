@@ -25,7 +25,6 @@ import type {
   CompleteProfilePayload,
 } from "./api";
 import { getWalletLabel } from "@/types/wallet";
-import { requiresWalletDisciplineForAmount } from "@/loan/loanTypes";
 import { FINERA_REGISTRATION_CONSENT_VERSION } from "@/legal/consentVersion";
 import { normalizeStoredMemberTrust } from "@/lib/memberTrustDefaults";
 import {
@@ -1006,7 +1005,7 @@ export async function mockTransferCreditToSavings(amount: number, currency: stri
     type: 'deposit',
     amount: net,
     date: new Date().toISOString(),
-    description: `Transfer from Approved Credit to FinCash wallet (1.5% commission ${fee.toFixed(2)} ${c})`,
+    description: `Transfer from Approved Credit to FINERA wallet (1.5% commission ${fee.toFixed(2)} ${c})`,
     status: 'completed',
   };
   (transaction as { currency?: string }).currency = c;
@@ -1102,18 +1101,6 @@ export async function mockApplyCreditApplication(data: CreditApplication): Promi
       applicationId: 'APP' + Date.now(),
       status: 'rejected',
       message: 'You already have an active loan in this currency',
-    };
-  }
-
-  const savingsForCurrency = getWalletBalance(user, creditCurrency);
-  if (
-    requiresWalletDisciplineForAmount(data.loanType, data.creditType) &&
-    savingsForCurrency < data.amount * 0.2
-  ) {
-    return {
-      applicationId: 'APP' + Date.now(),
-      status: 'rejected',
-      message: 'Insufficient savings. Minimum 20% of loan amount required.',
     };
   }
 
@@ -1329,7 +1316,7 @@ function seedMockNotifications(): NotificationItem[] {
       type: 'TRANSACTION',
       priority: 'MEDIUM',
       title: 'Cash in confirmed',
-      message: 'Your deposit was credited to your FinCash wallet. Funds are available for use.',
+      message: 'Your deposit was credited to your FINERA wallet. Funds are available for use.',
       isRead: false,
       createdAt: new Date(now.getTime() - 3600000).toISOString(),
       actionUrl: null,

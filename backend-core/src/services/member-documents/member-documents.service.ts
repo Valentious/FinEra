@@ -1,6 +1,7 @@
 import type { AccountType, LoanProductType } from "@prisma/client";
 import { prisma } from "../../infrastructure/database/index.js";
 import { validationError } from "../../middlewares/errorHandler.js";
+import { assertStopOrderAllowsSalaryLoan } from "../member-agreements/stop-order.service.js";
 
 export async function getUserAccountType(userId: string): Promise<AccountType> {
   const u = await prisma.user.findUnique({
@@ -45,18 +46,26 @@ export async function assertDocumentsAllowLoanApplication(
   loanProductType: LoanProductType
 ): Promise<void> {
   const md = await prisma.memberDocument.findUnique({ where: { userId } });
+  const accountType = md?.accountType ?? (await getUserAccountType(userId));
+  const primaryDocumentLabel =
+    accountType === "STUDENT"
+      ? "Previous Result-Slips"
+      : accountType === "ALUMNI"
+        ? "Collateral Documents"
+        : "Member agreement";
   if (!md?.agreementFilePath) {
-    throw validationError("Signed member agreement must be uploaded before applying for this loan.", {
-      fields: [{ field: "memberDocuments", error: "Member agreement upload required" }],
+    throw validationError(`${primaryDocumentLabel} must be uploaded before applying for this loan.`, {
+      fields: [{ field: "memberDocuments", error: `${primaryDocumentLabel} upload required` }],
     });
   }
   if (md.agreementStatus === "REJECTED") {
-    throw validationError("Member agreement was rejected. Please upload a corrected document.", {
-      fields: [{ field: "memberDocuments", error: "Agreement rejected" }],
+    throw validationError(`${primaryDocumentLabel} was rejected. Please upload corrected documents.`, {
+      fields: [{ field: "memberDocuments", error: `${primaryDocumentLabel} rejected` }],
     });
   }
 
   if (loanProductType === "SALARY_BACKED") {
+    await assertStopOrderAllowsSalaryLoan(userId);
     if (!md.consentFilePath) {
       throw validationError("Payroll consent form is required for salary-based loans.", {
         fields: [{ field: "memberDocuments", error: "Payroll consent required" }],
@@ -80,8 +89,10 @@ export function toPublicMemberDocument(md: {
   loanProductType: LoanProductType;
   agreementStatus: string;
   consentStatus: string | null;
+  stopOrderStatus: string | null;
   agreementFilePath: string | null;
   consentFilePath: string | null;
+  stopOrderFilePath: string | null;
   adminNotes: string | null;
   assetDocumentationNote: string | null;
   uploadedAt: Date;
@@ -91,8 +102,10 @@ export function toPublicMemberDocument(md: {
     loanProductType: md.loanProductType,
     agreementStatus: md.agreementStatus,
     consentStatus: md.consentStatus,
+    stopOrderStatus: md.stopOrderStatus,
     hasAgreementUpload: Boolean(md.agreementFilePath),
     hasConsentUpload: Boolean(md.consentFilePath),
+    hasStopOrderUpload: Boolean(md.stopOrderFilePath),
     adminNotes: md.adminNotes,
     assetDocumentationNote: md.assetDocumentationNote,
     uploadedAt: md.uploadedAt.toISOString(),

@@ -31,8 +31,6 @@ interface LoginRegisterProps {
   onForgotPassword?: () => void;
   /** Pre-selected account type from AccountTypeSelection - affects email label & validation */
   accountType?: 'student' | 'staff' | 'alumni';
-  /** Practice (explore) vs live account - chosen on account type screen */
-  accountMode?: 'real' | 'demo';
 }
 
 export function LoginRegister({
@@ -41,7 +39,6 @@ export function LoginRegister({
   onBack,
   onForgotPassword,
   accountType = "student",
-  accountMode = "real",
 }: LoginRegisterProps) {
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
@@ -137,7 +134,7 @@ export function LoginRegister({
             <Button
               variant="ghost"
               onClick={onBack}
-              className="flex items-center gap-2 text-white/75 hover:bg-white/10 hover:text-white"
+              className="flex items-center gap-2 text-black/85 hover:bg-black/5 hover:text-black"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Account Type
@@ -146,16 +143,8 @@ export function LoginRegister({
         )}
 
         <div className="mb-8 flex w-full justify-center">
-          <FinEraBrandMark surface="onDark" className="mb-0" />
+          <FinEraBrandMark surface="onLight" className="mb-0" />
         </div>
-
-        {accountMode === "demo" && (
-          <div className="mb-6 rounded-2xl border border-violet-300/35 bg-violet-950/45 px-4 py-3 text-center shadow-lg shadow-black/20 backdrop-blur-sm">
-            <p className="text-sm font-semibold leading-snug text-violet-100">
-              Explore account - use the full digital journey with simulated balances. Upgrade to a real account when you are ready for live wallets and credit.
-            </p>
-          </div>
-        )}
 
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -163,17 +152,17 @@ export function LoginRegister({
           transition={{ duration: 0.5 }}
         >
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="mb-4 grid w-full grid-cols-2 rounded-xl border border-white/15 bg-white/10 p-1 shadow-inner shadow-black/20 backdrop-blur-md">
+            <TabsList className="mb-4 grid w-full grid-cols-2 rounded-xl border border-black/10 bg-white/90 p-1 shadow-inner shadow-black/10 backdrop-blur-md">
               <TabsTrigger
                 value="login"
-                className="rounded-lg text-white/75 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-white/5 data-[state=inactive]:hover:text-white"
+                className="rounded-lg text-black/85 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-md data-[state=inactive]:hover:bg-black/5 data-[state=inactive]:hover:text-black"
               >
                 <LogIn className="mr-2 h-4 w-4" />
                 Login
               </TabsTrigger>
               <TabsTrigger
                 value="register"
-                className="rounded-lg text-white/75 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-md data-[state=inactive]:hover:bg-white/5 data-[state=inactive]:hover:text-white"
+                className="rounded-lg text-black/85 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-md data-[state=inactive]:hover:bg-black/5 data-[state=inactive]:hover:text-black"
               >
                 <UserPlus className="mr-2 h-4 w-4" />
                 Register
@@ -245,10 +234,9 @@ export function LoginRegister({
             <TabsContent value="register">
               <Card className="overflow-hidden rounded-2xl border border-white/25 bg-white/[0.98] shadow-2xl shadow-black/45 backdrop-blur-sm">
                 <CardHeader className="space-y-1 pt-8">
-                  <CardTitle className="text-2xl font-bold text-center">Create Account Profile</CardTitle>
-                  <CardDescription className="text-center">
-                    Join the academic financial community
-                  </CardDescription>
+                  <CardTitle className="text-2xl font-bold text-center">
+                    {accountType === "alumni" ? "Register Business Credentials" : "Create a profile"}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pb-8 px-8">
                   <form onSubmit={handleRegister} className="space-y-4">
@@ -409,7 +397,7 @@ export function LoginRegister({
                       disabled={showPasswordMismatch || !legalConsentAccepted}
                       className="w-full h-12 bg-primary hover:bg-emerald-700 rounded-xl font-semibold text-lg text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Create Account Profile
+                      {accountType === "alumni" ? "Register Business Credentials" : "Create a profile"}
                     </Button>
                   </form>
                 </CardContent>

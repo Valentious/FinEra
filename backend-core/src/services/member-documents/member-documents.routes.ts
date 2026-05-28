@@ -98,8 +98,8 @@ router.post(
   async (req, res, next) => {
     try {
       const kind = String(req.body.kind || "");
-      if (kind !== "agreement" && kind !== "consent") {
-        throw validationError('kind must be "agreement" or "consent"');
+      if (kind !== "agreement" && kind !== "consent" && kind !== "stop_order") {
+        throw validationError('kind must be "agreement", "consent", or "stop_order"');
       }
       if (!req.file) throw validationError("No file uploaded");
 
@@ -109,6 +109,9 @@ router.post(
 
       if (kind === "consent" && loanProductType !== "SALARY_BACKED") {
         throw validationError("Payroll consent applies only to salary-based loans");
+      }
+      if (kind === "stop_order" && loanProductType !== "SALARY_BACKED") {
+        throw validationError("Repayment stop order applies only to salary-based loans");
       }
 
       const userId = req.user!.id;
@@ -129,6 +132,13 @@ router.post(
               consentStatus: "PENDING" as const,
             }
           : {};
+      const stopOrderUpdate =
+        kind === "stop_order"
+          ? {
+              stopOrderFilePath: relPath,
+              stopOrderStatus: "PENDING" as const,
+            }
+          : {};
 
       const initialConsentStatus =
         loanProductType === "SALARY_BACKED"
@@ -143,12 +153,14 @@ router.post(
           loanProductType,
           ...agreementUpdate,
           ...consentUpdate,
+          ...stopOrderUpdate,
           consentStatus: kind === "consent" ? "PENDING" : initialConsentStatus,
         },
         update: {
           loanProductType,
           ...agreementUpdate,
           ...consentUpdate,
+          ...stopOrderUpdate,
         },
       });
 
@@ -228,7 +240,7 @@ router.put("/employment", async (req, res, next) => {
   }
 });
 
-const templateParam = z.enum(["AGREEMENT", "PAYROLL_CONSENT"]);
+const templateParam = z.enum(["AGREEMENT", "PAYROLL_CONSENT", "REPAYMENT_STOP_ORDER"]);
 
 router.get("/templates/:type/download", async (req, res, next) => {
   try {

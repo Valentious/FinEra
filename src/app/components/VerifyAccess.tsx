@@ -14,17 +14,25 @@ import { toast } from "sonner";
 import { CameraCapture } from "./CameraCapture";
 import { FileOrCameraInput } from "./FileOrCameraInput";
 import { uploadKycDocument } from "@/services/api";
+import { GoldCoinsAuthBackdrop } from "@/app/components/GoldCoinsAuthBackdrop";
+
+import type { AppAccountType } from "@/loan/loanTypes";
 
 interface VerifyAccessProps {
   onVerify: (data: any) => void;
+  accountType?: AppAccountType;
 }
 
-export function VerifyAccess({ onVerify }: VerifyAccessProps) {
+export function VerifyAccess({ onVerify, accountType }: VerifyAccessProps) {
   const [step, setStep] = useState<"intro" | "face" | "id_front" | "id_back" | "processing" | "success">("intro");
   const [faceImage, setFaceImage] = useState<string | null>(null);
   const [idFront, setIdFront] = useState<string | null>(null);
   const [idBack, setIdBack] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const idDocumentLabel = accountType === "student" ? "University ID" : "National ID";
+  const idDocumentScanLabel = `${idDocumentLabel} Scan`;
+  const frontScanTitle = accountType === "student" ? "Scan Front University ID" : "ID Front Scan";
+  const backScanTitle = accountType === "student" ? "Scan Back University ID" : "ID Back Scan";
 
   const handleNext = () => {
     if (step === "intro") setStep("face");
@@ -49,15 +57,15 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
     if (idFront) {
       uploads.push(
         uploadKycDocument(idFront, "ID_FRONT").then((r) => {
-          if (!r.success) toast.error("ID front upload failed. Verification saved locally.");
-        }).catch(() => toast.error("ID front upload failed. Verification saved locally."))
+          if (!r.success) toast.error(`${idDocumentLabel} front upload failed. Verification saved locally.`);
+        }).catch(() => toast.error(`${idDocumentLabel} front upload failed. Verification saved locally.`))
       );
     }
     if (idBack) {
       uploads.push(
         uploadKycDocument(idBack, "ID_BACK").then((r) => {
-          if (!r.success) toast.error("ID back upload failed. Verification saved locally.");
-        }).catch(() => toast.error("ID back upload failed. Verification saved locally."))
+          if (!r.success) toast.error(`${idDocumentLabel} back upload failed. Verification saved locally.`);
+        }).catch(() => toast.error(`${idDocumentLabel} back upload failed. Verification saved locally.`))
       );
     }
     void Promise.all(uploads);
@@ -81,7 +89,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-transparent p-4">
+    <GoldCoinsAuthBackdrop>
       <div className="max-w-md w-full">
         <AnimatePresence mode="wait">
           {step === "intro" && (
@@ -115,7 +123,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                     <Scan className="w-5 h-5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-foreground">National ID Scan</p>
+                    <p className="text-sm font-black text-foreground">{idDocumentScanLabel}</p>
                     <p className="text-[10px] text-muted-foreground font-bold">OCR data extraction (Front & Back)</p>
                   </div>
                 </div>
@@ -163,16 +171,17 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
               className="space-y-6"
             >
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-black text-foreground">ID Front Scan</h2>
-                <p className="text-muted-foreground font-medium text-sm">Upload or capture front of your National ID</p>
+                <h2 className="text-2xl font-black text-foreground">{frontScanTitle}</h2>
+                <p className="text-muted-foreground font-medium text-sm">Upload or capture front of your {idDocumentLabel}</p>
               </div>
 
               <FileOrCameraInput
                 value={idFront}
                 onChange={(b) => setIdFront(b)}
                 onClear={() => setIdFront(null)}
-                label="National ID"
+                label={idDocumentLabel}
                 sideLabel="Front"
+                captureInstruction={`Position the front of your ${idDocumentLabel} within the frame`}
               />
 
               <div className="flex gap-3">
@@ -192,16 +201,17 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
               className="space-y-6"
             >
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-black text-foreground">ID Back Scan</h2>
-                <p className="text-muted-foreground font-medium text-sm">Upload or capture back of your National ID</p>
+                <h2 className="text-2xl font-black text-foreground">{backScanTitle}</h2>
+                <p className="text-muted-foreground font-medium text-sm">Upload or capture back of your {idDocumentLabel}</p>
               </div>
 
               <FileOrCameraInput
                 value={idBack}
                 onChange={(b) => setIdBack(b)}
                 onClear={() => setIdBack(null)}
-                label="National ID"
+                label={idDocumentLabel}
                 sideLabel="Back"
+                captureInstruction={`Position the back of your ${idDocumentLabel} within the frame`}
               />
 
               <div className="flex gap-3">
@@ -248,7 +258,7 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
                 </div>
               </div>
               <h3 className="text-2xl font-black text-foreground">Analyzing Biometrics</h3>
-              <p className="text-muted-foreground font-medium mt-2 max-w-[240px]">Performing 1:1 cross-check between face and ID document.</p>
+              <p className="text-muted-foreground font-medium mt-2 max-w-[240px]">Performing 1:1 cross-check between face and {idDocumentLabel} document.</p>
               
               <div className="mt-8 space-y-2 w-full max-w-[280px]">
                 <div className="flex items-center justify-between text-[10px] font-black text-muted-foreground uppercase">
@@ -297,6 +307,6 @@ export function VerifyAccess({ onVerify }: VerifyAccessProps) {
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </GoldCoinsAuthBackdrop>
   );
 }

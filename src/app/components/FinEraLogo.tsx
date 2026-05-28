@@ -3,14 +3,14 @@ import { forwardRef, useId } from "react";
 interface FinEraLogoProps {
   /** Logo size: "sm" | "md" | "lg" | "xl" */
   size?: "sm" | "md" | "lg" | "xl";
-  /** Show tagline "INCLUSIVE CREDIT" */
+  /** Show tagline "INCLUSIVE Micro-Loans" */
   showTagline?: boolean;
   /**
    * "start" = wordmark is left-anchored in a tight viewBox (no extra canvas to the left).
    * Use beside an icon; ignored when `showTagline` is true (keeps full centered layout for tagline).
    */
   wordmarkAlign?: "center" | "start";
-  /** `variant` is retained for theming hooks. "Fin" is white; SVG tagline "INCLUSIVE CREDIT" is black when `showTagline`. */
+  /** `variant` is retained for theming hooks. "Fin" is white; SVG tagline "INCLUSIVE Micro-Loans" is black when `showTagline`. */
   variant?: "dark" | "light";
   /** Custom class name */
   className?: string;
@@ -87,7 +87,7 @@ export const FinEraLogo = forwardRef<SVGSVGElement, FinEraLogoProps>(
             fontWeight="600"
             letterSpacing="0.18em"
           >
-            INCLUSIVE CREDIT
+            INCLUSIVE Micro-Loans
           </text>
         )}
       </svg>

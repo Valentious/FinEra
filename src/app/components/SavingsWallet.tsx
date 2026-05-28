@@ -21,7 +21,7 @@ interface SavingsWalletProps {
   onWithdraw: () => void;
   onBack: () => void;
   availableCreditFacility?: number; // Optional credit facility amount
-  /** Matches TrustScore / dashboard FinCash card gradient bands */
+  /** Matches TrustScore / dashboard FINERA card gradient bands */
   disciplineScore?: number;
 }
 

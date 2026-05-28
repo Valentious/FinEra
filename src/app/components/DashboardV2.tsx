@@ -16,7 +16,6 @@ import {
   ShieldCheck,
   Coins,
   Send,
-  Wallet,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -26,7 +25,6 @@ import {
   formatAmountWithSymbol,
 } from "@/types/wallet";
 import {
-  finAmountHero,
   finAmountLedger,
   finAmountPrimary,
 } from "@/lib/financialTypography";
@@ -39,13 +37,13 @@ import {
   onDisciplineGradientIcon,
   onDisciplineGradientMuted,
   onDisciplineGradientOrb,
-  onDisciplineGradientPill,
   onDisciplineGradientText,
   onDisciplineGradientShellShadow,
 } from "@/lib/disciplineGradient";
 import { BrandHeroFigure } from "@/app/components/BrandHeroFigure";
+import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 
-export type CurrencyOption = "USD" | "ZIG" | "ZAR" | "EUR" | "GBP";
+export type CurrencyOption = "USD" | "ZIG";
 
 const DEFAULT_CURRENCY_SYMBOLS: Record<string, string> = {
   ...CURRENCY_AMOUNT_SYMBOLS,
@@ -92,7 +90,7 @@ export interface CurrencyTab {
 interface DashboardV2Props {
   userName: string;
   walletBalance: number;
-  /** e.g. FinCash USD Wallet - must match active dashboard currency */
+  /** e.g. FinEra USD Wallet - must match active dashboard currency */
   walletLabel: string;
   /** Outstanding / active loan balance for the selected dashboard currency. */
   activeCredit: number;
@@ -218,10 +216,9 @@ export function DashboardV2({
   walletBalance,
   walletLabel,
   activeCredit,
-  availableCreditLimit,
   disciplineScore,
   creditScore,
-  loyaltyProgress: loyaltyProgressRaw,
+  loyaltyProgress: _loyaltyProgress,
   selectedCurrency = 'USD',
   onCurrencyChange,
   displayAccountNumber,
@@ -237,18 +234,20 @@ export function DashboardV2({
   currencyTabs,
   dashboardConfig = {},
 }: DashboardV2Props) {
-  const safeAvailableCreditLimit = Number.isFinite(Number(availableCreditLimit)) ? Number(availableCreditLimit) : 0;
   const safeWalletBalance = Number.isFinite(Number(walletBalance)) ? Number(walletBalance) : 0;
   const safeActiveCredit = Number.isFinite(Number(activeCredit)) ? Number(activeCredit) : 0;
   const safeDisciplineScore = Number.isFinite(Number(disciplineScore)) ? Number(disciplineScore) : 50;
   const safeCreditScore = Number.isFinite(Number(creditScore)) ? Number(creditScore) : 82;
-  const safeLoyaltyProgress = Number.isFinite(Number(loyaltyProgressRaw)) ? Number(loyaltyProgressRaw) : 0;
 
   const [showDisciplineDetails, setShowDisciplineDetails] = useState(false);
   const [showCreditScoreBreakdown, setShowCreditScoreBreakdown] = useState(false);
-  const tabs = currencyTabs && currencyTabs.length > 0
+  const visibleTabs = (currencyTabs && currencyTabs.length > 0
     ? currencyTabs
-    : [{ currencyCode: 'USD', displayName: 'USD', symbol: '$' }, { currencyCode: 'ZIG', displayName: 'ZiG', symbol: 'ZiG' }, { currencyCode: 'ZAR', displayName: 'ZAR', symbol: 'R' }];
+    : [{ currencyCode: 'USD', displayName: 'USD', symbol: '$' }, { currencyCode: 'ZIG', displayName: 'ZiG', symbol: 'ZiG' }])
+    .filter((tab) => tab.currencyCode === 'USD' || tab.currencyCode === 'ZIG');
+  const tabs = visibleTabs.length > 0
+    ? visibleTabs
+    : [{ currencyCode: 'USD', displayName: 'USD', symbol: '$' }, { currencyCode: 'ZIG', displayName: 'ZiG', symbol: 'ZiG' }];
   /** Radix Select throws if `value` is not present in items — coerce to a valid tab. */
   const selectCurrency: CurrencyOption = tabs.some((t) => t.currencyCode === selectedCurrency)
     ? (selectedCurrency as CurrencyOption)
@@ -300,7 +299,7 @@ export function DashboardV2({
       >
         <div className="finera-gradient-plate finera-gradient-plate--ribbon pointer-events-none" aria-hidden />
         <div
-          className="pointer-events-none absolute bottom-0 right-0 z-[1] hidden h-[5.5rem] w-[46%] max-w-[7.5rem] overflow-hidden sm:block sm:h-[6.5rem] sm:max-w-[9.5rem] md:h-[7.75rem] md:max-w-[11rem] lg:h-[8.5rem] lg:max-w-[12rem]"
+          className="pointer-events-none absolute bottom-0 right-0 z-[1] hidden h-[5.5rem] w-[46%] max-w-[7.5rem] overflow-hidden opacity-40 sm:block sm:h-[6.5rem] sm:max-w-[9.5rem] md:h-[7.75rem] md:max-w-[11rem] lg:h-[8.5rem] lg:max-w-[12rem]"
           aria-hidden
         >
           <BrandHeroFigure variant="dashboard-ribbon" />
@@ -319,17 +318,22 @@ export function DashboardV2({
           </div>
 
           {onCurrencyChange ? (
-            <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:min-w-[min(100%,17.5rem)] sm:items-end">
-              <span
-                id="dash-ribbon-currency-label"
-                className="text-balance text-left text-xs font-extrabold uppercase leading-snug tracking-wide text-black dark:text-white sm:text-right sm:text-sm"
-              >
-                CHANGE DASHBOARD CURRENCY
-              </span>
-              <Select value={selectCurrency} onValueChange={(v) => onCurrencyChange(v as CurrencyOption)}>
+            <div className="relative z-[6] mt-1 flex w-full shrink-0 flex-col sm:ml-auto sm:mt-0 sm:w-auto sm:min-w-[min(100%,18rem)] sm:max-w-[20rem] lg:translate-y-1">
+              <div
+                className="pointer-events-none absolute -inset-2 rounded-2xl bg-slate-950/10 backdrop-blur-[2px] sm:-inset-3 dark:bg-black/18"
+                aria-hidden
+              />
+              <div className="relative flex w-full flex-col gap-2 rounded-xl border border-white/55 bg-white/88 px-3.5 py-3 shadow-[0_8px_22px_rgba(15,23,42,0.10)] ring-1 ring-slate-900/5 backdrop-blur-xl sm:px-4 sm:py-3.5 dark:border-white/15 dark:bg-slate-950/72 dark:ring-white/10">
+                <span
+                  id="dash-ribbon-currency-label"
+                  className="text-balance text-left text-xs font-extrabold uppercase leading-snug tracking-[0.12em] text-slate-950 sm:text-right sm:text-sm dark:text-white"
+                >
+                  SWITCH WALLET
+                </span>
+                <Select value={selectCurrency} onValueChange={(v) => onCurrencyChange(v as CurrencyOption)}>
                 <SelectTrigger
                   aria-labelledby="dash-ribbon-currency-label"
-                  className="h-10 w-full min-w-0 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] px-4 py-2 text-left text-sm font-semibold text-[#1A1A1A] shadow-none hover:bg-[#F9FAFB] focus:bg-[#F9FAFB] data-[state=open]:bg-[#F9FAFB] focus-visible:border-gray-300 focus-visible:ring-2 focus-visible:ring-gray-200/40 sm:min-w-[13.75rem] lg:min-w-[15rem] dark:bg-[#FFFFFF] dark:text-[#1A1A1A] dark:hover:bg-[#F9FAFB] dark:focus:bg-[#F9FAFB] dark:data-[state=open]:bg-[#F9FAFB] [&_svg]:shrink-0 [&_svg]:text-gray-700"
+                  className="h-11 w-full min-w-0 rounded-lg border border-slate-200/90 bg-white/96 px-4 py-2 text-left text-sm font-semibold text-slate-950 shadow-none hover:bg-white focus:bg-white data-[state=open]:bg-white focus-visible:border-emerald-400 focus-visible:ring-2 focus-visible:ring-emerald-200/70 sm:min-w-[14rem] lg:min-w-[15.5rem] dark:border-white/15 dark:bg-white/95 dark:text-slate-950 [&_svg]:shrink-0 [&_svg]:text-slate-700"
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-2">
                     <Coins className="h-4 w-4 shrink-0 text-gray-600" aria-hidden />
@@ -347,6 +351,7 @@ export function DashboardV2({
                   ))}
                 </SelectContent>
               </Select>
+              </div>
             </div>
           ) : null}
         </div>
@@ -390,21 +395,31 @@ export function DashboardV2({
               aria-hidden
             />
             <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-              <div className="mb-4 flex items-start justify-between">
+              <div className="mb-4">
                 <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border p-0 ${onDisciplineGradientGlass}`}>
                   <CreditCard className={`h-6 w-6 ${onDisciplineGradientIcon}`} aria-hidden />
                 </div>
-                <div className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-widest ${onDisciplineGradientPill}`}>
-                  Ready
-                </div>
               </div>
-              <p className={`text-xs font-semibold uppercase tracking-widest ${onDisciplineGradientText}`}>Potential credit</p>
-              <p className={`mt-1 text-[11px] font-semibold uppercase tracking-wider ${onDisciplineGradientMuted}`}>
-                {selectCurrency} limit
-              </p>
-              <h3 className={`mt-0.5 text-4xl leading-none ${finAmountHero} ${onDisciplineGradientText}`}>
-                {formatAmountWithCurrency(safeAvailableCreditLimit, selectCurrency)}
-              </h3>
+              {accountType === "staff" ? (
+                <p
+                  className={`mt-1 text-sm font-semibold leading-snug sm:text-base ${onDisciplineGradientText}`}
+                >
+                  Consumer loans that are collateral-free and available to formally employed individuals,
+                  including SSB, ZRP, and ZPCS members, subject to payroll deduction arrangements.
+                </p>
+              ) : accountType === "alumni" ? (
+                <p
+                  className={`mt-1 max-w-[32rem] text-sm font-semibold leading-relaxed sm:text-[0.95rem] ${onDisciplineGradientText}`}
+                >
+                  This is working capital for Sole Traders, Small to Medium Enterprises and Corporate businesses, aimed at supporting business needs through collateral/asset-based loans.
+                </p>
+              ) : (
+                <p
+                  className={`mt-1 max-w-[32rem] text-sm font-semibold leading-relaxed sm:text-[0.95rem] ${onDisciplineGradientText}`}
+                >
+                  Student Loans for students in partnered Universities. Student sccount supports registered university students during periods of delay in receiving  allowances from parents or guardians. The facility provides student portal-based loans(max 30USD) to help cover daily needs such as food and healthcare. Repayment period: up to one month.
+                </p>
+              )}
               <div className="mt-6 min-h-0 flex-1">
                 <LoanTypeSelector accountType={accountType} onSelectLoanType={onSelectLoanType} />
               </div>
@@ -429,7 +444,12 @@ export function DashboardV2({
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-2xl border p-0 sm:h-11 sm:w-11 md:h-12 md:w-12 ${onDisciplineGradientGlass}`}
                     >
-                      <Wallet className={`h-5 w-5 sm:h-6 sm:w-6 ${onDisciplineGradientIcon}`} aria-hidden />
+                      <FinEraShieldIcon
+                        size={30}
+                        noShadow
+                        className="rounded-xl"
+                        innerSvgClassName="h-[72%] w-[72%]"
+                      />
                     </div>
                   </div>
                   <p className={`text-[10px] font-semibold uppercase tracking-widest sm:text-xs ${onDisciplineGradientText}`}>{walletLabel}</p>
@@ -620,81 +640,7 @@ export function DashboardV2({
       </div>
 
       {/* 6️⃣ Analytics & Activity Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* C. Loyalty Progress Card™ (10-Cycle Engine) */}
-        <motion.div whileHover={{ y: -4 }}>
-          <Card
-            className={`relative h-full overflow-hidden border-none p-6 shadow-xl shadow-slate-200/50 dark:shadow-none ${
-              safeLoyaltyProgress === 10 ? "bg-gradient-to-br from-amber-400 to-amber-500 text-white" : ""
-            }`}
-          >
-            {safeLoyaltyProgress !== 10 ? (
-              <div className="finera-gradient-plate finera-gradient-plate--panel pointer-events-none" aria-hidden />
-            ) : null}
-            <div className="relative z-10">
-            <h3 className={`mb-6 text-lg font-black ${safeLoyaltyProgress === 10 ? "text-white" : "text-foreground"}`}>
-              Loyalty Reward Progress
-            </h3>
-            
-            {/* Horizontal Tracker */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((cycle) => (
-                  <div key={cycle} className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${
-                      cycle <= safeLoyaltyProgress 
-                        ? (safeLoyaltyProgress === 10 ? 'bg-white text-amber-600' : 'bg-primary text-white') 
-                        : 'bg-slate-200 text-muted-foreground dark:bg-slate-700 dark:text-white/85'
-                    }`}>
-                      {cycle <= safeLoyaltyProgress ? '✓' : cycle}
-                    </div>
-                    <div className={`text-[8px] mt-1 font-bold ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-muted-foreground/75'}`}>
-                      {cycle}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="relative h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full ${safeLoyaltyProgress === 10 ? 'bg-white' : 'bg-primary'} transition-all duration-500`}
-                  style={{ width: `${(safeLoyaltyProgress / 10) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <p className={`text-sm mb-4 font-medium ${safeLoyaltyProgress === 10 ? 'text-white' : 'text-muted-foreground'}`}>
-              {safeLoyaltyProgress === 10 
-                ? "5% interest rate reduction activated on your next loan." 
-                : "Complete 10 loans with zero defaults to unlock a 5% interest rate reduction."}
-            </p>
-
-            {safeLoyaltyProgress === 9 && (
-              <div className="px-4 py-3 bg-amber-50 border-2 border-amber-400 rounded-xl mb-4 dark:bg-amber-950/60 dark:border-amber-600">
-                <p className="text-amber-900 dark:text-amber-100 font-black text-sm text-center">
-                  🎉 One loan away from your 5% rate reduction!
-                </p>
-              </div>
-            )}
-
-            {safeLoyaltyProgress === 10 && (
-              <div className="px-4 py-3 bg-white/20 backdrop-blur-md border-2 border-white/40 rounded-xl">
-                <p className="text-white font-black text-sm text-center">
-                  🏆 Congratulations! Loyalty Milestone Achieved!
-                </p>
-              </div>
-            )}
-
-            {safeLoyaltyProgress < 9 && (
-              <div className="text-center">
-                <p className={`text-xs font-bold ${safeLoyaltyProgress === 10 ? 'text-white/80' : 'text-muted-foreground/85'}`}>
-                  {10 - safeLoyaltyProgress} more successful {10 - safeLoyaltyProgress === 1 ? 'cycle' : 'cycles'} to go
-                </p>
-              </div>
-            )}
-            </div>
-          </Card>
-        </motion.div>
-
+      <div className="grid grid-cols-1 gap-6">
         {/* Recent Transactions - currency-scoped ledger */}
         <Card className="relative flex flex-col overflow-hidden border-none p-6 shadow-xl shadow-slate-200/50 dark:shadow-none">
           <div className="finera-gradient-plate finera-gradient-plate--panel pointer-events-none" aria-hidden />

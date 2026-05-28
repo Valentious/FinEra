@@ -40,7 +40,7 @@ export function MakePayment({
   countryCode = "zw",
   currencyCode = "USD",
   walletBalance = 0,
-  walletLabel = "FinCash Wallet",
+  walletLabel = "FINERA Wallet",
   currencySymbol = "$",
 }: MakePaymentProps) {
   const options = getPaymentOptionsByCountry(countryCode);

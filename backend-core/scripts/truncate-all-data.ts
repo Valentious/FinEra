@@ -19,6 +19,7 @@ async function main() {
     "KycDocument",
     "MemberDefaultCompliance",
     "EmploymentDetails",
+    "MemberAgreementDocument",
     "MemberDocument",
     "DocumentTemplate",
     "FraudLog",

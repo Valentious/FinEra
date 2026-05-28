@@ -990,7 +990,7 @@ export async function withdrawFunds(data: WithdrawalRequest): Promise<{ transact
 
 /**
  * POST /wallet/transfer-credit-to-savings
- * Transfer from approved credit to FinCash wallet for that currency. REQUIRES currency for isolation.
+ * Transfer from approved credit to FINERA wallet for that currency. REQUIRES currency for isolation.
  */
 export async function transferCreditToSavings(amount: number, currency: string = 'USD'): Promise<{
   approvedCreditWallet: number;
@@ -1163,7 +1163,7 @@ export async function getCreditLimitForCurrency(currency: string): Promise<{
  * - Calculate final credit amount
  * - Add to approvedCreditWallet
  * - Update activeCredit
- * - Lock 20% of savings if applicable
+ * - Submit the requested amount for product eligibility checks
  * - Create loan record
  * - Send notification to user
  */
@@ -1723,8 +1723,10 @@ export interface MemberDocumentsStatusPayload {
     loanProductType: string;
     agreementStatus: MemberDocVerificationStatus;
     consentStatus: MemberDocVerificationStatus | null;
+    stopOrderStatus: MemberDocVerificationStatus | null;
     hasAgreementUpload: boolean;
     hasConsentUpload: boolean;
+    hasStopOrderUpload: boolean;
     adminNotes: string | null;
     assetDocumentationNote: string | null;
     uploadedAt: string;
@@ -1756,7 +1758,7 @@ export async function putMemberDocumentsContext(loanProductType: string): Promis
 }
 
 export async function uploadMemberSignedDocument(params: {
-  kind: "agreement" | "consent";
+  kind: "agreement" | "consent" | "stop_order";
   loanProductType: string;
   file: File;
 }): Promise<{ success: boolean }> {
@@ -1800,7 +1802,64 @@ export async function patchAssetDocumentationNote(
   });
 }
 
-export async function downloadMemberTemplate(docType: "AGREEMENT" | "PAYROLL_CONSENT", filename: string): Promise<void> {
+export type StopOrderDocumentStatus = "pending" | "submitted" | "approved" | "rejected";
+
+export interface StopOrderDocumentPayload {
+  documentType: string;
+  status: StopOrderDocumentStatus;
+  fileName: string | null;
+  hasUpload: boolean;
+  uploadedAt: string | null;
+}
+
+export async function getStopOrderDocumentStatus(): Promise<{ success: boolean; data: StopOrderDocumentPayload }> {
+  return apiCall("/member-agreements/stop-order", { method: "GET" });
+}
+
+export async function downloadStopOrderTemplate(): Promise<void> {
+  const token = authToken();
+  const res = await fetch(`${BASE_URL}/member-agreements/stop-order/template/download`, {
+    method: "GET",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { message?: string }).message || `Download failed (${res.status})`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "LOAN REPAYMENT STOP ORDER.pdf";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function uploadStopOrderDocument(file: File): Promise<{
+  success: boolean;
+  data: StopOrderDocumentPayload & { message?: string };
+}> {
+  const form = new FormData();
+  form.append("file", file);
+  const token = authToken();
+  const res = await fetch(`${BASE_URL}/member-agreements/stop-order/upload`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: "include",
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { message?: string }).message || `Upload failed (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function downloadMemberTemplate(
+  docType: "AGREEMENT" | "PAYROLL_CONSENT" | "REPAYMENT_STOP_ORDER",
+  filename: string
+): Promise<void> {
   const token = authToken();
   const res = await fetch(`${BASE_URL}/member-documents/templates/${docType}/download`, {
     method: "GET",

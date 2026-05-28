@@ -14,7 +14,7 @@ import {
   Megaphone,
   AlertCircle,
   ShieldAlert,
-  GraduationCap,
+  PieChart,
   Loader2,
   RefreshCw,
   ExternalLink,
@@ -33,7 +33,7 @@ const TYPE_ICONS: Record<NotifVisual, typeof CreditCard> = {
   system: Zap,
   feature: Megaphone,
   security: ShieldAlert,
-  learning: GraduationCap,
+  learning: PieChart,
 };
 
 /** Single green family - no blue; accents vary by weight only */
@@ -321,7 +321,7 @@ export function NotificationsDropdown({ onNavigate, headerTone = "default" }: No
                             <p className="mt-0.5 text-xs leading-relaxed text-emerald-900/85">
                               {row.id === "finera-builtin-account-purpose" ? (
                                 <>
-                                  Your Wallet IDs identify you for transfers and support. Fund your FinCash wallets for
+                                  Your Wallet IDs identify you for transfers and support. Fund your FINERA wallets for
                                   savings, loans, and repayments in{" "}
                                   <span className="finera-inclusive-credit-phrase">FinEra Inclusive Credit</span>.
                                 </>

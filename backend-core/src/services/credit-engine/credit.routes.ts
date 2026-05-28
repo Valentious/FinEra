@@ -23,10 +23,6 @@ router.use(authMiddleware);
 
 const loanProductEnum = z.enum(["ASSET_BACKED", "SALARY_BACKED", "COLLATERAL", "NON_COLLATERAL"]);
 
-function requiresWalletDisciplineForAmount(loanType: LoanProductType, creditType: string): boolean {
-  return loanType === "NON_COLLATERAL" && (creditType === "essential" || creditType === "business");
-}
-
 function loanTypeAllowedForAccount(loanType: LoanProductType, accountType: AccountType): boolean {
   if (accountType === "STUDENT") return loanType === "NON_COLLATERAL";
   if (accountType === "ALUMNI") return loanType === "ASSET_BACKED";
@@ -201,7 +197,7 @@ const applyInstantSchema = z.object({
 /**
  * POST /credit/apply-instant
  * Apply for credit with instant approval (auto-disburse).
- * Validates: account vs loan product, no active loan, wallet 20% only for unsecured student flows.
+ * Validates: account vs loan product, no active loan, and required member documents.
  */
 router.post("/apply-instant", async (req, res, next) => {
   try {
@@ -241,13 +237,6 @@ router.post("/apply-instant", async (req, res, next) => {
     if (!wallet) throw validationError("Wallet not found");
 
     await assertWalletHasNoActiveLoan(prisma, wallet.id);
-
-    const walletBal = Number(wallet.balance);
-    if (requiresWalletDisciplineForAmount(loanProduct, creditType) && walletBal < amount * 0.2) {
-      throw validationError("Wallet balance must be at least 20% of loan amount for this product", {
-        fields: [{ field: "amount", error: "Insufficient wallet balance for unsecured student loan" }],
-      });
-    }
 
     await assertDocumentsAllowLoanApplication(req.user!.id, loanProduct);
 

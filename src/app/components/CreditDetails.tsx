@@ -3,13 +3,12 @@ import { Button } from "@/app/components/ui/button";
 import { Card } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { ArrowLeft, AlertTriangle, CheckCircle, Info, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { LoanApplicationFlow } from "@/app/components/LoanApplicationFlow";
 import type { AppAccountType, LoanType } from "@/loan/loanTypes";
-import { requiresCollateralStep, requiresWalletDisciplineForAmount } from "@/loan/loanTypes";
+import { requiresCollateralStep } from "@/loan/loanTypes";
 import { CreditEvaluationService } from "@/services/creditEvaluation";
 import { toast } from "sonner";
-import { Progress } from "@/app/components/ui/progress";
 import {
   CURRENCY_AMOUNT_SYMBOLS,
   currencyAmountPlaceholder,
@@ -18,7 +17,7 @@ import {
 
 interface CreditDetailsProps {
   currencyCode: string;
-  /** e.g. FinCash USD Wallet - matches active dashboard currency */
+  /** e.g. FinEra USD Wallet - matches active dashboard currency */
   walletLabel: string;
   isWalletLoading: boolean;
   walletError: string | null;
@@ -27,11 +26,8 @@ interface CreditDetailsProps {
   limitsReady: boolean;
   loanType: LoanType;
   accountType: AppAccountType;
-  creditType: string;
   maxAmount: number;
   repaymentCycle: string;
-  savingsRequirement: number;
-  currentSavings: number;
   onContinue: (amount: number) => void | Promise<void>;
   onBack: () => void;
 }
@@ -46,11 +42,8 @@ export function CreditDetails({
   limitsReady,
   loanType,
   accountType,
-  creditType,
   maxAmount,
   repaymentCycle,
-  savingsRequirement,
-  currentSavings,
   onContinue,
   onBack,
 }: CreditDetailsProps) {
@@ -61,10 +54,7 @@ export function CreditDetails({
   const inputPadClass = sym.length > 2 ? "pl-24" : "pl-10";
 
   const requestedAmount = parseFloat(amount) || 0;
-  const requiredSavings = requestedAmount * 0.2;
-  const maxAllowedLoan = currentSavings / 0.2;
 
-  const savingsCheckApplies = requiresWalletDisciplineForAmount(loanType, creditType);
   const collateralFlow = requiresCollateralStep(loanType);
   const pageBg = collateralFlow ? "min-h-dvh bg-transparent p-4 pb-24" : "min-h-dvh bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 pb-24";
 
@@ -76,14 +66,9 @@ export function CreditDetails({
       ? "Working capital and capital expenditure requirements"
       : "Personal consumption";
 
-  const savingsMet = !savingsCheckApplies || currentSavings >= requiredSavings;
-  const amountExceedsLimit = savingsCheckApplies && requestedAmount > maxAllowedLoan;
   const canProceed =
     limitsReady &&
-    requestedAmount > 0 &&
-    requestedAmount <= maxAmount &&
-    savingsMet &&
-    !amountExceedsLimit;
+    requestedAmount > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,121 +233,13 @@ export function CreditDetails({
                   className={`${inputPadClass} h-14 text-xl font-black`}
                   step="0.01"
                   min="0"
-                  max={maxAmount}
                   required
                 />
               </div>
               <p className="text-sm text-muted-foreground font-medium">
                 Maximum allowed: {formatAmountWithCurrency(maxAmount, cc)}
-                {savingsCheckApplies &&
-                  ` (Based on ${walletLabel}: ${formatAmountWithCurrency(Math.min(maxAllowedLoan, maxAmount), cc)})`}
               </p>
             </div>
-
-            {requestedAmount > 0 && savingsCheckApplies && (
-              <div className="space-y-4">
-                <Card
-                  className={`p-4 ${savingsMet && !amountExceedsLimit ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`p-2 rounded-lg ${savingsMet && !amountExceedsLimit ? "bg-green-100" : "bg-red-100"}`}
-                    >
-                      {savingsMet && !amountExceedsLimit ? (
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                      ) : (
-                        <AlertTriangle className="w-5 h-5 text-red-600" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-black text-foreground mb-2">
-                        {savingsMet && !amountExceedsLimit ? "Wallet balance check passed ✓" : "Wallet balance requirement"}
-                      </h4>
-
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground font-medium">Requested Amount:</span>
-                            <span className="font-black">{formatAmountWithCurrency(requestedAmount, cc)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground font-medium">Required in wallet (20%):</span>
-                            <span className="font-black text-emerald-600">
-                              {formatAmountWithCurrency(requiredSavings, cc)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground font-medium">Your current balance:</span>
-                            <span
-                              className={`font-black ${currentSavings >= requiredSavings ? "text-green-600" : "text-red-600"}`}
-                            >
-                              {formatAmountWithCurrency(currentSavings, cc)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="flex justify-between text-xs font-bold text-muted-foreground mb-1">
-                            <span>Progress toward 20%</span>
-                            <span>{Math.min((currentSavings / requiredSavings) * 100, 100).toFixed(0)}%</span>
-                          </div>
-                          <Progress
-                            value={Math.min((currentSavings / requiredSavings) * 100, 100)}
-                            className="h-2"
-                          />
-                        </div>
-
-                        {amountExceedsLimit && (
-                          <div className="flex items-start gap-2 p-3 bg-red-100 rounded-lg">
-                            <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-sm text-red-800 font-bold">
-                                Your selected loan amount exceeds the limit based on your current {walletLabel} balance.
-                              </p>
-                              <p className="text-xs text-red-700 mt-1">
-                                Maximum loan you can request: {formatAmountWithCurrency(maxAllowedLoan, cc)}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        {!savingsMet && !amountExceedsLimit && (
-                          <div className="flex items-start gap-2 p-3 bg-amber-100 rounded-lg">
-                            <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm text-amber-800 font-bold">
-                              You need {formatAmountWithCurrency(requiredSavings - currentSavings, cc)} more in {walletLabel}{" "}
-                              to qualify for this loan amount.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="p-3 bg-emerald-50 border-emerald-200">
-                  <div className="flex items-start gap-2">
-                    <Info className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-emerald-900 font-bold">
-                        Financial discipline: 20% minimum balance in {walletLabel} ({cc})
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {requestedAmount > 0 && !savingsCheckApplies && (
-              <Card className="p-4 bg-green-50 border-green-200">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <div>
-                    <p className="text-sm text-green-800 font-bold">No minimum wallet balance rule applies for this credit purpose.</p>
-                  </div>
-                </div>
-              </Card>
-            )}
 
             <Button
               type="submit"
@@ -375,12 +252,16 @@ export function CreditDetails({
                   <Loader2 className="w-5 h-5 animate-spin shrink-0" />
                   Evaluating eligibility…
                 </>
-              ) : !canProceed && requestedAmount > 0 ? (
-                "Cannot Proceed - Check Requirements"
+              ) : !canProceed ? (
+                "Enter requested amount"
               ) : requiresCollateralStep(loanType) ? (
                 "Continue to Risk Acknowledgment"
               ) : (
-                "Continue to member agreement"
+                accountType === "alumni"
+                  ? "Continue to Collateral Documents"
+                  : accountType === "student"
+                    ? "Continue to Upload Current Result Slip"
+                    : "Continue to document upload"
               )}
             </Button>
           </form>

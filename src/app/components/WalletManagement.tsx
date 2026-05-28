@@ -225,7 +225,7 @@ export function WalletManagement({
                 Transfer to {walletLabel}
               </h3>
               <p className="text-sm text-muted-foreground font-medium mb-6">
-                Move funds from your Approved Credit Wallet into your FinCash wallet (USD, ZiG, ZAR, etc.). A 1.5% commission applies on each transfer.
+                Move funds from your Approved Credit Wallet into your FINERA wallet (USD, ZiG). A 1.5% commission applies on each transfer.
               </p>
 
               <div className="space-y-4 mb-6">
@@ -244,7 +244,7 @@ export function WalletManagement({
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-muted-foreground max-w-[4rem] truncate">
-                      {cc === "USD" ? "$" : cc === "ZAR" ? "R" : cc === "ZIG" ? "ZiG" : cc}
+                      {cc === "USD" ? "$" : cc === "ZIG" ? "ZiG" : cc}
                     </span>
                     <input
                       type="number"

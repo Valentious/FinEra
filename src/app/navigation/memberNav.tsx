@@ -1,21 +1,24 @@
 import { useMemo } from "react";
 import {
   LayoutDashboard,
-  GraduationCap,
-  Handshake,
   FileText,
   Settings,
+  HelpCircle,
+  ShieldCheck,
+  Briefcase,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/app/components/ui/utils";
 import { useI18n } from "@/app/providers/I18nProvider";
+import type { AppAccountType } from "@/loan/loanTypes";
 
 export const MEMBER_NAV_IDS = [
   "dashboard",
-  "financialEducation",
-  "partnerProgram",
+  "editEmploymentDetails",
   "agreementsConsent",
+  "identityVerification",
   "profileSettings",
+  "helpCentre",
 ] as const;
 
 export type MemberNavId = (typeof MEMBER_NAV_IDS)[number];
@@ -30,30 +33,42 @@ export type MemberNavItem = {
   icon: LucideIcon;
 };
 
-export function useMemberNavItems(): MemberNavItem[] {
+export function useMemberNavItems(accountType?: AppAccountType): MemberNavItem[] {
   const { t } = useI18n();
-  return useMemo(
+  const agreementsConsentLabel =
+    accountType === "student"
+      ? "Upload Current Result Slip"
+      : accountType === "alumni"
+        ? "Collateral Documents"
+        : "Repayment Details";
+
+  const items = useMemo(
     () => [
       { id: "dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
-      { id: "financialEducation", label: t("nav.learningHub"), icon: GraduationCap },
-      { id: "partnerProgram", label: t("nav.partnerProgram"), icon: Handshake },
-      { id: "agreementsConsent", label: t("nav.agreementsConsent"), icon: FileText },
+      ...(accountType === "staff" ? [{ id: "editEmploymentDetails" as const, label: "Edit Employment Details", icon: Briefcase }] : []),
+      { id: "agreementsConsent", label: agreementsConsentLabel, icon: FileText },
+      { id: "identityVerification", label: t("nav.identityVerification"), icon: ShieldCheck },
       { id: "profileSettings", label: t("nav.accountSettings"), icon: Settings },
+      { id: "helpCentre", label: t("nav.helpCentre"), icon: HelpCircle },
     ],
-    [t],
+    [agreementsConsentLabel, t, accountType],
   );
+
+  return items;
 }
 
 export function MobileBottomNav({
   className,
   activeScreen,
   onNavigate,
+  accountType,
 }: {
   className?: string;
   activeScreen: string;
   onNavigate: (screen: string) => void;
+  accountType?: AppAccountType;
 }) {
-  const items = useMemberNavItems();
+  const items = useMemberNavItems(accountType);
   const activeId: MemberNavId | null = isMemberNavId(activeScreen) ? activeScreen : null;
 
   return (

@@ -18,6 +18,13 @@ function Badge({ status }: { status: string | null | undefined }) {
   return <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${cls}`}>{status}</span>;
 }
 
+function primaryDocumentLabel(row: { user: { accountType: string }; loanProductType: string }): string {
+  const accountType = row.user.accountType.toUpperCase();
+  if (accountType === "STUDENT") return "Previous Result-Slips";
+  if (accountType === "ALUMNI" || row.loanProductType === "ASSET_BACKED") return "Collateral Documents";
+  return "Agreement";
+}
+
 export function DocumentsCompliancePage() {
   const [templates, setTemplates] = useState<{ documentType: string; fileName: string | null; uploadedAt: string }[]>([]);
   const [submissions, setSubmissions] = useState<
@@ -27,6 +34,7 @@ export function DocumentsCompliancePage() {
       loanProductType: string;
       agreementStatus: string;
       consentStatus: string | null;
+      stopOrderStatus: string | null;
       adminNotes: string | null;
       employment: {
         employerName: string;
@@ -60,7 +68,7 @@ export function DocumentsCompliancePage() {
     void load();
   }, [load]);
 
-  const pickTemplate = (docType: "AGREEMENT" | "PAYROLL_CONSENT") => {
+  const pickTemplate = (docType: "AGREEMENT" | "PAYROLL_CONSENT" | "REPAYMENT_STOP_ORDER") => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".pdf,.doc,.docx,application/pdf";
@@ -81,7 +89,7 @@ export function DocumentsCompliancePage() {
     <div className="min-h-full bg-black pb-8 text-white">
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 md:px-8">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white">Agreements &amp; consent</h1>
+          <h1 className="text-2xl font-black tracking-tight text-white">Document compliance</h1>
           <p className="mt-1 text-sm text-muted-foreground">Templates, member uploads, verification, and delinquency tools.</p>
         </div>
 
@@ -98,7 +106,7 @@ export function DocumentsCompliancePage() {
               className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-500"
               onClick={() => pickTemplate("AGREEMENT")}
             >
-              Upload member agreement template
+              Upload collateral documents template
             </button>
             <button
               type="button"
@@ -106,6 +114,13 @@ export function DocumentsCompliancePage() {
               onClick={() => pickTemplate("PAYROLL_CONSENT")}
             >
               Upload payroll consent template
+            </button>
+            <button
+              type="button"
+              className="rounded-xl border border-emerald-600/50 bg-zinc-900 px-4 py-2.5 text-sm font-bold text-emerald-400 hover:bg-emerald-950/50"
+              onClick={() => pickTemplate("REPAYMENT_STOP_ORDER")}
+            >
+              Upload repayment stop order template
             </button>
             <button
               type="button"
@@ -171,7 +186,9 @@ export function DocumentsCompliancePage() {
             <p className="mt-4 text-muted-foreground">No submissions yet.</p>
           ) : (
             <div className="mt-4 space-y-6">
-              {submissions.map((row) => (
+              {submissions.map((row) => {
+                const documentLabel = primaryDocumentLabel(row);
+                return (
                 <div key={row.id} className="rounded-xl border border-zinc-800 bg-black p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -183,13 +200,19 @@ export function DocumentsCompliancePage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <div className="text-right">
-                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Agreement</p>
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground">{documentLabel}</p>
                         <Badge status={row.agreementStatus} />
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Consent</p>
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Payroll consent</p>
                         <Badge status={row.consentStatus} />
                       </div>
+                      {row.loanProductType === "SALARY_BACKED" && (
+                        <div className="text-right">
+                          <p className="text-[10px] font-bold uppercase text-muted-foreground">Stop order</p>
+                          <Badge status={row.stopOrderStatus} />
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -220,7 +243,7 @@ export function DocumentsCompliancePage() {
                           }
                         }}
                       >
-                        Agreement: {st}
+                        {documentLabel}: {st}
                       </button>
                     ))}
                     {row.loanProductType === "SALARY_BACKED" &&
@@ -238,7 +261,25 @@ export function DocumentsCompliancePage() {
                             }
                           }}
                         >
-                          Consent: {st}
+                          Payroll consent: {st}
+                        </button>
+                      ))}
+                    {row.loanProductType === "SALARY_BACKED" &&
+                      (["VERIFIED", "REJECTED", "PENDING"] as const).map((st) => (
+                        <button
+                          key={`so-${st}`}
+                          type="button"
+                          className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-bold text-foreground hover:bg-zinc-900"
+                          onClick={async () => {
+                            try {
+                              await patchAdminMemberDocuments(row.user.id, { stopOrderStatus: st });
+                              await load();
+                            } catch (e) {
+                              setErr(e instanceof Error ? e.message : "Failed");
+                            }
+                          }}
+                        >
+                          Stop order: {st}
                         </button>
                       ))}
                     <button
@@ -283,7 +324,8 @@ export function DocumentsCompliancePage() {
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

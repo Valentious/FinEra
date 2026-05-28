@@ -12,14 +12,14 @@ export function WelcomeIntro({ onContinue, userName }: WelcomeIntroProps) {
   const steps = [
     {
       icon: <PiggyBank className="w-6 h-6 text-green-600" />,
-      title: "Build your FinCash Wallet",
+      title: "Build your FINERA Wallet",
       description: "Start saving to unlock higher credit limits and better interest rates."
     },
     {
       icon: <CreditCard className="w-6 h-6 text-emerald-600" />,
       title: (
         <>
-          Access FinEra <span className="finera-inclusive-credit-tagline">INCLUSIVE CREDIT</span>
+          Access FinEra <span className="finera-inclusive-credit-tagline">INCLUSIVE Micro-Loans</span>
         </>
       ),
       description: "Get student-friendly loans with flexible repayment terms."

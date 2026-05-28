@@ -18,7 +18,7 @@ const items: { id: AdminNavId; to: string; label: string; icon: typeof LayoutDas
   { id: "users", to: "users", label: "Users", icon: Users },
   { id: "wallets", to: "wallets", label: "Wallets", icon: Wallet },
   { id: "credit", to: "credit-intelligence", label: "Credit Intelligence", icon: Brain },
-  { id: "documents", to: "documents", label: "Agreements & consent", icon: FileStack },
+  { id: "documents", to: "documents", label: "Document compliance", icon: FileStack },
   { id: "agents", to: "agent-governance", label: "Agent Governance (FVAR)", icon: Shield },
   { id: "risk", to: "risk-monitor", label: "Risk Monitor", icon: Activity },
   { id: "transactions", to: "transactions", label: "Transactions", icon: ArrowLeftRight },

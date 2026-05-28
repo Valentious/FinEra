@@ -14,7 +14,7 @@ export interface Wallet {
   walletNumericId?: string;
   /** Primary savings wallet balance for this currency (currency-isolated). */
   balance: number;
-  /** Dynamic label for active dashboard currency, e.g. FinCash USD Wallet */
+  /** Dynamic label for active dashboard currency, e.g. FinEra USD Wallet */
   walletLabel?: string;
   approvedCreditBalance: number;
   activeLoanBalance: number;
@@ -32,13 +32,11 @@ export function getWalletLabel(currency: string): string {
   const c = normalizeCurrencyCode(currency);
   switch (c) {
     case "USD":
-      return "FinCash USD Wallet";
+      return "FinEra USD Wallet";
     case "ZIG":
-      return "FinCash ZiG Wallet";
-    case "ZAR":
-      return "FinCash ZAR Wallet";
+      return "FINERA ZiG Wallet";
     default:
-      return "FinCash Wallet";
+      return "FINERA Wallet";
   }
 }
 
@@ -46,18 +44,12 @@ export function getWalletLabel(currency: string): string {
 export const CURRENCY_TO_COUNTRY: Record<string, string> = {
   USD: "US",
   ZIG: "ZW",
-  ZAR: "ZA",
-  EUR: "EU",
-  GBP: "GB",
 };
 
 /** Currency → display label (ZiG = Zimbabwe Gold) */
 export const CURRENCY_LABELS: Record<string, string> = {
   USD: "USD Account",
   ZIG: "ZiG Account",
-  ZAR: "ZAR Account",
-  EUR: "EUR Account",
-  GBP: "GBP Account",
 };
 
 /** Custody type → provider display name */
@@ -71,9 +63,6 @@ export const CUSTODY_PROVIDER: Record<string, string> = {
 export const COUNTRY_FLAGS: Record<string, string> = {
   US: "🇺🇸",
   ZW: "🇿🇼",
-  ZA: "🇿🇦",
-  EU: "🇪🇺",
-  GB: "🇬🇧",
   XX: "💳",
 };
 
@@ -85,9 +74,6 @@ export function getFlag(countryCode: string): string {
 export const CURRENCY_AMOUNT_SYMBOLS: Record<string, string> = {
   USD: "$",
   ZIG: "ZiG",
-  ZAR: "R",
-  EUR: "€",
-  GBP: "£",
 };
 
 /** Placeholder for amount inputs per dashboard */
@@ -95,9 +81,6 @@ export function currencyAmountPlaceholder(currency: string): string {
   const c = currency.toUpperCase();
   if (c === "USD") return "Enter amount ($)";
   if (c === "ZIG") return "Enter amount (ZiG)";
-  if (c === "ZAR") return "Enter amount (R)";
-  if (c === "EUR") return "Enter amount (€)";
-  if (c === "GBP") return "Enter amount (£)";
   return `Enter amount (${c})`;
 }
 
@@ -114,7 +97,7 @@ export function formatMoneyNumber(amount: number): string {
 
 /**
  * Format an amount for display using ISO currency code (single source of truth for credit UI).
- * USD → $1,234.56  |  ZAR → R 1,234.56  |  ZiG → ZiG 1,234.56
+ * USD → $1,234.56  |  ZiG → ZiG 1,234.56
  */
 export function formatAmountWithCurrency(amount: number, currency: string): string {
   const c = currency.toUpperCase();
@@ -122,14 +105,8 @@ export function formatAmountWithCurrency(amount: number, currency: string): stri
   switch (c) {
     case "USD":
       return `$${num}`;
-    case "ZAR":
-      return `R ${num}`;
     case "ZIG":
       return `ZiG ${num}`;
-    case "EUR":
-      return `€${num}`;
-    case "GBP":
-      return `£${num}`;
     default:
       return `${num} ${c}`;
   }
@@ -140,9 +117,6 @@ export function formatAmountWithSymbol(symbol: string, amount: number): string {
   const bySymbol: Record<string, string> = {
     $: "USD",
     ZiG: "ZIG",
-    R: "ZAR",
-    "€": "EUR",
-    "£": "GBP",
   };
   const code = bySymbol[symbol];
   if (code) return formatAmountWithCurrency(amount, code);

@@ -19,6 +19,7 @@ interface FileOrCameraInputProps {
   label: string;
   /** e.g. "Front" or "Back" for ID */
   sideLabel?: string;
+  captureInstruction?: string;
 }
 
 function fileToBase64(file: File): Promise<string> {
@@ -36,6 +37,7 @@ export function FileOrCameraInput({
   onClear,
   label,
   sideLabel,
+  captureInstruction = "Position document within the frame",
 }: FileOrCameraInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<"choose" | "upload" | "capture">("choose");
@@ -130,7 +132,7 @@ export function FileOrCameraInput({
           <CameraCapture
             mode="document"
             onCapture={handleCapture}
-            instructionText="Position document within the frame"
+            instructionText={captureInstruction}
             guideShape="rect"
           />
           <Button variant="ghost" size="sm" onClick={() => setMode("choose")}>

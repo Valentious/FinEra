@@ -51,7 +51,7 @@ export function toWallet(apiWallet: {
     currency,
     label: CURRENCY_LABELS[currency] ?? `${currency} Account`,
     countryCode: CURRENCY_TO_COUNTRY[currency] ?? "XX",
-    provider: CUSTODY_PROVIDER[apiWallet.custodyType as string] ?? "FinCash",
+    provider: CUSTODY_PROVIDER[apiWallet.custodyType as string] ?? "FINERA",
     accountNumber: apiWallet.accountNumber ?? "",
     walletNumericId: apiWallet.walletNumericId,
     balance: bal,

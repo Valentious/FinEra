@@ -1,6 +1,5 @@
 /**
- * FinEra Learning Hub - Production Learning System
- * API-driven, interactive, context-aware financial education
+ * FinEra Budgeting tools — plans, trackers, and guided budgeting modules.
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -8,7 +7,7 @@ import { Button } from "@/app/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/app/components/ui/card";
 import { Progress } from "@/app/components/ui/progress";
 import {
-  GraduationCap,
+  PieChart,
   Award,
   CheckCircle2,
   Clock,
@@ -185,7 +184,7 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
         <FineraGradientBackdrop clip="card" />
         <div className="relative z-10 flex flex-col items-center gap-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="font-medium text-foreground">Loading Learning Hub...</p>
+          <p className="font-medium text-foreground">Loading budgeting tools…</p>
         </div>
       </div>
     );
@@ -201,13 +200,13 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
         <div className="relative z-10 max-w-2xl">
           <div className="mb-4 flex items-center gap-2">
             <div className="rounded-lg border border-white/20 bg-white/10 p-2 backdrop-blur-md">
-              <GraduationCap className="h-6 w-6 text-emerald-100" />
+              <PieChart className="h-6 w-6 text-emerald-100" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-white/85">
-              Learning & Growth Hub
+              Budgeting tools
             </span>
           </div>
-          <h1 className="mb-4 text-4xl font-black leading-tight">Empower Your Financial Future.</h1>
+          <h1 className="mb-4 text-4xl font-black leading-tight">Plan, track, and stay on budget.</h1>
         </div>
       </div>
 
@@ -262,7 +261,7 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
               )}
 
               <div className="space-y-6">
-                <h2 className="text-3xl font-black text-foreground">Financial Growth Academy</h2>
+                <h2 className="text-3xl font-black text-foreground">Your budget workspace</h2>
 
                 <div className="flex bg-slate-50 p-1 rounded-2xl border border-slate-200 w-fit">
                   <button
@@ -273,7 +272,7 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    FREE LESSONS
+                    BUDGET BASICS
                   </button>
                   <button
                     onClick={() => setLearningTab("premium")}
@@ -283,14 +282,14 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    PREMIUM LEARNING
+                    ADVANCED TOOLS
                   </button>
                 </div>
 
                 {learningTab === "free" && (
                   <div className="space-y-4">
                     <p className="text-muted-foreground font-medium">
-                      Build strong financial discipline before accessing advanced financial tools.
+                      Start with simple budgets, spending awareness, and savings habits.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredModules.map((m) => {
@@ -345,7 +344,7 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
                 {learningTab === "premium" && (
                   <div className="space-y-4">
                     <p className="text-muted-foreground font-medium mb-4">
-                      Advanced financial intelligence for serious wealth builders.
+                      Deeper budgeting, cash-flow planning, and goal-based allocations.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredModules.map((m) => {
@@ -397,8 +396,7 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
                         <div>
                           <h4 className="font-black text-lg mb-1">Upgrade to Premium</h4>
                           <p className="text-emerald-100 text-xs font-medium">
-                            Subscription unlocks exclusive learning materials and advanced financial
-                            development tools.
+                            Subscription unlocks advanced budgeting templates and cash-flow planners.
                           </p>
                         </div>
                         <Button className="bg-white text-emerald-600 hover:bg-emerald-50 font-black rounded-xl px-6 whitespace-nowrap">
@@ -417,9 +415,9 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
                 <FineraGradientBackdrop clip="card" />
                 <div className="relative z-10">
                 <Trophy className="w-12 h-12 text-amber-400 mb-4" />
-                <h3 className="text-xl font-black mb-2">Academic Rewards</h3>
+                <h3 className="text-xl font-black mb-2">Budget milestones</h3>
                 <p className="text-emerald-100 text-xs font-medium mb-6 opacity-80">
-                  Complete any 3 modules to unlock a Tier-2 Credit Limit upgrade automatically.
+                  Complete any 3 budgeting modules to unlock a Tier-2 credit limit upgrade automatically.
                 </p>
                 <div className="space-y-2">
                   <div className="flex justify-between text-[10px] font-black uppercase">
@@ -439,7 +437,7 @@ export function FinancialEducation({ onBack, userData }: FinancialEducationProps
               <Card className="p-6 border-slate-100">
                 <h4 className="font-black text-foreground mb-4 flex items-center gap-2">
                   <Award className="w-4 h-4 text-amber-500" />
-                  Unlocked Badges
+                  Budget badges
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {completedCount >= 1 && (

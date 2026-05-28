@@ -103,7 +103,7 @@ export async function fetchAdminDocumentTemplates(): Promise<{
 }
 
 export async function uploadAdminDocumentTemplate(
-  documentType: "AGREEMENT" | "PAYROLL_CONSENT",
+  documentType: "AGREEMENT" | "PAYROLL_CONSENT" | "REPAYMENT_STOP_ORDER",
   file: File
 ): Promise<void> {
   const form = new FormData();
@@ -129,8 +129,10 @@ export async function fetchAdminMemberDocumentSubmissions(): Promise<{
       loanProductType: string;
       agreementStatus: string;
       consentStatus: string | null;
+      stopOrderStatus: string | null;
       hasAgreementFile: boolean;
       hasConsentFile: boolean;
+      hasStopOrderFile: boolean;
       adminNotes: string | null;
       employment: {
         employerName: string;
@@ -153,6 +155,7 @@ export async function patchAdminMemberDocuments(
   body: {
     agreementStatus?: "PENDING" | "VERIFIED" | "REJECTED";
     consentStatus?: "PENDING" | "VERIFIED" | "REJECTED" | null;
+    stopOrderStatus?: "PENDING" | "VERIFIED" | "REJECTED" | null;
     adminNotes?: string;
     employmentVerified?: boolean;
   }

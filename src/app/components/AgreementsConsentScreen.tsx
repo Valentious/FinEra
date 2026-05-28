@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import type { LoanType } from "@/loan/loanTypes";
 import { getLoanProductLabel, isLoanTypeAllowedForAccount, LOAN_TYPES } from "@/loan/loanTypes";
 import {
@@ -11,7 +10,6 @@ import {
 } from "@/services/api";
 import { USE_MOCK_DATA } from "@/services/index";
 import { Button } from "@/app/components/ui/button";
-import { Checkbox } from "@/app/components/ui/checkbox";
 import { Download, FileUp, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,7 +20,7 @@ import {
 } from "@/lib/disciplineGradient";
 import { FineraGradientBackdrop } from "@/app/components/FineraGradientBackdrop";
 import { LoanApplicationFlow } from "@/app/components/LoanApplicationFlow";
-import { isCheckboxChecked } from "@/lib/checkboxState";
+
 
 function StatusBadge({ status }: { status: MemberDocVerificationStatus | null | undefined }) {
   if (status == null) {
@@ -74,7 +72,6 @@ export function AgreementsConsentScreen({
   isLoanApplicationFinal = false,
   continueButtonLabel,
 }: AgreementsConsentScreenProps) {
-  const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [agreementStatus, setAgreementStatus] = useState<MemberDocVerificationStatus | null>(null);
   const [consentStatus, setConsentStatus] = useState<MemberDocVerificationStatus | null>(null);
@@ -88,11 +85,32 @@ export function AgreementsConsentScreen({
 
   const isSalary = loanType === "SALARY_BACKED";
   const isAssetBased = loanType === "ASSET_BACKED";
+  const isStudentAccount = accountType === "student";
+  const isBusinessAccount = accountType === "alumni";
   /** Student portal loans: address proof via utility or parent/guardian residence letter (not employer). */
   const utilityOrResidenceDocLabel =
-    accountType === "student"
-      ? "utility bill or parent/guardian residence confirmation letter"
-      : "utility bill or employer residence confirmation letter";
+    isStudentAccount
+      ? "Upload current result slip"
+      : isBusinessAccount
+        ? "Collateral Documents"
+        : "utility bill or employer residence confirmation letter";
+  const primaryDocumentLabel = isBusinessAccount
+    ? "Collateral Documents"
+    : isStudentAccount
+      ? "Upload current result slip"
+      : isAssetBased
+        ? "Collateral Documents"
+        : utilityOrResidenceDocLabel;
+  const primaryDocumentTemplateLabel = isBusinessAccount
+    ? "Collateral Documents template"
+    : isStudentAccount
+      ? ""
+      : "Member Agreement";
+  const primaryDocumentUploadedToast = isBusinessAccount
+    ? "Collateral Documents uploaded"
+    : isStudentAccount
+      ? "Current result slip uploaded"
+      : "Document uploaded";
 
   const refresh = useCallback(async () => {
     if (USE_MOCK_DATA) {
@@ -148,6 +166,7 @@ export function AgreementsConsentScreen({
     }
   };
 
+
   const onPickUpload = (kind: "agreement" | "consent") => {
     const input = document.createElement("input");
     input.type = "file";
@@ -168,7 +187,7 @@ export function AgreementsConsentScreen({
           return;
         }
         await uploadMemberSignedDocument({ kind, loanProductType: loanType, file });
-        toast.success(kind === "agreement" ? "Agreement uploaded" : "Consent uploaded");
+        toast.success(kind === "agreement" ? primaryDocumentUploadedToast : "Consent uploaded");
         await refresh();
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Upload failed");
@@ -177,20 +196,19 @@ export function AgreementsConsentScreen({
     input.click();
   };
 
-  const canContinue = agreed && hasAgreement && (!isSalary || hasConsent);
+  const canContinue = hasAgreement && (!isSalary || hasConsent);
 
   const primaryLabel =
     continueButtonLabel ?? (isLoanApplicationFinal ? "Submit loan application" : "Continue");
 
   const continueBlockers = useMemo(() => {
     const parts: string[] = [];
-    if (!agreed) parts.push("confirm the acknowledgment");
     if (!hasAgreement) {
-      parts.push(isAssetBased ? "upload member agreement" : `upload ${utilityOrResidenceDocLabel}`);
+      parts.push(`upload ${primaryDocumentLabel}`);
     }
     if (isSalary && !hasConsent) parts.push("upload a copy of payslip (within 3 months)");
     return parts;
-  }, [agreed, hasAgreement, isAssetBased, isSalary, hasConsent, utilityOrResidenceDocLabel]);
+  }, [hasAgreement, isSalary, hasConsent, primaryDocumentLabel]);
 
   const glassPanel = `rounded-2xl border p-5 shadow-md shadow-primary/12 backdrop-blur-md dark:shadow-primary/10 ${onDisciplineGradientGlass} ${onDisciplineGradientText}`;
   const innerRow = `flex flex-col gap-2 rounded-xl border border-white/40 bg-white/55 p-4 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between dark:border-white/12 dark:bg-white/10 ${onDisciplineGradientText}`;
@@ -247,24 +265,26 @@ export function AgreementsConsentScreen({
           </div>
         )}
 
-        {!isSalary ? (
+        {(!isSalary && !isStudentAccount) && (
           <div className={glassPanel}>
             <p className={`text-[10px] font-semibold uppercase tracking-widest ${onDisciplineGradientMuted}`}>
               Download templates
             </p>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <Button
-                type="button"
-                variant="outline"
-                className={`flex-1 border font-semibold ${onDisciplineGradientButtonOutline} ${onDisciplineGradientText}`}
-                onClick={() => void onDownloadAgreement()}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Member agreement
-              </Button>
+              {!isSalary && !isStudentAccount && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={`flex-1 border font-semibold ${onDisciplineGradientButtonOutline} ${onDisciplineGradientText}`}
+                  onClick={() => void onDownloadAgreement()}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {primaryDocumentTemplateLabel}
+                </Button>
+              )}
             </div>
           </div>
-        ) : null}
+        )}
 
         <div className={glassPanel}>
           <p className={`text-[10px] font-semibold uppercase tracking-widest ${onDisciplineGradientMuted}`}>Upload signed documents</p>
@@ -275,7 +295,7 @@ export function AgreementsConsentScreen({
               <div className={innerRow}>
                 <div>
                   <p className="text-sm font-bold leading-snug">
-                    {isAssetBased ? "Member agreement" : utilityOrResidenceDocLabel}
+                    {primaryDocumentLabel}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -313,44 +333,12 @@ export function AgreementsConsentScreen({
                   </div>
                 </div>
               )}
+
             </div>
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
-          <p className="font-bold text-black">Acknowledgment</p>
-          <p className="mt-2 text-xs leading-relaxed text-black">
-            You understand that repayment compliance is monitored and that repeated missed repayments may trigger default handling and, for salary-based
-            products, employer coordination (without automatic payroll deduction by FinEra).
-          </p>
-          <div className="mt-4 flex items-start gap-3">
-            <Checkbox
-              id="agree-consent-flow"
-              checked={agreed}
-              onCheckedChange={(c) => setAgreed(isCheckboxChecked(c))}
-              className="mt-0.5 border-2 border-slate-400 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
-              aria-describedby="agree-consent-flow-desc"
-            />
-            <div className="min-w-0 flex-1 text-sm font-semibold text-black" id="agree-consent-flow-desc">
-              <label htmlFor="agree-consent-flow" className="cursor-pointer">
-                I understand and agree to FinEra&apos;s{" "}
-              </label>
-              <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
-                Terms of Service
-              </Link>
-              <label htmlFor="agree-consent-flow" className="cursor-pointer">
-                {" "}
-                and{" "}
-              </label>
-              <Link to="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
-                Privacy Policy
-              </Link>
-              <label htmlFor="agree-consent-flow" className="cursor-pointer">
-                , and to the document uploads required for this product.
-              </label>
-            </div>
-          </div>
-        </div>
+        
 
         {isLoanApplicationFinal ? (
           <div className="sticky bottom-0 z-20 -mx-4 border-t border-white/20 bg-gradient-to-b from-white/0 via-white/90 to-white/95 pt-3 pb-4 dark:from-slate-950/0 dark:via-slate-950/90 dark:to-slate-950 md:-mx-0">

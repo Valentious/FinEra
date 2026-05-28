@@ -7,9 +7,9 @@ export type FinEraBrandMarkSurface = "onDark" | "onLight";
 export interface FinEraBrandMarkProps {
   className?: string;
   surface?: FinEraBrandMarkSurface;
-  /** Set `false` to hide the “INCLUSIVE CREDIT” line. */
+  /** Set `false` to hide the “INCLUSIVE Micro-Loans” line. */
   showSubline?: boolean;
-  /** Overrides default “INCLUSIVE CREDIT” when `showSubline` is true. */
+  /** Overrides default “INCLUSIVE Micro-Loans” when `showSubline` is true. */
   sublineText?: string;
   /** @deprecated No-op; retained so existing callers do not break. */
   finClassName?: string;
@@ -18,13 +18,13 @@ export interface FinEraBrandMarkProps {
 }
 
 /**
- * FinEra presentation: shield + FinEra wordmark (FinEraLogoText) + optional INCLUSIVE CREDIT.
+ * FinEra presentation: shield + FinEra wordmark (FinEraLogoText) + optional INCLUSIVE Micro-Loans.
  */
 export function FinEraBrandMark({
   className,
   surface = "onDark",
   showSubline = true,
-  sublineText = "INCLUSIVE CREDIT",
+  sublineText = "INCLUSIVE Micro-Loans",
   finClassName: _fin,
   extraHexClassName: _hex,
 }: FinEraBrandMarkProps) {

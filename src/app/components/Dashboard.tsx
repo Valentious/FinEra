@@ -5,7 +5,6 @@ import {
   CreditCard, 
   ArrowUpRight, 
   ArrowDownLeft, 
-  Wallet,
   Calendar,
   ChevronRight,
   Info,
@@ -28,16 +27,17 @@ import {
   onDisciplineGradientTrackFill,
 } from "@/lib/disciplineGradient";
 import { finAmountHero, finAmountLedger, finAmountPrimary } from "@/lib/financialTypography";
+import { FinEraShieldIcon } from "@/app/components/FinEraShieldIcon";
 
 interface DashboardProps {
   userName: string;
   /** Primary balance for active currency wallet */
   walletBalance: number;
-  /** USD | ZIG | ZAR - drives FinCash … Wallet label */
+  /** USD | ZIG | ZAR - drives FINERA … Wallet label */
   dashboardCurrency?: string;
   activeCredit: number;
   availableCreditLimit: number;
-  /** Drives FinCash card gradient (same bands as TrustScore) */
+  /** Drives FINERA card gradient (same bands as TrustScore) */
   disciplineScore?: number;
   onApplyForCredit: () => void;
   onAddSavings: () => void;
@@ -72,7 +72,7 @@ export function Dashboard({
         <div className="pointer-events-none absolute bottom-0 left-0 h-44 w-44 -translate-x-1/4 translate-y-1/4 rounded-full bg-primary/18 blur-3xl dark:bg-primary/12" />
         <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className={`text-[10px] font-semibold uppercase tracking-widest ${onDisciplineGradientMuted}`}>FinCash · {cc}</p>
+            <p className={`text-[10px] font-semibold uppercase tracking-widest ${onDisciplineGradientMuted}`}>FINERA · {cc}</p>
             <h1 className="mt-1 text-[12pt] font-semibold tracking-tight text-black">
               Welcome, {userName}
             </h1>
@@ -127,7 +127,7 @@ export function Dashboard({
           </Card>
         </motion.div>
 
-        {/* FinCash wallet (currency-scoped) - TrustScore-style gradient */}
+        {/* FINERA wallet (currency-scoped) - TrustScore-style gradient */}
         <motion.div whileHover={{ y: -4 }} className="order-2">
           <Card
             className={`relative flex h-full flex-col justify-between overflow-hidden border-none bg-gradient-to-br ${walletGradient} p-6 ${onDisciplineGradientShellShadow} ${onDisciplineGradientText}`}
@@ -136,8 +136,13 @@ export function Dashboard({
             <div className="relative z-10 flex flex-1 flex-col justify-between">
               <div>
                 <div className="mb-4">
-                  <div className={`inline-flex rounded-2xl border p-3 ${onDisciplineGradientGlass}`}>
-                    <Wallet className={`h-6 w-6 ${onDisciplineGradientIcon}`} />
+                  <div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl border p-0 ${onDisciplineGradientGlass}`}>
+                    <FinEraShieldIcon
+                      size={30}
+                      noShadow
+                      className="rounded-xl"
+                      innerSvgClassName="h-[72%] w-[72%]"
+                    />
                   </div>
                 </div>
                 <p className={`text-xs font-semibold uppercase tracking-widest ${onDisciplineGradientText}`}>{walletLabel}</p>

@@ -17,7 +17,6 @@ import {
   Globe,
   FileCheck,
   FileText,
-  DollarSign,
   Lock,
   Key,
   UserX,
@@ -28,6 +27,7 @@ import {
   ShieldCheck,
   XCircle,
   Wallet,
+  Home,
   Moon,
   Sun,
   HelpCircle,
@@ -51,17 +51,19 @@ interface ProfileSettingsProps {
   userData: any;
   onUpdate: (data: any) => void;
   onLogout: () => void;
+  /** Main-menu entry: show only selected tab content (no settings sidebar). */
+  standaloneTab?: "verification" | "employment";
 }
 
 type SettingsTab = 
   | 'profile'
   | 'verification'
-  | 'security'
-  | 'cashier'
-  | 'help';
+  | 'employment'
+  | 'security';
 
-export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSettingsProps) {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+export function ProfileSettings({ userData, onUpdate, onLogout, standaloneTab }: ProfileSettingsProps) {
+  const [activeTab, setActiveTab] = useState<SettingsTab>(standaloneTab ?? "profile");
+  const standaloneMode = Boolean(standaloneTab);
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { t, setLocale } = useI18n();
   const [themeReady, setThemeReady] = useState(false);
@@ -77,6 +79,13 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
   const [dobError, setDobError] = useState("");
   const [profilePhoneError, setProfilePhoneError] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+  const [occupation, setOccupation] = useState(userData.occupation || "");
+  const [employerName, setEmployerName] = useState(userData.employerName || "");
+  const [employmentPhone, setEmploymentPhone] = useState(userData.employerContact || "");
+  const [employmentSector, setEmploymentSector] = useState(userData.employmentSector || "");
+  const [grossMonthlyIncome, setGrossMonthlyIncome] = useState(userData.grossMonthlyIncome || "");
+  const [otherIncome, setOtherIncome] = useState(userData.otherIncome || "");
+  const [dateOfEmployment, setDateOfEmployment] = useState(userData.dateOfEmployment || "");
 
   useEffect(() => {
     setProfileTitle(userData.title || "Mr");
@@ -92,11 +101,22 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
     }
     setDobError("");
     setProfilePhoneError("");
+    setOccupation(userData.occupation || "");
+    setEmployerName(userData.employerName || "");
+    setEmploymentPhone(userData.employerContact || "");
+    setEmploymentSector(userData.employmentSector || "");
+    setGrossMonthlyIncome(userData.grossMonthlyIncome || "");
+    setOtherIncome(userData.otherIncome || "");
+    setDateOfEmployment(userData.dateOfEmployment || "");
   }, [userData.memberId, userData.email, userData.dateOfBirth, userData.phoneNumber, userData.fullName, userData.city, userData.preferredLanguage, userData.title, setLocale]);
 
   useEffect(() => {
     setThemeReady(true);
   }, []);
+
+  useEffect(() => {
+    if (standaloneTab) setActiveTab(standaloneTab);
+  }, [standaloneTab]);
 
   const isDarkTheme = (resolvedTheme ?? theme) === "dark";
 
@@ -140,13 +160,42 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
     toast.error("Account closure requires verification. Contact support.");
   };
 
+  const totalIncome = (Number(grossMonthlyIncome || 0) || 0) + (Number(otherIncome || 0) || 0);
+
+  const handleSaveEmployment = () => {
+    onUpdate({
+      ...userData,
+      occupation: occupation.trim(),
+      employerName: employerName.trim(),
+      employerContact: employmentPhone.trim(),
+      employmentSector: employmentSector.trim(),
+      grossMonthlyIncome,
+      otherIncome,
+      totalIncome,
+      dateOfEmployment,
+    });
+    toast.success("Employment details updated");
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12 animate-in slide-in-from-bottom-4 duration-500 text-foreground">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-black text-foreground">{t("profile.title")}</h1>
-          <p className="text-muted-foreground font-medium">{t("profile.subtitle")}</p>
+          <h1 className="text-3xl font-black text-foreground">
+            {standaloneTab === "verification"
+              ? t("nav.identityVerification")
+              : standaloneTab === "employment"
+                ? "Edit Employment Details"
+                : t("profile.title")}
+          </h1>
+          <p className="text-muted-foreground font-medium">
+            {standaloneTab === "verification"
+              ? "Upload documents to verify your identity"
+              : standaloneTab === "employment"
+                ? "Update occupation, employer, sector, and income details"
+                : t("profile.subtitle")}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {/* Theme: Light / Dark (persisted via next-themes → html.dark) */}
@@ -179,86 +228,42 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar Navigation */}
-        <aside className="lg:w-72 space-y-2">
-          <nav className="rounded-2xl border border-border bg-card p-3 shadow-sm space-y-1">
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                activeTab === 'profile' 
-                  ? 'bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400' 
-                  : 'text-muted-foreground hover:bg-muted/60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <User className="w-4 h-4" />
-                <span className="text-sm">{t("profile.tabProfile")}</span>
-              </div>
-              <ChevronRight className="w-4 h-4" />
-            </button>
+      <div className={`flex flex-col gap-6 ${standaloneMode ? "" : "lg:flex-row"}`}>
+        {!standaloneMode && (
+          <aside className="lg:w-72 space-y-2">
+            <nav className="rounded-2xl border border-border bg-card p-3 shadow-sm space-y-1">
+              <button
+                onClick={() => setActiveTab("profile")}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
+                  activeTab === "profile"
+                    ? "bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400"
+                    : "text-muted-foreground hover:bg-muted/60"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm">{t("profile.tabProfile")}</span>
+                </div>
+                <ChevronRight className="w-4 h-4" />
+              </button>
 
-            <button
-              onClick={() => setActiveTab('verification')}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                activeTab === 'verification' 
-                  ? 'bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400' 
-                  : 'text-muted-foreground hover:bg-muted/60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <FileCheck className="w-4 h-4" />
-                <span className="text-sm">{t("profile.tabVerification")}</span>
-              </div>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setActiveTab('security')}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                activeTab === 'security' 
-                  ? 'bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400' 
-                  : 'text-muted-foreground hover:bg-muted/60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Shield className="w-4 h-4" />
-                <span className="text-sm">{t("profile.tabSecurity")}</span>
-              </div>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setActiveTab('cashier')}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                activeTab === 'cashier' 
-                  ? 'bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400' 
-                  : 'text-muted-foreground hover:bg-muted/60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Wallet className="w-4 h-4" />
-                <span className="text-sm">Cashier</span>
-              </div>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setActiveTab('help')}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                activeTab === 'help' 
-                  ? 'bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400' 
-                  : 'text-muted-foreground hover:bg-muted/60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <HelpCircle className="w-4 h-4" />
-                <span className="text-sm">Help Centre</span>
-              </div>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </nav>
-        </aside>
+              <button
+                onClick={() => setActiveTab("security")}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
+                  activeTab === "security"
+                    ? "bg-emerald-50 text-emerald-600 font-bold dark:bg-emerald-950/50 dark:text-emerald-400"
+                    : "text-muted-foreground hover:bg-muted/60"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Shield className="w-4 h-4" />
+                  <span className="text-sm">{t("profile.tabSecurity")}</span>
+                </div>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </nav>
+          </aside>
+        )}
 
         {/* Main Content Area */}
         <div className="flex-1 space-y-6">
@@ -530,15 +535,17 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                     </div>
                   </div>
 
-                  {/* Proof of Income */}
-                  {(userData.accountType === 'staff' || userData.accountType === 'alumni') && (
+                  {/* Proof of residence */}
+                  {(userData.accountType === "staff" || userData.accountType === "alumni") && (
                     <div className="p-4 rounded-xl border-2 border-dashed border-slate-200 hover:border-emerald-300 transition-all">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <DollarSign className="w-5 h-5 text-muted-foreground" />
+                          <Home className="w-5 h-5 text-muted-foreground" />
                           <div>
-                            <p className="text-sm font-bold text-foreground">Proof of Income</p>
-                            <p className="text-xs text-muted-foreground">Payslip or employment letter (within 3 months)</p>
+                            <p className="text-sm font-bold text-foreground">Proof of residence</p>
+                            <p className="text-xs text-muted-foreground">
+                              Utility bill or employer residence confirmation letter
+                            </p>
                           </div>
                         </div>
                         <Button size="sm" variant="outline" className="rounded-lg">
@@ -548,6 +555,42 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {activeTab === "employment" && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+              <Card className="border-border shadow-lg rounded-2xl">
+                <CardHeader className="border-b border-border/60">
+                  <CardTitle className="text-lg">Employment Status Details</CardTitle>
+                  <CardDescription>Maintain your professional employment profile</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                  <Input value={occupation} onChange={(e) => setOccupation(e.target.value)} placeholder="Occupation" className="h-11 rounded-xl" />
+                  <Input value={employerName} onChange={(e) => setEmployerName(e.target.value)} placeholder="Employer's Name" className="h-11 rounded-xl" />
+                  <Input value={employmentPhone} onChange={(e) => setEmploymentPhone(e.target.value)} placeholder="Telephone Number" className="h-11 rounded-xl" />
+                  <select
+                    value={employmentSector}
+                    onChange={(e) => setEmploymentSector(e.target.value)}
+                    className="w-full h-11 rounded-xl border border-border bg-background px-3 text-sm"
+                  >
+                    <option value="">Employment Sector</option>
+                    <option value="Financial Service">Financial Service</option>
+                    <option value="Manufacturing">Manufacturing</option>
+                    <option value="Mining">Mining</option>
+                    <option value="Construction">Construction</option>
+                    <option value="Agriculture">Agriculture</option>
+                    <option value="Retail">Retail</option>
+                    <option value="Security office">Security office</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <Input type="date" value={dateOfEmployment} onChange={(e) => setDateOfEmployment(e.target.value)} className="h-11 rounded-xl" />
+                  <Input type="number" value={grossMonthlyIncome} onChange={(e) => setGrossMonthlyIncome(e.target.value)} placeholder="Gross Monthly Income" className="h-11 rounded-xl" />
+                  <Input type="number" value={otherIncome} onChange={(e) => setOtherIncome(e.target.value)} placeholder="Other Income" className="h-11 rounded-xl" />
+                  <Input value={String(totalIncome)} readOnly placeholder="Total Income" className="h-11 rounded-xl bg-muted" />
+                  <Button onClick={handleSaveEmployment} className="w-full rounded-xl font-bold">Save Employment Details</Button>
                 </CardContent>
               </Card>
             </motion.div>
@@ -800,131 +843,8 @@ export function ProfileSettings({ userData, onUpdate, onLogout }: ProfileSetting
             </motion.div>
           )}
 
-          {/* CASHIER TAB */}
-          {activeTab === 'cashier' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
-            >
-              <Card className="border-border shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-border/60">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-50 rounded-lg">
-                      <Wallet className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Payment Methods</CardTitle>
-                      <CardDescription>Manage your cash in and cash out options</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-6 space-y-4">
-                  <div className="p-4 rounded-xl border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                        <Smartphone className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">Ecocash</p>
-                        <p className="text-xs text-muted-foreground">Mobile money</p>
-                      </div>
-                    </div>
-                    <CheckCircle2 className="w-5 h-5 text-green-600" />
-                  </div>
+          
 
-                  <div className="p-4 rounded-xl border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                        <CreditCard className="w-5 h-5 text-emerald-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">InnBucks</p>
-                        <p className="text-xs text-muted-foreground">Mobile money</p>
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline" className="rounded-lg">Add</Button>
-                  </div>
-
-                  <div className="p-4 rounded-xl border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <Smartphone className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">OneMoney</p>
-                        <p className="text-xs text-muted-foreground">Mobile money</p>
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline" className="rounded-lg">Add</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* HELP CENTRE TAB */}
-          {activeTab === 'help' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
-            >
-              <Card className="border-border shadow-lg rounded-2xl">
-                <CardHeader className="border-b border-border/60">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-50 rounded-lg">
-                      <HelpCircle className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Help & Support</CardTitle>
-                      <CardDescription>Get assistance and resources</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-6 space-y-4">
-                  <button className="w-full p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Scale className="w-5 h-5 text-muted-foreground" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-foreground">Responsible Trading</p>
-                        <p className="text-xs text-muted-foreground">Learn about safe credit practices</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </button>
-
-                  <button 
-                    onClick={() => toast.success("Opening WhatsApp...")}
-                    className="w-full p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <MessageCircle className="w-5 h-5 text-green-600" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-foreground">WhatsApp Support</p>
-                        <p className="text-xs text-muted-foreground">Chat with our support team</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </button>
-
-                  <button 
-                    onClick={() => toast.success("Starting live chat...")}
-                    className="w-full p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <MessageSquare className="w-5 h-5 text-emerald-600" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold text-foreground">Live Chat</p>
-                        <p className="text-xs text-muted-foreground">Get instant help from our agents</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
         </div>
       </div>
     </div>

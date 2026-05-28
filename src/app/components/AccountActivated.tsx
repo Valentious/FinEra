@@ -26,7 +26,7 @@ export function AccountActivated({ onContinue }: AccountActivatedProps) {
 
           <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
             <div className="flex justify-between items-center">
-              <span className="text-foreground">FinCash Wallet</span>
+              <span className="text-foreground">FINERA Wallet</span>
               <span className="text-emerald-600 font-semibold">Active</span>
             </div>
           </div>

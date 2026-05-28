@@ -16,13 +16,9 @@ export function LoanTypeSelector({ accountType, onSelectLoanType, disabled }: Lo
   if (accountType === "staff") {
     return (
       <div className="flex w-full flex-col gap-3">
-        <Button type="button" disabled={disabled} onClick={() => onSelectLoanType("ASSET_BACKED")} className={loanCtaClassName}>
-          <Landmark className="h-5 w-5 shrink-0 text-black" />
-          Get Asset-Based Loan
-        </Button>
         <Button type="button" disabled={disabled} onClick={() => onSelectLoanType("SALARY_BACKED")} className={loanCtaClassName}>
           <Wallet className="h-5 w-5 shrink-0 text-black" />
-          Get Salary-Based Loan
+          Apply Salary-Based Loan
         </Button>
       </div>
     );
@@ -33,7 +29,7 @@ export function LoanTypeSelector({ accountType, onSelectLoanType, disabled }: Lo
       <div className="flex w-full flex-col gap-3">
         <Button type="button" disabled={disabled} onClick={() => onSelectLoanType("ASSET_BACKED")} className={loanCtaClassName}>
           <Landmark className="h-5 w-5 shrink-0 text-black" />
-          Get Asset-Based Loan
+          Apply Asset-Based Loan
         </Button>
       </div>
     );
@@ -43,7 +39,7 @@ export function LoanTypeSelector({ accountType, onSelectLoanType, disabled }: Lo
     <div className="flex w-full flex-col gap-3">
       <Button type="button" disabled={disabled} onClick={() => onSelectLoanType("NON_COLLATERAL")} className={loanCtaClassName}>
         <GraduationCap className="h-5 w-5 shrink-0 text-black" />
-        Get Student Portal Based Loan
+        Apply Student Portal Based Loan
       </Button>
     </div>
   );

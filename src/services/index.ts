@@ -58,7 +58,6 @@ export const apiService = USE_MOCK_DATA ? {
   getCurrencies: async () => [
     { currencyCode: "USD", displayName: "US Dollar", symbol: "$", status: "active", custodyType: "bank", dashboardConfig: {} },
     { currencyCode: "ZIG", displayName: "Zimbabwe Gold (ZiG)", symbol: "Z$", status: "active", custodyType: "bank", dashboardConfig: {} },
-    { currencyCode: "ZAR", displayName: "South African Rand", symbol: "R", status: "active", custodyType: "bank", dashboardConfig: {} },
   ],
   getDashboardConfig: async () => ({}),
   getWalletsByCurrency: mockApi.mockGetWalletsByCurrency,

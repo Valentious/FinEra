@@ -17,7 +17,7 @@ export function toBackendAccountType(accountType: AppAccountType): "STUDENT" | "
   return accountType === "student" ? "STUDENT" : accountType === "staff" ? "STAFF" : "ALUMNI";
 }
 
-/** Staff: asset + salary. Business account (alumni): asset only. Student: non-collateral only. */
+/** Staff: salary only. Business account (alumni): asset only. Student: non-collateral only. */
 export function isLoanTypeAllowedForAccount(loanType: LoanType, accountType: AppAccountType): boolean {
   if (accountType === "student") {
     return loanType === "NON_COLLATERAL";
@@ -25,27 +25,18 @@ export function isLoanTypeAllowedForAccount(loanType: LoanType, accountType: App
   if (accountType === "alumni") {
     return loanType === "ASSET_BACKED";
   }
-  return loanType === "ASSET_BACKED" || loanType === "SALARY_BACKED";
+  return loanType === "SALARY_BACKED";
 }
 
 /** When stored loanType is not allowed, snap back to a safe default. */
 export function getDefaultLoanTypeForAccount(accountType: AppAccountType): LoanType {
   if (accountType === "student") return "NON_COLLATERAL";
+  if (accountType === "staff") return "SALARY_BACKED";
   return "ASSET_BACKED";
 }
 
 export function requiresCollateralStep(loanType: LoanType): boolean {
   return loanType === "ASSET_BACKED" || loanType === "COLLATERAL";
-}
-
-/**
- * FinCash 20% discipline rule applies only to unsecured student non-collateral (essential/business).
- */
-export function requiresWalletDisciplineForAmount(
-  loanType: LoanType,
-  creditType: string
-): boolean {
-  return loanType === "NON_COLLATERAL" && (creditType === "essential" || creditType === "business");
 }
 
 export function getLoanProductLabel(loanType: LoanType): string {

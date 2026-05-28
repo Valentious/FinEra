@@ -10,6 +10,7 @@ import { prisma } from "../../infrastructure/database/index.js";
 import { adminAuthMiddleware, requireAdminRole } from "../../middlewares/adminAuth.js";
 import { validationError } from "../../middlewares/errorHandler.js";
 import { recordMissedInstallment } from "../compliance/default-compliance.service.js";
+import { syncStopOrderReviewStatus } from "../member-agreements/stop-order.service.js";
 
 const router = Router();
 router.use(adminAuthMiddleware);
@@ -29,7 +30,7 @@ const templateUpload = multer({
   },
 });
 
-const docTypeBody = z.enum(["AGREEMENT", "PAYROLL_CONSENT"]);
+const docTypeBody = z.enum(["AGREEMENT", "PAYROLL_CONSENT", "REPAYMENT_STOP_ORDER"]);
 
 router.post(
   "/document-templates",
@@ -38,7 +39,7 @@ router.post(
   async (req, res, next) => {
     try {
       const parsed = docTypeBody.safeParse(req.body.documentType);
-      if (!parsed.success) throw validationError("documentType must be AGREEMENT or PAYROLL_CONSENT");
+      if (!parsed.success) throw validationError("documentType must be AGREEMENT, PAYROLL_CONSENT, or REPAYMENT_STOP_ORDER");
       if (!req.file) throw validationError("No file uploaded");
 
       const documentType = parsed.data as DocumentTemplateType;
@@ -112,8 +113,10 @@ router.get("/member-documents/submissions", requireAdminRole("ADMIN", "RISK_OFFI
             loanProductType: r.loanProductType,
             agreementStatus: r.agreementStatus,
             consentStatus: r.consentStatus,
+            stopOrderStatus: r.stopOrderStatus,
             hasAgreementFile: Boolean(r.agreementFilePath),
             hasConsentFile: Boolean(r.consentFilePath),
+            hasStopOrderFile: Boolean(r.stopOrderFilePath),
             adminNotes: r.adminNotes,
             assetDocumentationNote: r.assetDocumentationNote,
             updatedAt: r.updatedAt.toISOString(),
@@ -138,6 +141,7 @@ router.get("/member-documents/submissions", requireAdminRole("ADMIN", "RISK_OFFI
 const verifySchema = z.object({
   agreementStatus: z.enum(["PENDING", "VERIFIED", "REJECTED"]).optional(),
   consentStatus: z.enum(["PENDING", "VERIFIED", "REJECTED"]).nullable().optional(),
+  stopOrderStatus: z.enum(["PENDING", "VERIFIED", "REJECTED"]).nullable().optional(),
   adminNotes: z.string().max(2000).optional(),
   employmentVerified: z.boolean().optional(),
 });
@@ -153,15 +157,21 @@ router.patch("/member-documents/:userId", requireAdminRole("ADMIN", "RISK_OFFICE
 
     const agreementStatus = parsed.data.agreementStatus as MemberDocumentVerificationStatus | undefined;
     const consentStatus = parsed.data.consentStatus as MemberDocumentVerificationStatus | null | undefined;
+    const stopOrderStatus = parsed.data.stopOrderStatus as MemberDocumentVerificationStatus | null | undefined;
 
     await prisma.memberDocument.update({
       where: { userId },
       data: {
         ...(agreementStatus ? { agreementStatus } : {}),
         ...(consentStatus !== undefined ? { consentStatus } : {}),
+        ...(stopOrderStatus !== undefined ? { stopOrderStatus } : {}),
         ...(parsed.data.adminNotes !== undefined ? { adminNotes: parsed.data.adminNotes } : {}),
       },
     });
+
+    if (stopOrderStatus !== undefined) {
+      await syncStopOrderReviewStatus(userId, stopOrderStatus ?? "PENDING");
+    }
 
     if (parsed.data.employmentVerified === true) {
       await prisma.employmentDetails.updateMany({
@@ -187,12 +197,17 @@ router.get(
     try {
       const userId = req.params.userId;
       const which = String(req.query.which || "");
-      if (which !== "agreement" && which !== "consent") {
-        throw validationError('which=agreement|consent required');
+      if (which !== "agreement" && which !== "consent" && which !== "stop_order") {
+        throw validationError('which=agreement|consent|stop_order required');
       }
       const md = await prisma.memberDocument.findUnique({ where: { userId } });
       if (!md) throw validationError("Not found");
-      const rel = which === "agreement" ? md.agreementFilePath : md.consentFilePath;
+      const rel =
+        which === "agreement"
+          ? md.agreementFilePath
+          : which === "consent"
+            ? md.consentFilePath
+            : md.stopOrderFilePath;
       if (!rel) throw validationError("No file");
       const abs = path.resolve(rel);
       const uploadsRoot = path.resolve("uploads");

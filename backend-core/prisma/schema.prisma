@@ -155,16 +155,29 @@ enum NotificationType {
   DEFAULT_WARNING
 }
 
-/// Admin-managed downloadable templates (member agreement / payroll consent).
+/// Admin-managed downloadable templates (member agreement / payroll consent / repayment stop order).
 enum DocumentTemplateType {
   AGREEMENT
   PAYROLL_CONSENT
+  REPAYMENT_STOP_ORDER
 }
 
 /// Verification state for uploaded member agreement / payroll consent files.
 enum MemberDocumentVerificationStatus {
   PENDING
   VERIFIED
+  REJECTED
+}
+
+/// Member agreement documents (e.g. loan repayment stop order for professional accounts).
+enum MemberAgreementDocumentType {
+  LOAN_REPAYMENT_STOP_ORDER
+}
+
+enum MemberAgreementDocumentStatus {
+  PENDING
+  SUBMITTED
+  APPROVED
   REJECTED
 }
 
@@ -310,6 +323,7 @@ model User {
   partnerProgram          PartnerProgram?
   portfolioSnapshots      PortfolioSnapshot[]
   memberDocument          MemberDocument?
+  memberAgreementDocuments MemberAgreementDocument[]
   employmentDetails       EmploymentDetails?
   defaultCompliance       MemberDefaultCompliance?
 
@@ -932,8 +946,10 @@ model MemberDocument {
   loanProductType        LoanProductType
   agreementFilePath      String?
   consentFilePath        String?
+  stopOrderFilePath      String?
   agreementStatus        MemberDocumentVerificationStatus @default(PENDING)
   consentStatus          MemberDocumentVerificationStatus?
+  stopOrderStatus        MemberDocumentVerificationStatus?
   adminNotes             String?
   assetDocumentationNote String?
   uploadedAt             DateTime                         @default(now())
@@ -943,6 +959,26 @@ model MemberDocument {
 
   @@index([agreementStatus])
   @@index([consentStatus])
+  @@index([stopOrderStatus])
+}
+
+/// Tracks professional-account agreement uploads (stop order, etc.).
+model MemberAgreementDocument {
+  id           String                      @id @default(uuid())
+  userId       String
+  documentType MemberAgreementDocumentType
+  status       MemberAgreementDocumentStatus @default(PENDING)
+  fileUrl      String?
+  fileName     String?
+  uploadedAt   DateTime?
+  createdAt    DateTime                    @default(now())
+  updatedAt    DateTime                    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, documentType])
+  @@index([userId])
+  @@index([status])
 }
 
 model EmploymentDetails {

@@ -30,7 +30,7 @@ const wordSize: Record<NonNullable<FinEraInclusiveCreditLogoProps["size"]>, "sm"
 };
 
 /**
- * FinEra INCLUSIVE CREDIT — shield + FinEra wordmark + subline, in a card shell (original presentation).
+ * FinEra INCLUSIVE Micro-Loans — shield + FinEra wordmark + subline, in a card shell (original presentation).
  */
 export const FinEraInclusiveCreditLogo = forwardRef<HTMLDivElement, FinEraInclusiveCreditLogoProps>(
   ({ size = "md", dark = false, className = "" }, ref) => {
@@ -63,7 +63,7 @@ export const FinEraInclusiveCreditLogo = forwardRef<HTMLDivElement, FinEraInclus
             ${dark ? "text-muted-foreground" : "text-muted-foreground"}
           `}
           >
-            INCLUSIVE CREDIT
+            INCLUSIVE Micro-Loans
           </p>
           <p
             className={`

@@ -30,7 +30,7 @@ import { DebitCardMethodPanel } from "@/app/components/DebitCardMethodPanel";
 import type { VirtualDebitCard } from "@/services/api";
 import type { WithdrawalRequest } from "@/services/api";
 
-/** Same rate as backend `processTransferCreditToWallet` (Approved Credit → FinCash). */
+/** Same rate as backend `processTransferCreditToWallet` (Approved Credit → FINERA). */
 export const APPROVED_CREDIT_TO_WALLET_FEE_RATE = 0.015;
 
 interface WithdrawFlowProps {
@@ -348,7 +348,7 @@ export function WithdrawFlow({
               <Button variant="ghost" size="icon" onClick={() => setStep("method")} className="rounded-full">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h2 className="text-2xl font-black text-foreground">Approved Credit → FinCash ({currencyCode})</h2>
+              <h2 className="text-2xl font-black text-foreground">Approved Credit → FINERA ({currencyCode})</h2>
             </div>
 
             <p className="text-sm text-muted-foreground font-medium leading-relaxed">
@@ -422,7 +422,7 @@ export function WithdrawFlow({
                 onClick={handleApprovedCreditTransfer}
                 className="w-full h-14 bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl text-lg font-bold"
               >
-                Confirm move to FinCash
+                Confirm move to FINERA
               </Button>
             </div>
           </motion.div>
@@ -729,7 +729,7 @@ export function WithdrawFlow({
                       <span className="text-foreground font-bold">−{formatAmountWithSymbol(sym, approvedCreditFee)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground font-bold text-xs uppercase">Credited to FinCash</span>
+                      <span className="text-muted-foreground font-bold text-xs uppercase">Credited to FINERA</span>
                       <span className="text-emerald-700 font-black">{formatAmountWithSymbol(sym, approvedCreditNet)}</span>
                     </div>
                   </>
@@ -745,7 +745,7 @@ export function WithdrawFlow({
                 </div>
                 <div className="h-[1px] bg-slate-200 my-2" />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground font-bold text-xs uppercase">Updated FinCash balance</span>
+                  <span className="text-muted-foreground font-bold text-xs uppercase">Updated FINERA balance</span>
                   <span className="text-emerald-600 font-black">
                     {formatAmountWithSymbol(
                       sym,

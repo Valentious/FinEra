@@ -46,7 +46,7 @@ export function CollateralDetails({
     e.preventDefault();
     setOwnershipBypassMessage("");
     if (!confirmed) {
-      setOwnershipBypassMessage("Confirm proof of ownership before continuing to member agreement.");
+      setOwnershipBypassMessage("Confirm proof of ownership before continuing to Collateral Documents.");
       toast.error("Please confirm proof of ownership.");
       return;
     }
@@ -169,7 +169,7 @@ export function CollateralDetails({
                   <div className="space-y-2">
                     <Label className="font-bold text-muted-foreground ml-1">Asset Description & Condition</Label>
                     <Textarea
-                      placeholder="e.g. MacBook Pro M2, 16GB RAM, No scratches, Original packaging included."
+                      placeholder="Describe the collateral item, condition, and included accessories."
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       rows={4}
@@ -222,7 +222,7 @@ export function CollateralDetails({
                   </div>
 
                   <Button type="submit" className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-lg font-black shadow-xl shadow-emerald-100" disabled={!confirmed}>
-                    Next to member agreement
+                    Next to Collateral Documents
                   </Button>
                 </form>
               </Card>

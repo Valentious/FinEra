@@ -1,5 +1,5 @@
 /**
- * FinEra INCLUSIVE CREDIT - Form Validation Utilities
+ * FinEra INCLUSIVE Micro-Loans - Form Validation Utilities
  * Production-ready validation for KYC, security, and data integrity.
  */
 

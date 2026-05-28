@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { NotificationsDropdown } from "@/app/components/NotificationsDropdown";
 import { useMemberNavItems, isMemberNavId, type MemberNavId } from "@/app/navigation/memberNav";
 import { useI18n } from "@/app/providers/I18nProvider";
+import type { AppAccountType } from "@/loan/loanTypes";
 
 interface MainNavigationProps {
   activeScreen: string;
@@ -16,6 +17,7 @@ interface MainNavigationProps {
   walletNumericId?: string;
   /** Active dashboard currency (labels e.g. USD Wallet ID) */
   walletCurrencyCode?: string;
+  accountType?: AppAccountType;
 }
 
 function SidebarNavItem({
@@ -63,9 +65,10 @@ export function MainNavigation({
   accountNumber,
   walletNumericId,
   walletCurrencyCode,
+  accountType,
 }: MainNavigationProps) {
   const { t } = useI18n();
-  const navItems = useMemberNavItems();
+  const navItems = useMemberNavItems(accountType);
   const sidebarActiveId: MemberNavId | null = isMemberNavId(activeScreen) ? activeScreen : null;
 
   return (

@@ -5,7 +5,6 @@ import { LoginRegister } from "@/app/components/LoginRegister";
 import { OTPVerification } from "@/app/components/OTPVerification";
 import { MainNavigation } from "@/app/components/MainNavigation";
 import { AccountTypeSelection } from "@/app/components/AccountTypeSelection";
-import type { AccountOperatingMode } from "@/app/components/AccountTypeSelection";
 import { VerifyAccess } from "@/app/components/VerifyAccess";
 import { ProfileDetails } from "@/app/components/ProfileDetails";
 import { DashboardV2 } from "@/app/components/DashboardV2";
@@ -17,7 +16,7 @@ import { CreditApproved } from "@/app/components/CreditApproved";
 import { WalletCredited } from "@/app/components/WalletCredited";
 import { RepaymentDashboard } from "@/app/components/RepaymentDashboard";
 import { FinancialEducation } from "@/app/components/FinancialEducation";
-import { PartnerProgram } from "@/app/components/PartnerProgram";
+import { HelpCentre } from "@/app/components/HelpCentre";
 import { WithdrawFlow } from "@/app/components/WithdrawFlow";
 import { DepositFlow } from "@/app/components/DepositFlow";
 import { ProfileSettings } from "@/app/components/ProfileSettings";
@@ -33,7 +32,6 @@ import {
   getDefaultLoanTypeForAccount,
   isLoanTypeAllowedForAccount,
   requiresCollateralStep,
-  requiresWalletDisciplineForAmount,
 } from "@/loan/loanTypes";
 import { useAccountStore } from "@/stores/accountStore";
 import { fetchWalletsForStore } from "@/lib/walletFetcher";
@@ -77,8 +75,10 @@ type Screen =
   | "walletCredited"
   | "repaymentDashboard"
   | "financialEducation"
+  | "helpCentre"
+  | "editEmploymentDetails"
+  | "identityVerification"
   | "profileSettings"
-  | "partnerProgram"
   | "makeRepayment"
   | "makePayment"
   | "peerTransfer";
@@ -104,14 +104,14 @@ function generateAccountNumber(): string {
   return timestamp.slice(-9) + random;
 }
 
-/** Generate unique FinEra multi-currency account numbers (FE-USD-xxx, FE-ZIG-xxx, FE-ZAR-xxx) */
+/** Generate unique FinEra multi-currency account numbers (FE-USD-xxx, FE-ZIG-xxx). */
 function generateFinEraAccountNumbers(): FinEraAccountNumbers {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const suffix = () => Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
   return {
     usd: `FE-USD-${suffix()}`,
     zig: `FE-ZIG-${suffix()}`,
-    zar: `FE-ZAR-${suffix()}`,
+    zar: "",
   };
 }
 
@@ -141,15 +141,6 @@ const loadUserData = (email: string): UserData | null => {
   }
 };
 
-function readSessionAccountMode(): AccountOperatingMode {
-  try {
-    const s = sessionStorage.getItem("finera_pre_account_mode");
-    if (s === "demo" || s === "real") return s;
-  } catch {
-    /* ignore */
-  }
-  return "real";
-}
 // ==================== END MOCK DATA HELPERS ====================
 
 export default function App() {
@@ -168,7 +159,6 @@ export default function App() {
 
   const [currentScreen, setCurrentScreen] = useState<Screen>("splash");
   const [preSelectedAccountType, setPreSelectedAccountType] = useState<'student' | 'staff' | 'alumni' | null>(null);
-  const [preSelectedAccountMode, setPreSelectedAccountMode] = useState<AccountOperatingMode>(readSessionAccountMode);
   const [userData, setUserData] = useState<UserData>({
     memberId: "",
     fullName: "",
@@ -276,11 +266,11 @@ export default function App() {
   const storeError = useAccountStore((s) => s.error);
 
   /** Selected dashboard tab - drives ALL wallet API calls (isolated from stale activeWallet when tab has no wallet row yet). */
-  const [dashboardCurrency, setDashboardCurrency] = useState<"USD" | "ZIG" | "ZAR" | "EUR" | "GBP">("USD");
+  const [dashboardCurrency, setDashboardCurrency] = useState<"USD" | "ZIG">("USD");
 
   useEffect(() => {
     if (activeWallet?.currency) {
-      setDashboardCurrency(activeWallet.currency as "USD" | "ZIG" | "ZAR" | "EUR" | "GBP");
+      setDashboardCurrency(activeWallet.currency as "USD" | "ZIG");
     }
   }, [activeWallet?.id]);
 
@@ -464,7 +454,10 @@ export default function App() {
     const load = async () => {
       try {
         const tabs = await apiService.getCurrencies?.();
-        if (Array.isArray(tabs) && tabs.length > 0) setCurrencyTabs(tabs);
+        if (Array.isArray(tabs) && tabs.length > 0) {
+          const visibleTabs = tabs.filter((t) => ["USD", "ZIG"].includes(String(t.currencyCode || "").toUpperCase()));
+          setCurrencyTabs(visibleTabs.length > 0 ? visibleTabs : tabs);
+        }
       } catch {
         /* keep default */
       }
@@ -655,7 +648,7 @@ export default function App() {
       await apiService.register({
         ...data,
         accountType,
-        accountMode: preSelectedAccountMode,
+        accountMode: "real",
       });
       const email = String(data.email || "")
         .trim()
@@ -677,14 +670,8 @@ export default function App() {
     }
   };
 
-  const handlePreSelectAccountType = (type: "student" | "staff" | "alumni", accountMode: AccountOperatingMode) => {
+  const handlePreSelectAccountType = (type: "student" | "staff" | "alumni") => {
     setPreSelectedAccountType(type);
-    setPreSelectedAccountMode(accountMode);
-    try {
-      sessionStorage.setItem("finera_pre_account_mode", accountMode);
-    } catch {
-      /* ignore */
-    }
     setCurrentScreen("loginRegister");
   };
 
@@ -707,8 +694,10 @@ export default function App() {
     "walletCredited",
     "repaymentDashboard",
     "financialEducation",
+    "helpCentre",
+    "editEmploymentDetails",
+    "identityVerification",
     "profileSettings",
-    "partnerProgram",
     "memberAgreement",
     "agreementsConsent",
     "makeRepayment",
@@ -721,11 +710,11 @@ export default function App() {
     const cap = creditAvailability;
     switch (creditApplication.creditType) {
       case "essential":
-        return { maxAmount: Math.min(5000, cap), repaymentCycle: "MONTHLY", savingsRequirement: 0.2 };
+        return { maxAmount: Math.min(5000, cap), repaymentCycle: "MONTHLY" };
       case "business":
-        return { maxAmount: Math.min(10000, cap), repaymentCycle: "MONTHLY", savingsRequirement: 0.2 };
+        return { maxAmount: Math.min(10000, cap), repaymentCycle: "MONTHLY" };
       default:
-        return { maxAmount: Math.min(5000, cap), repaymentCycle: "MONTHLY", savingsRequirement: 0.2 };
+        return { maxAmount: Math.min(5000, cap), repaymentCycle: "MONTHLY" };
     }
   }, [creditApplication.creditType, creditAvailability, creditLimitFetchError]);
 
@@ -812,6 +801,7 @@ export default function App() {
           userName={userData.fullName || "Member"}
           walletNumericId={displayWalletNumericId || undefined}
           walletCurrencyCode={selectedCurrency}
+          accountType={userData.accountType}
         />
       )}
 
@@ -830,15 +820,6 @@ export default function App() {
         {currentScreen === "splash" && <SplashScreen onComplete={() => setCurrentScreen("accountType")} />}
         {currentScreen === "accountType" && (
           <AccountTypeSelection
-            accountMode={preSelectedAccountMode}
-            onAccountModeChange={(m) => {
-              setPreSelectedAccountMode(m);
-              try {
-                sessionStorage.setItem("finera_pre_account_mode", m);
-              } catch {
-                /* ignore */
-              }
-            }}
             onSelectType={handlePreSelectAccountType}
             onBack={() => setCurrentScreen("splash")}
           />
@@ -846,7 +827,6 @@ export default function App() {
         {currentScreen === "loginRegister" && (
           <LoginRegister
             accountType={preSelectedAccountType || "student"}
-            accountMode={preSelectedAccountMode}
             onLogin={handleLogin}
             onRegister={handleRegister}
             onBack={() => setCurrentScreen("accountType")}
@@ -857,7 +837,12 @@ export default function App() {
           <ForgotPasswordFlow onBackToLogin={() => setCurrentScreen("loginRegister")} />
         )}
         {currentScreen === "otpVerification" && <OTPVerification email={userData.email} onVerify={() => setCurrentScreen("verify")} onBack={() => setCurrentScreen("loginRegister")} />}
-        {currentScreen === "verify" && <VerifyAccess onVerify={() => setCurrentScreen("profileDetails")} />}
+        {currentScreen === "verify" && (
+          <VerifyAccess
+            accountType={userData.accountType}
+            onVerify={() => setCurrentScreen("profileDetails")}
+          />
+        )}
         {currentScreen === "profileDetails" && (
           <ProfileDetails 
             accountType={userData.accountType} 
@@ -1067,24 +1052,11 @@ export default function App() {
             limitsReady={creditDetails != null}
             loanType={creditApplication.loanType}
             accountType={userData.accountType}
-            creditType={creditApplication.creditType}
             maxAmount={creditDetails?.maxAmount ?? 0}
             repaymentCycle={creditDetails?.repaymentCycle ?? ""}
-            savingsRequirement={(creditDetails?.savingsRequirement ?? 0) * 100}
-            currentSavings={creditWalletState.kind === "ok" ? creditWalletState.balance : 0}
             onContinue={(amount) => {
               if (creditWalletState.kind !== "ok") {
                 toast.error("Wallet not found for selected currency.");
-                return;
-              }
-              const savings = creditWalletState.balance;
-              if (
-                requiresWalletDisciplineForAmount(creditApplication.loanType, creditApplication.creditType) &&
-                savings < amount * 0.2
-              ) {
-                toast.error(
-                  `Financial Discipline Notification: ${creditWalletState.kind === "ok" ? creditWalletState.walletLabel : getWalletLabel(selectedCurrency)} balance must be at least 20% of loan amount.`
-                );
                 return;
               }
               setCreditApplication({ ...creditApplication, amount });
@@ -1141,6 +1113,7 @@ export default function App() {
             currencyCode={selectedCurrency}
             isWalletLoading={creditWalletState.kind === "loading"}
             walletError={creditWalletState.kind === "missing" ? creditWalletState.message : null}
+            isSalaryBasedLoan={creditApplication.loanType === "SALARY_BACKED"}
             totalObligation={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance : activeCreditForTab}
             amountRepaid={0}
             outstandingBalance={creditWalletState.kind === "ok" ? creditWalletState.activeLoanBalance : activeCreditForTab}
@@ -1189,6 +1162,11 @@ export default function App() {
             userData={userData}
           />
         )}
+        {currentScreen === "helpCentre" && (
+          <HelpCentre
+            onBack={() => setCurrentScreen("dashboard")}
+          />
+        )}
         {currentScreen === "makePayment" && (
           <MakePayment
             countryCode={userData.countryId || "zw"}
@@ -1215,8 +1193,29 @@ export default function App() {
             }}
           />
         )}
-        {currentScreen === "profileSettings" && <ProfileSettings userData={userData} onLogout={handleLogout} onUpdate={(d) => updateAndSave({ ...userData, ...d })} />}
-        {currentScreen === "partnerProgram" && <PartnerProgram />}
+        {currentScreen === "identityVerification" && (
+          <ProfileSettings
+            userData={userData}
+            onLogout={handleLogout}
+            onUpdate={(d) => updateAndSave({ ...userData, ...d })}
+            standaloneTab="verification"
+          />
+        )}
+        {currentScreen === "editEmploymentDetails" && (
+          <ProfileSettings
+            userData={userData}
+            onLogout={handleLogout}
+            onUpdate={(d) => updateAndSave({ ...userData, ...d })}
+            standaloneTab="employment"
+          />
+        )}
+        {currentScreen === "profileSettings" && (
+          <ProfileSettings
+            userData={userData}
+            onLogout={handleLogout}
+            onUpdate={(d) => updateAndSave({ ...userData, ...d })}
+          />
+        )}
         </AppErrorBoundary>
         </main>
       </div>
@@ -1226,6 +1225,7 @@ export default function App() {
           className="md:hidden"
           activeScreen={currentScreen}
           onNavigate={handleMemberNavigate}
+          accountType={userData.accountType}
         />
       )}
     </div>

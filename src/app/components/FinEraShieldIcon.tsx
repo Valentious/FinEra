@@ -16,6 +16,8 @@ interface FinEraShieldIconProps {
   innerSvgClassName?: string;
   /** `circle` = full circular green badge (e.g. splash). Default = rounded square. */
   variant?: "default" | "circle";
+  /** Remove the outer drop shadow when the logo sits inside another premium glass container. */
+  noShadow?: boolean;
   className?: string;
 }
 
@@ -27,6 +29,7 @@ export function FinEraShieldIcon({
   dimensionClassName,
   innerSvgClassName,
   variant = "default",
+  noShadow = false,
   className = "",
 }: FinEraShieldIconProps) {
   const sizeFromClass = Boolean(dimensionClassName);
@@ -42,7 +45,7 @@ export function FinEraShieldIcon({
       style={{
         ...(sizeFromClass ? {} : { width: size, height: size }),
         background: `linear-gradient(135deg, ${BRAND_GREEN_DARK} 0%, ${BRAND_GREEN} 100%)`,
-        boxShadow: "0 2px 8px rgba(34, 197, 94, 0.3)",
+        boxShadow: noShadow ? "none" : "0 2px 8px rgba(34, 197, 94, 0.3)",
       }}
     >
       <svg

@@ -1,6 +1,6 @@
 /**
  * Fetches wallets from API and maps to Wallet[] for account store.
- * When API returns empty, seeds with default FinCash accounts from getCurrencies (scalable).
+ * When API returns empty, seeds with default FINERA accounts from getCurrencies (scalable).
  */
 
 import apiService from "@/services/index";
@@ -8,21 +8,21 @@ import { toWallet } from "@/stores/accountStore";
 import type { Wallet } from "@/types/wallet";
 import { CURRENCY_LABELS, CURRENCY_TO_COUNTRY, getWalletLabel } from "@/types/wallet";
 
-/** Build default FinCash accounts from available currencies (scalable) */
+/** Build default FINERA accounts from available currencies (scalable) */
 function buildDefaultWallets(currencies: { currencyCode: string }[]): Wallet[] {
+  const allowed = new Set(["USD", "ZIG"]);
   const supported = currencies.length > 0 ? currencies : [
     { currencyCode: "USD" },
     { currencyCode: "ZIG" },
-    { currencyCode: "ZAR" },
   ];
-  return supported.map((c) => {
+  return supported.filter((c) => allowed.has(c.currencyCode.toUpperCase())).map((c) => {
     const cc = c.currencyCode.toUpperCase();
     return {
       id: `finera-${cc.toLowerCase()}`,
       currency: cc,
       label: CURRENCY_LABELS[cc] ?? `${cc} Account`,
       countryCode: CURRENCY_TO_COUNTRY[cc] ?? "XX",
-      provider: "FinCash",
+      provider: "FINERA",
       accountNumber: "",
       balance: 0,
       walletLabel: getWalletLabel(cc),
@@ -34,7 +34,9 @@ function buildDefaultWallets(currencies: { currencyCode: string }[]): Wallet[] {
 
 export async function fetchWalletsForStore(): Promise<Wallet[]> {
   const raw = await apiService.getWalletsByCurrency();
-  const fromApi = raw.map((w) =>
+  const fromApi = raw
+    .filter((w) => ["USD", "ZIG"].includes(String(w.currencyCode || "").toUpperCase()))
+    .map((w) =>
     toWallet({
       id: w.id,
       currencyCode: w.currencyCode,

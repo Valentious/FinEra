@@ -4,7 +4,7 @@
  */
 export const finAmountHero = "fin-amount fin-amount--hero tabular-nums tracking-tight";
 
-/** Card-sized primary balances (FinCash, loan principal). */
+/** Card-sized primary balances (FINERA, loan principal). */
 export const finAmountPrimary = "fin-amount fin-amount--primary tabular-nums tracking-tight";
 
 /** Inline / secondary money (fees, subtitles). */
