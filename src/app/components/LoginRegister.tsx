@@ -174,7 +174,9 @@ export function LoginRegister({
                 <CardHeader className="space-y-1 pt-8">
                   <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
                   <CardDescription className="text-center">
-                    Enter your credentials to access your account
+                    {accountType === "alumni"
+                      ? "Enter your business credentials"
+                      : "Enter your credentials to access your account"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 pb-8 px-8">
@@ -235,7 +237,7 @@ export function LoginRegister({
               <Card className="overflow-hidden rounded-2xl border border-white/25 bg-white/[0.98] shadow-2xl shadow-black/45 backdrop-blur-sm">
                 <CardHeader className="space-y-1 pt-8">
                   <CardTitle className="text-2xl font-bold text-center">
-                    {accountType === "alumni" ? "Register Business Credentials" : "Create a profile"}
+                    {accountType === "alumni" ? "Register Your Business Login Cedentials" : "Register Your Login Credentials"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pb-8 px-8">
@@ -397,7 +399,7 @@ export function LoginRegister({
                       disabled={showPasswordMismatch || !legalConsentAccepted}
                       className="w-full h-12 bg-primary hover:bg-emerald-700 rounded-xl font-semibold text-lg text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {accountType === "alumni" ? "Register Business Credentials" : "Create a profile"}
+                      {accountType === "alumni" ? "Register Your Business Login Cedentials" : "Register Your Login Credentials"}
                     </Button>
                   </form>
                 </CardContent>
